@@ -104,14 +104,10 @@ public:
 class GroupsEditor : public VBoxContainer {
 	GDCLASS(GroupsEditor, VBoxContainer);
 
+	bool updating_group;
+
 	Node *node;
-
-	GroupDialog *group_dialog;
-
-	LineEdit *group_name;
-	Button *add;
 	Tree *tree;
-
 	UndoRedo *undo_redo;
 
 	void update_tree();
@@ -119,7 +115,10 @@ class GroupsEditor : public VBoxContainer {
 	void _remove_group(Object *p_item, int p_column, int p_id);
 	void _close();
 
+	void _manage_groups();
+	void _group_toggled();
 	void _show_group_dialog();
+	void _group_dialog_closed();
 
 protected:
 	static void _bind_methods();

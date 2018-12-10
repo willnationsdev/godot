@@ -1718,6 +1718,11 @@ void ProjectSettingsEditor::set_plugins_page() {
 	tab_container->set_current_tab(plugin_settings->get_index());
 }
 
+void ProjectSettingsEditor::set_groups_page() {
+
+	tab_container->set_current_tab(group_settings->get_index());
+}
+
 TabContainer *ProjectSettingsEditor::get_tabs() {
 	return tab_container;
 }
@@ -2117,6 +2122,11 @@ ProjectSettingsEditor::ProjectSettingsEditor(EditorData *p_data) {
 	shaders_global_variables_editor->set_name(TTR("Shader Globals"));
 	tab_container->add_child(shaders_global_variables_editor);
 	shaders_global_variables_editor->connect("globals_changed", callable_mp(this, &ProjectSettingsEditor::_settings_changed));
+
+	group_settings = memnew(EditorGroupSettings);
+	group_settings->set_name(TTR("Groups"));
+	tab_container->add_child(group_settings);
+	group_settings->connect("group_changed", this, "_settings_changed");
 
 	plugin_settings = memnew(EditorPluginSettings);
 	plugin_settings->set_name(TTR("Plugins"));

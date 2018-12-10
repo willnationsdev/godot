@@ -31,8 +31,8 @@
 #include "groups_editor.h"
 
 #include "editor/scene_tree_editor.h"
-#include "editor_node.h"
-#include "editor_scale.h"
+#include "editor/editor_node.h"
+#include "editor/editor_scale.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/label.h"
 #include "scene/resources/packed_scene.h"
@@ -564,8 +564,6 @@ void GroupsEditor::_add_group(const String &p_group) {
 	undo_redo->add_undo_method(EditorNode::get_singleton()->get_scene_tree_dock()->get_tree_editor(), "update_tree");
 
 	undo_redo->commit_action();
-
-	group_name->clear();
 }
 
 void GroupsEditor::_remove_group(Object *p_item, int p_column, int p_id) {
@@ -594,6 +592,34 @@ void GroupsEditor::_remove_group(Object *p_item, int p_column, int p_id) {
 	undo_redo->commit_action();
 }
 
+void GroupsEditor::_group_toggled() {
+	if (updating_group)
+		return;
+
+	TreeItem *ti = tree->get_edited();
+	int column = tree->get_edited_column();
+
+	if (column == 0) {
+		updating_group = true;
+
+		bool checked = ti->is_checked(0);
+		String group_name = ti->get_text(0);
+
+		if (checked) {
+			_add_to_group(group_name);
+		} else {
+			_remove_from_group(group_name);
+		}
+	}
+
+	updating_group = false;
+}
+
+void GroupsEditor::_manage_groups() {
+	EditorNode::get_singleton()->get_project_settings()->set_groups_page();
+	EditorNode::get_singleton()->get_project_settings()->popup_project_settings();
+}
+
 struct _GroupInfoComparator {
 	bool operator()(const Node::GroupInfo &p_a, const Node::GroupInfo &p_b) const {
 		return p_a.name.operator String() < p_b.name.operator String();
@@ -607,11 +633,10 @@ void GroupsEditor::update_tree() {
 		return;
 	}
 
-	List<Node::GroupInfo> groups;
-	node->get_groups(&groups);
-	groups.sort_custom<_GroupInfoComparator>();
+	if (updating_group)
+		return;
 
-	TreeItem *root = tree->create_item();
+	updating_group = true;
 
 	for (List<GroupInfo>::Element *E = groups.front(); E; E = E->next()) {
 		Node::GroupInfo gi = E->get();
@@ -619,8 +644,8 @@ void GroupsEditor::update_tree() {
 			continue;
 		}
 
-		Node *n = node;
-		bool can_be_deleted = true;
+	List<String> current_groups_names;
+	for (List<GroupInfo>::Element *E = current_groups.front(); E; E = E->next()) {
 
 		while (n) {
 			Ref<SceneState> ss = (n == EditorNode::get_singleton()->get_edited_scene()) ? n->get_scene_inherited_state() : n->get_scene_instance_state();
@@ -634,8 +659,7 @@ void GroupsEditor::update_tree() {
 				}
 			}
 
-			n = n->get_owner();
-		}
+		String name = E->get();
 
 		TreeItem *item = tree->create_item(root);
 		item->set_text(0, gi.name);
@@ -645,6 +669,8 @@ void GroupsEditor::update_tree() {
 			item->set_selectable(0, false);
 		}
 	}
+
+	updating_group = false;
 }
 
 void GroupsEditor::set_current(Node *p_node) {
