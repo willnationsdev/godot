@@ -47,41 +47,70 @@ public:
 	struct Action {
 		int id;
 		float deadzone;
-		List<Ref<InputEvent> > inputs;
+		Set<Ref<InputEvent> > inputs;
 	};
 
 private:
 	static InputMap *singleton;
 
-	mutable Map<StringName, Action> input_map;
+public:
+	typedef Map<StringName, Action> ActionMap;
 
-	List<Ref<InputEvent> >::Element *_find_event(Action &p_action, const Ref<InputEvent> &p_event, bool *p_pressed = NULL, float *p_strength = NULL) const;
+private:
+	struct ActionMapData {
+		ActionMap action_map;
+		StringName name;
+		bool active = true;
+	};
 
-	Array _get_action_list(const StringName &p_action);
-	Array _get_actions();
+	mutable Vector<ActionMapData> action_maps;
+	mutable Map<StringName, ActionMapData *> map_names;
+	mutable uint32_t map_idx;
+	mutable ActionMap composite_map;
+	mutable bool composite_map_dirty;
+
+	static int last_id;
+
+	ActionMapData *get_am_data(int p_map_idx) const;
+	const ActionMapData *get_am_data_const(int p_map_idx) const;
+
+	Set<Ref<InputEvent> >::Element *_find_event(Action &p_action, const Ref<InputEvent> &p_event, bool *p_pressed = NULL, float *p_strength = NULL) const;
+
+	Array _get_action_list(const StringName &p_action, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	Array _get_actions(int p_map_idx = ACTION_MAP_INDEX_CURRENT);
 
 protected:
 	static void _bind_methods();
 
 public:
 	static _FORCE_INLINE_ InputMap *get_singleton() { return singleton; }
+	static const int ACTION_MAP_INDEX_CURRENT = -2;
+	static const int ACTION_MAP_INDEX_ALL = -1;
 
-	bool has_action(const StringName &p_action) const;
-	List<StringName> get_actions() const;
-	void add_action(const StringName &p_action, float p_deadzone = 0.5);
-	void erase_action(const StringName &p_action);
+	bool has_action(const StringName &p_action, int p_map_idx = ACTION_MAP_INDEX_CURRENT) const;
+	List<StringName> get_actions(int p_map_idx = ACTION_MAP_INDEX_CURRENT) const;
+	void add_action(const StringName &p_action, float p_deadzone = 0.5, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	void erase_action(const StringName &p_action, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
 
-	void action_set_deadzone(const StringName &p_action, float p_deadzone);
-	void action_add_event(const StringName &p_action, const Ref<InputEvent> &p_event);
-	bool action_has_event(const StringName &p_action, const Ref<InputEvent> &p_event);
-	void action_erase_event(const StringName &p_action, const Ref<InputEvent> &p_event);
-	void action_erase_events(const StringName &p_action);
+	void action_set_deadzone(const StringName &p_action, float p_deadzone, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	void action_add_event(const StringName &p_action, const Ref<InputEvent> &p_event, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	bool action_has_event(const StringName &p_action, const Ref<InputEvent> &p_event, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	void action_erase_event(const StringName &p_action, const Ref<InputEvent> &p_event, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	void action_erase_events(const StringName &p_action, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
 
-	const List<Ref<InputEvent> > *get_action_list(const StringName &p_action);
-	bool event_is_action(const Ref<InputEvent> &p_event, const StringName &p_action) const;
-	bool event_get_action_status(const Ref<InputEvent> &p_event, const StringName &p_action, bool *p_pressed = NULL, float *p_strength = NULL) const;
+	const Set<Ref<InputEvent> > *get_action_list(const StringName &p_action, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	bool event_is_action(const Ref<InputEvent> &p_event, const StringName &p_action, int p_map_idx = ACTION_MAP_INDEX_CURRENT) const;
+	bool event_get_action_status(const Ref<InputEvent> &p_event, const StringName &p_action, bool *p_pressed = NULL, float *p_strength = NULL, int p_map_idx = ACTION_MAP_INDEX_CURRENT) const;
 
-	const Map<StringName, Action> &get_action_map() const;
+	const ActionMap *get_action_map_idx(int p_map_idx) const;
+	void add_empty_action_map();
+	void add_duplicate_action_map(int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	void remove_action_map(int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+	void swap_action_maps(int p_first_idx, int p_second_idx);
+	void set_current_action_map(int p_map_idx) const;
+	void set_action_map_name(const StringName &p_name, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
+
+	const ActionMap &get_action_map() const;
 	void load_from_globals();
 	void load_default();
 
