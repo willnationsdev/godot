@@ -31,10 +31,44 @@
 #include "editor/editor_input_map_settings.h"
 
 #include "core/input_map.h"
+#include "core/os/keyboard.h"
 #include "editor/editor_node.h"
 #include "editor/editor_scale.h"
 #include "scene/gui/label.h"
 #include "scene/gui/line_edit.h"
+
+static const char *_button_names[JOY_BUTTON_MAX] = {
+	"DualShock Cross, Xbox A, Nintendo B",
+	"DualShock Circle, Xbox B, Nintendo A",
+	"DualShock Square, Xbox X, Nintendo Y",
+	"DualShock Triangle, Xbox Y, Nintendo X",
+	"L, L1",
+	"R, R1",
+	"L2",
+	"R2",
+	"L3",
+	"R3",
+	"Select, Nintendo -",
+	"Start, Nintendo +",
+	"D-Pad Up",
+	"D-Pad Down",
+	"D-Pad Left",
+	"D-Pad Right"
+};
+
+static const char *_axis_names[JOY_AXIS_MAX * 2] = {
+	" (Left Stick Left)",
+	" (Left Stick Right)",
+	" (Left Stick Up)",
+	" (Left Stick Down)",
+	" (Right Stick Left)",
+	" (Right Stick Right)",
+	" (Right Stick Up)",
+	" (Right Stick Down)",
+	"", "", "", "",
+	"", " (L2)",
+	"", " (R2)"
+};
 
 static bool _validate_action_name(const String &p_name) {
 	const CharType *cstr = p_name.c_str();
@@ -51,7 +85,7 @@ void EditorInputMapSettings::_action_selected() {
 	if (!ti || !ti->is_editable(0))
 		return;
 
-	add_at = "input/" + ti->get_text(0);
+	add_at = "input/" + itos(InputMap::get_singleton()->get_map_index()) + "/" + ti->get_text(0);
 	edit_idx = -1;
 }
 
@@ -94,9 +128,11 @@ void EditorInputMapSettings::_action_edited() {
 		int order = ProjectSettings::get_singleton()->get_order(add_at);
 		Dictionary action = ProjectSettings::get_singleton()->get(add_at);
 
-		UndoRedo *undo_redo =
+		UndoRedo *undo_redo = EditorNode::get_singleton()->get_undo_redo();
 
-				setting = true;
+		ERR_FAIL_COND(!settings_lock);
+
+		*settings_lock = true;
 		undo_redo->create_action(TTR("Rename Input Action Event"));
 		undo_redo->add_do_method(ProjectSettings::get_singleton(), "clear", add_at);
 		undo_redo->add_do_method(ProjectSettings::get_singleton(), "set", action_prop, action);
@@ -109,7 +145,7 @@ void EditorInputMapSettings::_action_edited() {
 		undo_redo->add_do_method(this, "_settings_changed");
 		undo_redo->add_undo_method(this, "_settings_changed");
 		undo_redo->commit_action();
-		setting = false;
+		*settings_lock = false;
 
 		add_at = action_prop;
 	} else if (input_editor->get_selected_column() == 1) {
@@ -119,12 +155,18 @@ void EditorInputMapSettings::_action_edited() {
 		Dictionary new_action = old_action.duplicate();
 		new_action["deadzone"] = ti->get_range(1);
 
+		UndoRedo *undo_redo = EditorNode::get_singleton()->get_undo_redo();
+
+		ERR_FAIL_COND(!settings_lock);
+
+		*settings_lock = true;
 		undo_redo->create_action(TTR("Change Action deadzone"));
 		undo_redo->add_do_method(ProjectSettings::get_singleton(), "set", name, new_action);
 		undo_redo->add_do_method(this, "_settings_changed");
 		undo_redo->add_undo_method(ProjectSettings::get_singleton(), "set", name, old_action);
 		undo_redo->add_undo_method(this, "_settings_changed");
 		undo_redo->commit_action();
+		*settings_lock = false; // TODO: note that these setting assignments were added
 	}
 }
 
@@ -212,6 +254,11 @@ void EditorInputMapSettings::_device_input_add() {
 	}
 	action["events"] = events;
 
+	UndoRedo *undo_redo = EditorNode::get_singleton()->get_undo_redo();
+
+	ERR_FAIL_COND(!settings_lock);
+
+	*settings_lock = true;
 	undo_redo->create_action(TTR("Add Input Action Event"));
 	undo_redo->add_do_method(ProjectSettings::get_singleton(), "set", name, action);
 	undo_redo->add_undo_method(ProjectSettings::get_singleton(), "set", name, old_val);
@@ -220,6 +267,7 @@ void EditorInputMapSettings::_device_input_add() {
 	undo_redo->add_do_method(this, "_settings_changed");
 	undo_redo->add_undo_method(this, "_settings_changed");
 	undo_redo->commit_action();
+	*settings_lock = false;
 
 	_show_last_added(ie, name);
 }
@@ -238,6 +286,241 @@ String EditorInputMapSettings::_get_device_string(int i_device) {
 	return TTR("Device") + " " + itos(i_device);
 }
 
+void EditorInputMapSettings::_press_a_key_confirm() {
+
+	if (last_wait_for_key.is_null())
+		return;
+
+	Ref<InputEventKey> ie;
+	ie.instance();
+	ie->set_scancode(last_wait_for_key->get_scancode());
+	ie->set_shift(last_wait_for_key->get_shift());
+	ie->set_alt(last_wait_for_key->get_alt());
+	ie->set_control(last_wait_for_key->get_control());
+	ie->set_metakey(last_wait_for_key->get_metakey());
+
+	String name = add_at;
+	int idx = edit_idx;
+
+	Dictionary old_val = ProjectSettings::get_singleton()->get(name);
+	Dictionary action = old_val.duplicate();
+	Array events = action["events"];
+
+	for (int i = 0; i < events.size(); i++) {
+
+		Ref<InputEventKey> aie = events[i];
+		if (aie.is_null())
+			continue;
+		if (aie->get_scancode_with_modifiers() == ie->get_scancode_with_modifiers()) {
+			return;
+		}
+	}
+
+	if (idx < 0 || idx >= events.size()) {
+		events.push_back(ie);
+	} else {
+		events[idx] = ie;
+	}
+	action["events"] = events;
+
+	UndoRedo *undo_redo = EditorNode::get_singleton()->get_undo_redo();
+
+	ERR_FAIL_COND(!settings_lock);
+
+	*settings_lock = true;
+	undo_redo->create_action(TTR("Add Input Action Event"));
+	undo_redo->add_do_method(ProjectSettings::get_singleton(), "set", name, action);
+	undo_redo->add_undo_method(ProjectSettings::get_singleton(), "set", name, old_val);
+	undo_redo->add_do_method(this, "_update_actions");
+	undo_redo->add_undo_method(this, "_update_actions");
+	undo_redo->add_do_method(this, "_settings_changed");
+	undo_redo->add_undo_method(this, "_settings_changed");
+	undo_redo->commit_action();
+	*settings_lock = false;
+
+	_show_last_added(ie, name);
+}
+
+void EditorInputMapSettings::_show_last_added(const Ref<InputEvent> &p_event, const String &p_name) {
+	TreeItem *r = input_editor->get_root();
+
+	String name = p_name;
+	name.erase(0, 6);
+	if (!r)
+		return;
+	r = r->get_children();
+	if (!r)
+		return;
+	bool found = false;
+	while (r) {
+		if (r->get_text(0) != name) {
+			r = r->get_next();
+			continue;
+		}
+		TreeItem *child = r->get_children();
+		while (child) {
+			Variant input = child->get_meta("__input");
+			if (p_event == input) {
+				r->set_collapsed(false);
+				child->select(0);
+				found = true;
+				break;
+			}
+			child = child->get_next();
+		}
+		if (found) break;
+		r = r->get_next();
+	}
+
+	if (found) input_editor->ensure_cursor_is_visible();
+}
+
+void EditorInputMapSettings::_update_actions() {
+
+	ERR_FAIL_COND(!settings_lock);
+
+	if (*settings_lock)
+		return;
+
+	Map<String, bool> collapsed;
+
+	if (input_editor->get_root() && input_editor->get_root()->get_children()) {
+		for (TreeItem *item = input_editor->get_root()->get_children(); item; item = item->get_next()) {
+			collapsed[item->get_text(0)] = item->is_collapsed();
+		}
+	}
+
+	input_editor->clear();
+	TreeItem *root = input_editor->create_item();
+	input_editor->set_hide_root(true);
+
+	List<PropertyInfo> props;
+	ProjectSettings::get_singleton()->get_property_list(&props);
+
+	for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
+
+		const PropertyInfo &pi = E->get();
+		if (!pi.name.begins_with("input/"))
+			continue;
+
+		String name = pi.name.get_slice("/", 1);
+		if (name == "")
+			continue;
+
+		Dictionary action = ProjectSettings::get_singleton()->get(pi.name);
+		Array events = action["events"];
+
+		TreeItem *item = input_editor->create_item(root);
+		item->set_text(0, name);
+		item->set_custom_bg_color(0, get_color("prop_subsection", "Editor"));
+		if (collapsed.has(name))
+			item->set_collapsed(collapsed[name]);
+
+		item->set_editable(1, true);
+		item->set_cell_mode(1, TreeItem::CELL_MODE_RANGE);
+		item->set_range_config(1, 0.0, 1.0, 0.01);
+		item->set_range(1, action["deadzone"]);
+		item->set_custom_bg_color(1, get_color("prop_subsection", "Editor"));
+
+		item->add_button(2, get_icon("Add", "EditorIcons"), 1, false, TTR("Add Event"));
+		if (!ProjectSettings::get_singleton()->get_input_presets().find(pi.name)) {
+			item->add_button(2, get_icon("Remove", "EditorIcons"), 2, false, TTR("Remove"));
+			item->set_editable(0, true);
+		}
+
+		for (int i = 0; i < events.size(); i++) {
+
+			Ref<InputEvent> event = events[i];
+			if (event.is_null())
+				continue;
+
+			TreeItem *action2 = input_editor->create_item(item);
+
+			Ref<InputEventKey> k = event;
+			if (k.is_valid()) {
+
+				String str = keycode_get_string(k->get_scancode()).capitalize();
+				if (k->get_metakey())
+					str = vformat("%s+", find_keycode_name(KEY_META)) + str;
+				if (k->get_shift())
+					str = TTR("Shift+") + str;
+				if (k->get_alt())
+					str = TTR("Alt+") + str;
+				if (k->get_control())
+					str = TTR("Control+") + str;
+
+				action2->set_text(0, str);
+				action2->set_icon(0, get_icon("Keyboard", "EditorIcons"));
+			}
+
+			Ref<InputEventJoypadButton> jb = event;
+
+			if (jb.is_valid()) {
+
+				String str = _get_device_string(jb->get_device()) + ", " + TTR("Button") + " " + itos(jb->get_button_index());
+				if (jb->get_button_index() >= 0 && jb->get_button_index() < JOY_BUTTON_MAX)
+					str += String() + " (" + _button_names[jb->get_button_index()] + ").";
+				else
+					str += ".";
+
+				action2->set_text(0, str);
+				action2->set_icon(0, get_icon("JoyButton", "EditorIcons"));
+			}
+
+			Ref<InputEventMouseButton> mb = event;
+
+			if (mb.is_valid()) {
+				String str = _get_device_string(mb->get_device()) + ", ";
+				switch (mb->get_button_index()) {
+					case BUTTON_LEFT: str += TTR("Left Button."); break;
+					case BUTTON_RIGHT: str += TTR("Right Button."); break;
+					case BUTTON_MIDDLE: str += TTR("Middle Button."); break;
+					case BUTTON_WHEEL_UP: str += TTR("Wheel Up."); break;
+					case BUTTON_WHEEL_DOWN: str += TTR("Wheel Down."); break;
+					default: str += TTR("Button") + " " + itos(mb->get_button_index()) + ".";
+				}
+
+				action2->set_text(0, str);
+				action2->set_icon(0, get_icon("Mouse", "EditorIcons"));
+			}
+
+			Ref<InputEventJoypadMotion> jm = event;
+
+			if (jm.is_valid()) {
+
+				int ax = jm->get_axis();
+				int n = 2 * ax + (jm->get_axis_value() < 0 ? 0 : 1);
+				String desc = _axis_names[n];
+				String str = _get_device_string(jm->get_device()) + ", " + TTR("Axis") + " " + itos(ax) + " " + (jm->get_axis_value() < 0 ? "-" : "+") + desc + ".";
+				action2->set_text(0, str);
+				action2->set_icon(0, get_icon("JoyAxis", "EditorIcons"));
+			}
+			action2->set_metadata(0, i);
+			action2->set_meta("__input", event);
+
+			action2->add_button(2, get_icon("Edit", "EditorIcons"), 3, false, TTR("Edit"));
+			action2->add_button(2, get_icon("Remove", "EditorIcons"), 2, false, TTR("Remove"));
+		}
+	}
+
+	_action_check(action_name->get_text());
+}
+
+void EditorInputMapSettings::_notification(int p_what) {
+
+	switch (p_what) {
+		case NOTIFICATION_ENTER_TREE: {
+			action_add_error->add_color_override("font_color", get_color("error_color", "Editor"));
+
+			_update_actions();
+			popup_add->add_icon_item(get_icon("Keyboard", "EditorIcons"), TTR("Key "), INPUT_KEY); //"Key " - because the word 'key' has already been used as a key animation
+			popup_add->add_icon_item(get_icon("JoyButton", "EditorIcons"), TTR("Joy Button"), INPUT_JOY_BUTTON);
+			popup_add->add_icon_item(get_icon("JoyAxis", "EditorIcons"), TTR("Joy Axis"), INPUT_JOY_MOTION);
+			popup_add->add_icon_item(get_icon("Mouse", "EditorIcons"), TTR("Mouse Button"), INPUT_MOUSE_BUTTON);
+		}
+	}
+}
+
 EditorInputMapSettings::EditorInputMapSettings() {
 	set_name(TTR("Input Map"));
 
@@ -245,6 +528,9 @@ EditorInputMapSettings::EditorInputMapSettings() {
 	set_anchor_and_margin(MARGIN_BOTTOM, ANCHOR_END, 0);
 	set_anchor_and_margin(MARGIN_LEFT, ANCHOR_BEGIN, 0);
 	set_anchor_and_margin(MARGIN_RIGHT, ANCHOR_END, 0);
+
+	message = memnew(AcceptDialog);
+	add_child(message);
 
 	toolbar = memnew(HBoxContainer);
 	add_child(toolbar);

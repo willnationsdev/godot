@@ -107,7 +107,8 @@ public:
 	void add_duplicate_action_map(int p_map_idx = ACTION_MAP_INDEX_CURRENT);
 	void remove_action_map(int p_map_idx = ACTION_MAP_INDEX_CURRENT);
 	void swap_action_maps(int p_first_idx, int p_second_idx);
-	void set_current_action_map(int p_map_idx) const;
+	void set_map_index(int p_map_idx) const { map_idx = p_map_idx; }
+	int get_map_index() const { return map_idx; }
 	void set_action_map_name(const StringName &p_name, int p_map_idx = ACTION_MAP_INDEX_CURRENT);
 
 	const ActionMap &get_action_map() const;

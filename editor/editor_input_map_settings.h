@@ -48,10 +48,15 @@ class EditorInputMapSettings : public VBoxContainer {
 		INPUT_MOUSE_BUTTON
 	};
 
+	friend class ProjectSettingsEditor;
+
+	InputType add_type;
 	String add_at;
 	int edit_idx;
+	bool *settings_lock; // set externally
 
 	HBoxContainer *toolbar;
+	AcceptDialog *message;
 
 	LineEdit *action_name;
 	Label *action_add_error;
@@ -62,19 +67,37 @@ class EditorInputMapSettings : public VBoxContainer {
 
 	ConfirmationDialog *press_a_key;
 	Label *press_a_key_label;
+	Ref<InputEventKey> last_wait_for_key;
 
 	ConfirmationDialog *device_input;
 	OptionButton *device_id;
 	Label *device_index_label;
 	OptionButton *device_index;
 
+	void _press_a_key_confirm();
+	void _show_last_added(const Ref<InputEvent> &p_event, const String &p_name);
+
 	void _set_current_device(int i_device);
 	int _get_current_device();
 	String _get_device_string(int i_device);
 	void _device_input_add();
 
+	void _action_check(String p_action);
+	void _action_adds(String);
+	void _action_add();
 	void _action_selected();
 	void _action_edited();
+	void _action_activated();
+	void _action_button_pressed(Object *p_obj, int p_column, int p_id);
+	void _wait_for_key(const Ref<InputEvent> &p_event);
+	void _press_a_key_confirm();
+	void _show_last_added(const Ref<InputEvent> &p_event, const String &p_name);
+	void _update_actions();
+
+	void _notification(int p_what);
+
+public:
+	EditorInputMapSettings();
 };
 
 #endif // EDITOR_INPUT_MAP_SETTINGS_H

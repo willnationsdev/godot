@@ -473,10 +473,6 @@ void InputMap::swap_action_maps(int p_first_idx, int p_second_idx) {
 	action_maps.write[p_second_idx] = temp;
 }
 
-void InputMap::set_current_action_map(int p_map_idx) const {
-	map_idx = p_map_idx;
-}
-
 void InputMap::set_action_map_name(const StringName &p_name, int p_map_idx) {
 	ERR_FAIL_COND(map_names.has(p_name));
 
@@ -533,7 +529,7 @@ void InputMap::load_from_globals() {
 
 	action_maps.clear();
 	add_empty_action_map();
-	set_current_action_map(0);
+	set_map_index(0);
 
 	List<PropertyInfo> pinfo;
 	ProjectSettings::get_singleton()->get_property_list(&pinfo);

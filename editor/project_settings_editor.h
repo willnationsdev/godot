@@ -58,9 +58,9 @@ class ProjectSettingsEditor : public AcceptDialog {
 	TabContainer *tab_container;
 
 	Timer *timer;
-	InputType add_type;
-	String add_at;
-	int edit_idx;
+	//InputType add_type;
+	//String add_at;
+	//int edit_idx;
 
 	EditorData *data;
 	UndoRedo *undo_redo;
@@ -76,18 +76,18 @@ class ProjectSettingsEditor : public AcceptDialog {
 	LineEdit *property;
 	OptionButton *type;
 	PopupMenu *popup_add;
-	ConfirmationDialog *press_a_key;
-	Label *press_a_key_label;
+	//ConfirmationDialog *press_a_key;
+	//Label *press_a_key_label;
 	ConfirmationDialog *device_input;
 	OptionButton *device_id;
 	OptionButton *device_index;
 	Label *device_index_label;
 	MenuButton *popup_copy_to_feature;
 
-	LineEdit *action_name;
-	Button *action_add;
-	Label *action_add_error;
-	Tree *input_editor;
+	//LineEdit *action_name;
+	//Button *action_add;
+	//Label *action_add_error;
+	//Tree *input_editor;
 	bool setting;
 	bool updating_translations;
 
@@ -120,19 +120,19 @@ class ProjectSettingsEditor : public AcceptDialog {
 	void _add_item(int p_item, Ref<InputEvent> p_exiting_event = NULL);
 	void _edit_item(Ref<InputEvent> p_exiting_event);
 
-	void _action_check(String p_action);
-	void _action_adds(String);
-	void _action_add();
-	void _device_input_add();
+	//void _action_check(String p_action);
+	//void _action_adds(String);
+	//void _action_add();
+	//void _device_input_add();
 
 	void _item_checked(const String &p_item, bool p_check);
-	void _action_selected();
-	void _action_edited();
-	void _action_activated();
-	void _action_button_pressed(Object *p_obj, int p_column, int p_id);
-	void _wait_for_key(const Ref<InputEvent> &p_event);
-	void _press_a_key_confirm();
-	void _show_last_added(const Ref<InputEvent> &p_event, const String &p_name);
+	//void _action_selected();
+	//void _action_edited();
+	//void _action_activated();
+	//void _action_button_pressed(Object *p_obj, int p_column, int p_id);
+	//void _wait_for_key(const Ref<InputEvent> &p_event);
+	//void _press_a_key_confirm();
+	//void _show_last_added(const Ref<InputEvent> &p_event, const String &p_name);
 
 	void _settings_prop_edited(const String &p_name);
 	void _settings_changed();
@@ -177,9 +177,9 @@ protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 
-	int _get_current_device();
-	void _set_current_device(int i_device);
-	String _get_device_string(int i_device);
+	//int _get_current_device();
+	//void _set_current_device(int i_device);
+	//String _get_device_string(int i_device);
 
 public:
 	void add_translation(const String &p_translation);
