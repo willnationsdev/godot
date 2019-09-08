@@ -218,6 +218,7 @@ public:
 	bool script_class_is_parent(const String &p_class, const String &p_inherits);
 	StringName script_class_get_base(const String &p_class) const;
 	Object *script_class_instance(const String &p_class);
+	void script_class_get_inheriters_from_class(const String &p_class, List<StringName> *r_list);
 
 	StringName script_class_get_name(const String &p_path) const;
 	void script_class_set_name(const String &p_path, const StringName &p_class);

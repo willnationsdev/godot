@@ -550,6 +550,7 @@ class EditorPropertyResource : public EditorProperty {
 		OBJ_MENU_PASTE = 6,
 		OBJ_MENU_NEW_SCRIPT = 7,
 		OBJ_MENU_SHOW_IN_FILE_SYSTEM = 8,
+		OBJ_MENU_BROWSE = 9,
 		TYPE_BASE_ID = 100,
 		CONVERT_BASE_ID = 1000
 
@@ -563,10 +564,12 @@ class EditorPropertyResource : public EditorProperty {
 	Vector<String> inheritors_array;
 	EditorInspector *sub_inspector;
 	VBoxContainer *sub_inspector_vbox;
+	CreateDialog *create_dialog;
 
 	bool use_sub_inspector;
 	bool dropping;
 	String base_type;
+	static const int MENU_ITEM_NEW_RES_MAX = 20;
 
 	SceneTreeDialog *scene_tree;
 

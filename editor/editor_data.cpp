@@ -919,6 +919,28 @@ Object *EditorData::script_class_instance(const String &p_class) {
 	return NULL;
 }
 
+void EditorData::script_class_get_inheriters_from_class(const String &p_class, List<StringName> *r_list) {
+	ERR_FAIL_COND(!r_list);
+	List<StringName> classes;
+	Map<StringName, bool> cache;
+	ScriptServer::get_global_class_list(&classes);
+	for (List<StringName>::Element *E = classes.front(); E; E = E->next()) {
+		const StringName &name = E->get();
+
+		StringName base = name;
+		while (ScriptServer::is_global_class(base)) {
+			if (base == p_class) {
+				r_list->push_back(base);
+			}
+			if (cache.has(base)) {
+				if (cache[base])
+					r_list->push_back(base);
+				break;
+			}
+		}
+	}
+}
+
 void EditorData::script_class_set_icon_path(const String &p_class, const String &p_icon_path) {
 	_script_class_icon_paths[p_class] = p_icon_path;
 }

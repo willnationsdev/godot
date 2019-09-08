@@ -2355,8 +2355,18 @@ void EditorPropertyResource::_update_menu_items() {
 				E = E->next();
 			}
 
+			if (valid_inheritors.size() > MENU_ITEM_NEW_RES_MAX) {
+				menu->add_item("Browse...", OBJ_MENU_BROWSE);
+			}
+
 			for (Set<String>::Element *F = valid_inheritors.front(); F; F = F->next()) {
 				const String &t = F->get();
+
+				if (idx == MENU_ITEM_NEW_RES_MAX) {
+					int more_id = ++idx;
+					menu->add_item("...", more_id);
+					menu->set_item_disabled(more_id, true);
+				}
 
 				bool is_custom_resource = false;
 				Ref<Texture> icon;
@@ -2670,6 +2680,16 @@ void EditorPropertyResource::_resource_selected() {
 
 void EditorPropertyResource::setup(const String &p_base_type) {
 	base_type = p_base_type;
+	List<StringName> type_list;
+	ClassDB::get_inheriters_from_class(base_type, &type_list);
+	if (!(type_list.size() > MENU_ITEM_NEW_RES_MAX && ScriptServer::is_global_class(base_type))) {
+		EditorNode::get_editor_data().script_class_get_inheriters_from_class(base_type, &type_list);
+	}
+	if (type_list.size() > MENU_ITEM_NEW_RES_MAX) {
+		create_dialog = memnew(CreateDialog);
+		add_child(create_dialog);
+		create_dialog->connect("confirmed", this, )
+	}
 }
 
 void EditorPropertyResource::_notification(int p_what) {
