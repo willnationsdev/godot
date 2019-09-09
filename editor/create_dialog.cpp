@@ -315,9 +315,7 @@ void CreateDialog::_update_search() {
 	EditorData &ed = EditorNode::get_editor_data();
 
 	root->set_text(0, base_type);
-	if (has_icon(base_type, "EditorIcons")) {
-		root->set_icon(0, get_icon(base_type, "EditorIcons"));
-	}
+	root->set_icon(0, EditorNode::get_singleton()->get_class_icon(base_type));
 
 	TreeItem *to_select = search_box->get_text() == base_type ? root : NULL;
 

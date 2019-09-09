@@ -247,6 +247,9 @@ private:
 
 	Map<Object *, VisualScriptInstance *> instances;
 
+	String script_class_name;
+	String script_class_icon_path;
+
 #ifdef TOOLS_ENABLED
 	Set<PlaceHolderScriptInstance *> placeholders;
 	//void _update_placeholder(PlaceHolderScriptInstance *p_placeholder);
@@ -359,6 +362,11 @@ public:
 #ifdef TOOLS_ENABLED
 	virtual bool are_subnodes_edited() const;
 #endif
+
+	String get_script_class_name();
+	String get_script_class_icon_path();
+	void set_script_class_name(const String &p_name);
+	void set_script_class_icon_path(const String &p_path);
 
 	VisualScript();
 	~VisualScript();
@@ -557,6 +565,9 @@ public:
 	virtual String get_extension() const;
 	virtual Error execute_file(const String &p_path);
 	virtual void finish();
+
+	virtual bool handles_global_class_type(const String &p_type) const;
+	virtual String get_global_class_name(const String &p_path, String *r_base_type = NULL, String *r_icon_path = NULL) const;
 
 	/* EDITOR FUNCTIONS */
 	virtual void get_reserved_words(List<String> *p_words) const;

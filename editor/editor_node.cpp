@@ -3616,9 +3616,9 @@ StringName EditorNode::get_object_custom_type_name(const Object *p_object) const
 				return name;
 
 			// should probably be deprecated in 4.x
-			StringName base = base_script->get_instance_base_type();
-			if (base != StringName() && EditorNode::get_editor_data().get_custom_types().has(base)) {
-				const Vector<EditorData::CustomType> &types = EditorNode::get_editor_data().get_custom_types()[base];
+			StringName native = base_script->get_instance_base_type();
+			if (native != StringName() && EditorNode::get_editor_data().get_custom_types().has(native)) {
+				const Vector<EditorData::CustomType> &types = EditorNode::get_editor_data().get_custom_types()[native];
 				for (int i = 0; i < types.size(); ++i) {
 					if (types[i].script == base_script) {
 						return types[i].name;
@@ -3669,7 +3669,7 @@ Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p
 	if (gui_base->has_icon(p_object->get_class(), "EditorIcons"))
 		return gui_base->get_icon(p_object->get_class(), "EditorIcons");
 
-	if (p_fallback.length())
+	if (p_fallback.length() && gui_base->has_icon(p_fallback, "EditorIcons"))
 		return gui_base->get_icon(p_fallback, "EditorIcons");
 
 	return NULL;

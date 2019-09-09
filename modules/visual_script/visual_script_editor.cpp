@@ -1988,6 +1988,10 @@ void VisualScriptEditor::set_edited_resource(const RES &p_res) {
 
 	_update_members();
 	_update_available_nodes();
+
+	_script_class_name_edit->set_text(script->get_script_class_name());
+	_script_class_icon_path_edit->set_text(script->get_script_class_icon_path());
+	set_edited(false);
 }
 
 Vector<String> VisualScriptEditor::get_functions() {
@@ -3440,6 +3444,35 @@ void VisualScriptEditor::add_syntax_highlighter(SyntaxHighlighter *p_highlighter
 void VisualScriptEditor::set_syntax_highlighter(SyntaxHighlighter *p_highlighter) {
 }
 
+void VisualScriptEditor::_script_class_icon_path_dialog_confirmed() {
+	String &path = _script_class_icon_path_dialog->get_current_path();
+	ERR_FAIL_COND(!_script_class_icon_path_edit);
+	_script_class_icon_path_edit->set_text(path);
+	if (script.is_valid())
+		script->set_script_class_icon_path(path);
+	set_edited(true);
+}
+
+void VisualScriptEditor::_script_class_icon_path_dialog_file_selected(const String &p_path) {
+	ERR_FAIL_COND(!_script_class_icon_path_edit);
+	_script_class_icon_path_edit->set_text(p_path);
+	if (script.is_valid())
+		script->set_script_class_icon_path(p_path);
+	set_edited(true);
+}
+
+void VisualScriptEditor::_script_class_name_text_changed(const String &p_text) {
+	if (script.is_valid())
+		script->set_script_class_name(p_text);
+	set_edited(true);
+}
+
+void VisualScriptEditor::_script_class_icon_path_text_changed(const String &p_text) {
+	if (script.is_valid())
+		script->set_script_class_icon_path(p_text);
+	set_edited(true);
+}
+
 void VisualScriptEditor::_bind_methods() {
 
 	ClassDB::bind_method("_member_button", &VisualScriptEditor::_member_button);
@@ -3500,6 +3533,11 @@ void VisualScriptEditor::_bind_methods() {
 	ClassDB::bind_method("_update_available_nodes", &VisualScriptEditor::_update_available_nodes);
 
 	ClassDB::bind_method("_generic_search", &VisualScriptEditor::_generic_search);
+
+	ClassDB::bind_method("_script_class_icon_path_dialog_confirmed", &VisualScriptEditor::_script_class_icon_path_dialog_confirmed);
+	ClassDB::bind_method("_script_class_icon_path_dialog_file_selected", &VisualScriptEditor::_script_class_icon_path_dialog_file_selected);
+	ClassDB::bind_method("_script_class_name_text_changed", &VisualScriptEditor::_script_class_name_text_changed);
+	ClassDB::bind_method("_script_class_icon_path_text_changed", &VisualScriptEditor::_script_class_icon_path_text_changed);
 }
 
 VisualScriptEditor::VisualScriptEditor() {
@@ -3523,7 +3561,7 @@ VisualScriptEditor::VisualScriptEditor() {
 	edit_menu->get_popup()->connect("id_pressed", this, "_menu_option");
 
 	left_vsplit = memnew(VSplitContainer);
-	ScriptEditor::get_singleton()->get_left_list_split()->call_deferred("add_child", left_vsplit); //add but wait until done settig up this
+	ScriptEditor::get_singleton()->get_left_list_split()->call_deferred("add_child", left_vsplit); //add but wait until done setting up this
 	left_vsplit->set_v_size_flags(SIZE_EXPAND_FILL);
 	left_vsplit->set_stretch_ratio(2);
 	left_vsplit->hide();
@@ -3531,7 +3569,52 @@ VisualScriptEditor::VisualScriptEditor() {
 	VBoxContainer *left_vb = memnew(VBoxContainer);
 	left_vsplit->add_child(left_vb);
 	left_vb->set_v_size_flags(SIZE_EXPAND_FILL);
-	//left_vb->set_custom_minimum_size(Size2(230, 1) * EDSCALE);
+
+	VBoxContainer *script_class_vbox = memnew(VBoxContainer);
+
+	HBoxContainer *hb = memnew(HBoxContainer);
+	hb->set_h_size_flags(SIZE_EXPAND_FILL);
+	LineEdit *le = memnew(LineEdit);
+	hb->add_child(le);
+	le->set_placeholder(TTR("Name"));
+	le->set_tooltip(TTR("Script Class names must be valid identifiers. Alphanumeric characters and underscores not starting with a number."));
+	le->connect("text_changed", this, "_script_class_name_text_changed");
+	le->set_h_size_flags(SIZE_EXPAND_FILL);
+	_script_class_name_edit = le;
+	script_class_vbox->add_child(hb);
+
+	hb = memnew(HBoxContainer);
+	hb->set_h_size_flags(SIZE_EXPAND_FILL);
+	le = memnew(LineEdit);
+	hb->add_child(le);
+	le->set_h_grow_direction(GROW_DIRECTION_BOTH);
+	le->set_placeholder(TTR("Icon Path"));
+	le->set_tooltip(TTR("Script Class icon paths are optional. Recommended 16x16 pixels. This icon appears in editor windows."));
+	le->connect("text_changed", this, "_script_class_icon_path_text_changed");
+	le->set_h_size_flags(SIZE_EXPAND_FILL);
+	_script_class_icon_path_edit = le;
+	ToolButton *tb = memnew(ToolButton);
+	Control *gui_base = EditorNode::get_singleton()->get_gui_base();
+	tb->set_icon(gui_base->has_icon("Load", "EditorIcons") ? gui_base->get_icon("Load", "EditorIcons") : NULL);
+	FileDialog *fd = memnew(FileDialog);
+	tb->connect("pressed", fd, "popup_centered_ratio");
+	hb->add_child(tb);
+	fd->set_mode(FileDialog::MODE_OPEN_FILE);
+	List<String> texture_type_exts;
+	ResourceLoader::get_recognized_extensions_for_type("Texture", &texture_type_exts);
+	for (List<String>::Element *E = texture_type_exts.front(); E; E = E->next()) {
+		fd->add_filter(vformat("*.%s", E->get()));
+	}
+	fd->set_enable_multiple_selection(false);
+	fd->set_show_hidden_files(false);
+	fd->set_title("Choose an image.");
+	fd->set_resizable(true);
+	fd->connect("confirmed", this, "_script_class_icon_path_dialog_confirmed");
+	fd->connect("file_selected", this, "_script_class_icon_path_dialog_file_selected");
+	this->add_child(fd);
+	_script_class_icon_path_dialog = fd;
+	script_class_vbox->add_child(hb);
+	left_vb->add_margin_child(TTR("Script Class:"), script_class_vbox);
 
 	base_type_select = memnew(Button);
 	left_vb->add_margin_child(TTR("Base Type:"), base_type_select);
