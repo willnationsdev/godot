@@ -212,15 +212,16 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 		Color accent = get_color("accent_color", "Editor");
 
 		Ref<Script> script = p_node->get_script();
-		if (!script.is_null() && EditorNode::get_singleton()->get_object_custom_type_base(p_node) != script) {
+		Ref<Script> recent_script_class = EditorNode::get_editor_data().script_class_get_most_recent_script_class(script);
+		if (!script.is_null() && recent_script_class != script) {
 			//has script
 			item->add_button(0, get_icon("Script", "EditorIcons"), BUTTON_SCRIPT);
 		} else {
-			//has no script (or script is a custom type)
+			//has no script (or script is a script class)
 			item->set_custom_color(0, get_color("disabled_font_color", "Editor"));
 			item->set_selectable(0, false);
 
-			if (!script.is_null()) { // make sure to mark the script if a custom type
+			if (!script.is_null()) { // make sure to mark the script if a script class
 				item->add_button(0, get_icon("Script", "EditorIcons"), BUTTON_SCRIPT);
 				item->set_button_disabled(0, item->get_button_count(0) - 1, true);
 			}
@@ -316,11 +317,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 
 		item->set_tooltip(0, tooltip);
 	} else {
-		StringName type = EditorNode::get_singleton()->get_object_custom_type_name(p_node);
-		if (type == StringName()) {
-			type = p_node->get_class();
-		}
-
+		StringName type = EditorNode::get_editor_data().script_class_get_type(p_node);
 		String tooltip = TTR("Type:") + " " + type;
 		if (p_node->get_editor_description() != String()) {
 			tooltip += "\n\n" + p_node->get_editor_description();
@@ -337,7 +334,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 		Ref<Script> script = p_node->get_script();
 		if (!script.is_null()) {
 			item->add_button(0, get_icon("Script", "EditorIcons"), BUTTON_SCRIPT, false, TTR("Open Script:") + " " + script->get_path());
-			if (EditorNode::get_singleton()->get_object_custom_type_base(p_node) == script) {
+			if (EditorNode::get_editor_data().script_class_get_most_recent_script_class(p_node->get_script()) == script) {
 				item->set_button_color(0, item->get_button_count(0) - 1, Color(1, 1, 1, 0.5));
 			}
 		}

@@ -366,39 +366,6 @@ void CreateDialog::_update_search() {
 			if (found)
 				add_type(I->get(), search_options_types, root, &to_select);
 		}
-
-		if (EditorNode::get_editor_data().get_custom_types().has(type) && ClassDB::is_parent_class(type, base_type)) {
-			//there are custom types based on this... cool.
-
-			const Vector<EditorData::CustomType> &ct = EditorNode::get_editor_data().get_custom_types()[type];
-			for (int i = 0; i < ct.size(); i++) {
-
-				bool show = search_box->get_text().is_subsequence_ofi(ct[i].name);
-
-				if (!show)
-					continue;
-
-				if (!search_options_types.has(type))
-					add_type(type, search_options_types, root, &to_select);
-
-				TreeItem *ti;
-				if (search_options_types.has(type))
-					ti = search_options_types[type];
-				else
-					ti = search_options->get_root();
-
-				TreeItem *item = search_options->create_item(ti);
-				item->set_metadata(0, type);
-				item->set_text(0, ct[i].name);
-				if (ct[i].icon.is_valid()) {
-					item->set_icon(0, ct[i].icon);
-				}
-
-				if (!to_select || ct[i].name == search_box->get_text()) {
-					to_select = item;
-				}
-			}
-		}
 	}
 
 	if (search_box->get_text() == "") {
@@ -527,7 +494,7 @@ Object *CreateDialog::instance_selected() {
 					n->set_name(custom);
 				return obj;
 			}
-			return EditorNode::get_editor_data().instance_custom_type(selected->get_text(0), custom);
+			return NULL;
 		} else {
 			return ClassDB::instance(selected->get_text(0));
 		}

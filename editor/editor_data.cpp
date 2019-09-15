@@ -479,58 +479,6 @@ EditorPlugin *EditorData::get_editor_plugin(int p_idx) {
 	return editor_plugins[p_idx];
 }
 
-void EditorData::add_custom_type(const String &p_type, const String &p_inherits, const Ref<Script> &p_script, const Ref<Texture> &p_icon) {
-
-	ERR_FAIL_COND(p_script.is_null());
-	CustomType ct;
-	ct.name = p_type;
-	ct.icon = p_icon;
-	ct.script = p_script;
-	if (!custom_types.has(p_inherits)) {
-		custom_types[p_inherits] = Vector<CustomType>();
-	}
-
-	custom_types[p_inherits].push_back(ct);
-}
-
-Object *EditorData::instance_custom_type(const String &p_type, const String &p_inherits) {
-
-	if (get_custom_types().has(p_inherits)) {
-
-		for (int i = 0; i < get_custom_types()[p_inherits].size(); i++) {
-			if (get_custom_types()[p_inherits][i].name == p_type) {
-				Ref<Script> script = get_custom_types()[p_inherits][i].script;
-
-				Object *ob = ClassDB::instance(p_inherits);
-				ERR_FAIL_COND_V(!ob, NULL);
-				if (ob->is_class("Node")) {
-					ob->call("set_name", p_type);
-				}
-				ob->set_script(script.get_ref_ptr());
-				return ob;
-			}
-		}
-	}
-
-	return NULL;
-}
-
-void EditorData::remove_custom_type(const String &p_type) {
-
-	for (Map<String, Vector<CustomType> >::Element *E = custom_types.front(); E; E = E->next()) {
-
-		for (int i = 0; i < E->get().size(); i++) {
-			if (E->get()[i].name == p_type) {
-				E->get().remove(i);
-				if (E->get().empty()) {
-					custom_types.erase(E->key());
-				}
-				return;
-			}
-		}
-	}
-}
-
 int EditorData::add_edited_scene(int p_at_pos) {
 
 	if (p_at_pos < 0)
@@ -906,7 +854,7 @@ StringName EditorData::script_class_get_base(const String &p_class) const {
 	return script->get_language()->get_global_class_name(base_script->get_path());
 }
 
-Object *EditorData::script_class_instance(const String &p_class) {
+Object *EditorData::script_class_instance(const String &p_class) const {
 	if (ScriptServer::is_global_class(p_class)) {
 		Object *obj = ClassDB::instance(ScriptServer::get_global_class_native_base(p_class));
 		if (obj) {
@@ -917,6 +865,34 @@ Object *EditorData::script_class_instance(const String &p_class) {
 		}
 	}
 	return NULL;
+}
+
+const Ref<Script> &EditorData::script_class_get_most_recent_script_class(const Ref<Script> &p_script) const {
+	if (p_script.is_valid()) {
+		Ref<Script> s = p_script;
+		while (s.is_valid()) {
+			StringName n = s->get_language()->get_global_class_name(s->get_path());
+			if (n != StringName()) {
+				return s;
+			}
+		}
+	}
+	return NULL;
+}
+
+const StringName &EditorData::script_class_get_type(const Object *p_object) const {
+	ERR_FAIL_COND_V(!p_object, StringName());
+	Ref<Script> script = p_object->get_script();
+	if (ClassDB::is_parent_class(p_object->get_class(), "Script")) {
+		script = p_object;
+	}
+	if (script.is_null())
+		return p_object->get_class();
+	StringName type = script->get_language()->get_global_class_name(script->get_path());
+	while (script.is_valid() && type == StringName()) {
+		type = script->get_language()->get_global_class_name(script->get_path());
+	}
+	return type;
 }
 
 EditorData::EditorData() {

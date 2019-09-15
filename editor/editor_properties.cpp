@@ -2259,10 +2259,6 @@ void EditorPropertyResource::_menu_option(int p_which) {
 				obj = ClassDB::instance(intype);
 			}
 
-			if (!obj) {
-				obj = EditorNode::get_editor_data().instance_custom_type(intype, "Resource");
-			}
-
 			ERR_BREAK(!obj);
 			Resource *resp = Object::cast_to<Resource>(obj);
 			ERR_BREAK(!resp);
@@ -2320,12 +2316,6 @@ void EditorPropertyResource::_update_menu_items() {
 	} else if (base_type != "") {
 		int idx = 0;
 
-		Vector<EditorData::CustomType> custom_resources;
-
-		if (EditorNode::get_editor_data().get_custom_types().has("Resource")) {
-			custom_resources = EditorNode::get_editor_data().get_custom_types()["Resource"];
-		}
-
 		for (int i = 0; i < base_type.get_slice_count(","); i++) {
 
 			String base = base_type.get_slice(",", i);
@@ -2334,10 +2324,6 @@ void EditorPropertyResource::_update_menu_items() {
 			valid_inheritors.insert(base);
 			List<StringName> inheritors;
 			ClassDB::get_inheriters_from_class(base.strip_edges(), &inheritors);
-
-			for (int j = 0; j < custom_resources.size(); j++) {
-				inheritors.push_back(custom_resources[j].name);
-			}
 
 			List<StringName>::Element *E = inheritors.front();
 			while (E) {
@@ -2358,29 +2344,14 @@ void EditorPropertyResource::_update_menu_items() {
 			for (Set<String>::Element *F = valid_inheritors.front(); F; F = F->next()) {
 				const String &t = F->get();
 
-				bool is_custom_resource = false;
-				Ref<Texture> icon;
-				if (!custom_resources.empty()) {
-					for (int j = 0; j < custom_resources.size(); j++) {
-						if (custom_resources[j].name == t) {
-							is_custom_resource = true;
-							if (custom_resources[j].icon.is_valid())
-								icon = custom_resources[j].icon;
-							break;
-						}
-					}
-				}
+				Ref<Texture> icon = EditorNode::get_singleton()->get_class_icon(t, base_type);
 
-				if (!is_custom_resource && !(ScriptServer::is_global_class(t) || ClassDB::can_instance(t)))
+				if (!(ScriptServer::is_global_class(t) || ClassDB::can_instance(t)))
 					continue;
 
 				inheritors_array.push_back(t);
 
 				int id = TYPE_BASE_ID + idx;
-
-				if (!icon.is_valid() && has_icon(t, "EditorIcons")) {
-					icon = get_icon(t, "EditorIcons");
-				}
 
 				if (icon.is_valid()) {
 

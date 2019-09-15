@@ -108,13 +108,6 @@ class EditorSelection;
 class EditorData {
 
 public:
-	struct CustomType {
-
-		String name;
-		Ref<Script> script;
-		Ref<Texture> icon;
-	};
-
 	struct EditedScene {
 		Node *root;
 		String path;
@@ -135,7 +128,6 @@ private:
 		String name;
 		Variant value;
 	};
-	Map<String, Vector<CustomType> > custom_types;
 
 	List<PropertyData> clipboard;
 	UndoRedo undo_redo;
@@ -178,11 +170,6 @@ public:
 	void save_editor_global_states();
 	void restore_editor_global_states();
 
-	void add_custom_type(const String &p_type, const String &p_inherits, const Ref<Script> &p_script, const Ref<Texture> &p_icon);
-	Object *instance_custom_type(const String &p_type, const String &p_inherits);
-	void remove_custom_type(const String &p_type);
-	const Map<String, Vector<CustomType> > &get_custom_types() const { return custom_types; }
-
 	int add_edited_scene(int p_at_pos);
 	void move_edited_scene_index(int p_idx, int p_to_idx);
 	void remove_scene(int p_idx);
@@ -217,7 +204,9 @@ public:
 
 	bool script_class_is_parent(const String &p_class, const String &p_inherits);
 	StringName script_class_get_base(const String &p_class) const;
-	Object *script_class_instance(const String &p_class);
+	Object *script_class_instance(const String &p_class) const;
+	const Ref<Script> &script_class_get_most_recent_script_class(const Ref<Script> &p_script) const;
+	const StringName &script_class_get_type(const Object *p_object) const;
 
 	EditorData();
 };

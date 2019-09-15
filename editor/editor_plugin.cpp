@@ -311,15 +311,6 @@ EditorInterface::EditorInterface() {
 }
 
 ///////////////////////////////////////////
-void EditorPlugin::add_custom_type(const String &p_type, const String &p_base, const Ref<Script> &p_script, const Ref<Texture> &p_icon) {
-
-	EditorNode::get_editor_data().add_custom_type(p_type, p_base, p_script, p_icon);
-}
-
-void EditorPlugin::remove_custom_type(const String &p_type) {
-
-	EditorNode::get_editor_data().remove_custom_type(p_type);
-}
 
 void EditorPlugin::add_autoload_singleton(const String &p_name, const String &p_path) {
 	EditorNode::get_singleton()->get_project_settings()->get_autoload_settings()->autoload_add(p_name, p_path);
@@ -826,8 +817,6 @@ void EditorPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("add_tool_menu_item", "name", "handler", "callback", "ud"), &EditorPlugin::add_tool_menu_item, DEFVAL(Variant()));
 	ClassDB::bind_method(D_METHOD("add_tool_submenu_item", "name", "submenu"), &EditorPlugin::add_tool_submenu_item);
 	ClassDB::bind_method(D_METHOD("remove_tool_menu_item", "name"), &EditorPlugin::remove_tool_menu_item);
-	ClassDB::bind_method(D_METHOD("add_custom_type", "type", "base", "script", "icon"), &EditorPlugin::add_custom_type);
-	ClassDB::bind_method(D_METHOD("remove_custom_type", "type"), &EditorPlugin::remove_custom_type);
 
 	ClassDB::bind_method(D_METHOD("add_autoload_singleton", "name", "path"), &EditorPlugin::add_autoload_singleton);
 	ClassDB::bind_method(D_METHOD("remove_autoload_singleton", "name"), &EditorPlugin::remove_autoload_singleton);

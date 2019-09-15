@@ -290,8 +290,6 @@ void CustomPropertyEditor::_menu_option(int p_which) {
 					if (!obj) {
 						if (ScriptServer::is_global_class(intype)) {
 							obj = EditorNode::get_editor_data().script_class_instance(intype);
-						} else {
-							obj = EditorNode::get_editor_data().instance_custom_type(intype, "Resource");
 						}
 					}
 
@@ -898,12 +896,6 @@ bool CustomPropertyEditor::edit(Object *p_owner, const String &p_name, Variant::
 			} else if (hint_text != "") {
 				int idx = 0;
 
-				Vector<EditorData::CustomType> custom_resources;
-
-				if (EditorNode::get_editor_data().get_custom_types().has("Resource")) {
-					custom_resources = EditorNode::get_editor_data().get_custom_types()["Resource"];
-				}
-
 				for (int i = 0; i < hint_text.get_slice_count(","); i++) {
 
 					String base = hint_text.get_slice(",", i);
@@ -912,10 +904,6 @@ bool CustomPropertyEditor::edit(Object *p_owner, const String &p_name, Variant::
 					valid_inheritors.insert(base);
 					List<StringName> inheritors;
 					ClassDB::get_inheriters_from_class(base.strip_edges(), &inheritors);
-
-					for (int j = 0; j < custom_resources.size(); j++) {
-						inheritors.push_back(custom_resources[j].name);
-					}
 
 					List<StringName>::Element *E = inheritors.front();
 					while (E) {
@@ -926,29 +914,14 @@ bool CustomPropertyEditor::edit(Object *p_owner, const String &p_name, Variant::
 					for (Set<String>::Element *j = valid_inheritors.front(); j; j = j->next()) {
 						const String &t = j->get();
 
-						bool is_custom_resource = false;
-						Ref<Texture> icon;
-						if (!custom_resources.empty()) {
-							for (int k = 0; k < custom_resources.size(); k++) {
-								if (custom_resources[k].name == t) {
-									is_custom_resource = true;
-									if (custom_resources[k].icon.is_valid())
-										icon = custom_resources[k].icon;
-									break;
-								}
-							}
-						}
+						Ref<Texture> icon = EditorNode::get_singleton()->get_class_icon(t, base);
 
-						if (!is_custom_resource && !ClassDB::can_instance(t))
+						if (!ScriptServer::is_global_class(t) || !ClassDB::can_instance(t))
 							continue;
 
 						inheritors_array.push_back(t);
 
 						int id = TYPE_BASE_ID + idx;
-
-						if (!icon.is_valid() && has_icon(t, "EditorIcons")) {
-							icon = get_icon(t, "EditorIcons");
-						}
 
 						if (icon.is_valid()) {
 
@@ -1150,8 +1123,6 @@ void CustomPropertyEditor::_type_create_selected(int p_idx) {
 		if (!obj) {
 			if (ScriptServer::is_global_class(intype)) {
 				obj = EditorNode::get_editor_data().script_class_instance(intype);
-			} else {
-				obj = EditorNode::get_editor_data().instance_custom_type(intype, "Resource");
 			}
 		}
 
@@ -1356,8 +1327,6 @@ void CustomPropertyEditor::_action_pressed(int p_which) {
 					if (!obj) {
 						if (ScriptServer::is_global_class(intype)) {
 							obj = EditorNode::get_editor_data().script_class_instance(intype);
-						} else {
-							obj = EditorNode::get_editor_data().instance_custom_type(intype, "Resource");
 						}
 					}
 
