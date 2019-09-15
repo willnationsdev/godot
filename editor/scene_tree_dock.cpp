@@ -434,17 +434,12 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 
 			String inherits = selected->get_class();
 			if (existing.is_valid()) {
-				for (int i = 0; i < ScriptServer::get_language_count(); i++) {
-					ScriptLanguage *l = ScriptServer::get_language(i);
-					if (l->get_type() == existing->get_class()) {
-						String name = l->get_global_class_name(existing->get_path());
-						if (ScriptServer::is_global_class(name) && EDITOR_GET("interface/editors/derive_script_globals_by_name").operator bool()) {
-							inherits = name;
-						} else if (l->can_inherit_from_file()) {
-							inherits = "\"" + existing->get_path() + "\"";
-						}
-						break;
-					}
+				ScriptLanguage *l = existing->get_language();
+				StringName name = l->get_global_class_name(existing->get_path());
+				if (ScriptServer::is_global_class(name) && EDITOR_GET("interface/editors/derive_script_globals_by_name").operator bool()) {
+					inherits = name;
+				} else if (l->can_inherit_from_file()) {
+					inherits = "\"" + existing->get_path() + "\"";
 				}
 			}
 			script_create_dialog->connect("script_created", this, "_script_created");

@@ -31,6 +31,7 @@
 #include "script_language.h"
 
 #include "core/core_string_names.h"
+#include "core/io/resource_loader.h"
 #include "core/project_settings.h"
 
 ScriptLanguage *ScriptServer::_languages[MAX_LANGUAGES];
@@ -250,6 +251,41 @@ StringName ScriptServer::get_global_class_native_base(const String &p_class) {
 		base = global_classes[base].base;
 	}
 	return base;
+}
+StringName ScriptServer::get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) {
+	String type = ResourceLoader::get_resource_type(p_path);
+
+	for (int i = 0; i < get_language_count(); i++) {
+		ScriptLanguage *lang = get_language(i);
+		if (!lang->handles_global_class_type(type))
+			continue;
+		StringName class_name = lang->get_global_class_name(p_path, r_base_type, r_icon_path);
+		if (class_name != StringName()) {
+			return class_name;
+		}
+	}
+
+	if (r_base_type)
+		*r_base_type = "";
+	if (r_icon_path)
+		*r_icon_path = "";
+	return StringName();
+}
+Ref<Script> ScriptServer::get_global_class_script(const StringName &p_class) {
+	ERR_FAIL_COND_V(!global_classes.has(p_class), NULL);
+	Ref<Script> script = ResourceLoader::load(get_global_class_path(p_class), "Script");
+	ERR_FAIL_COND_V(script.is_null(), NULL);
+	return script;
+}
+Object *ScriptServer::instantiate_global_class(const StringName &p_class) {
+	ERR_FAIL_COND_V(!global_classes.has(p_class), NULL);
+	String native = get_global_class_native_base(p_class);
+	ERR_FAIL_COND_V(!ClassDB::class_exists(native), NULL);
+	Object *obj = ClassDB::instance(native);
+	Ref<Script> script = get_global_class_script(p_class);
+	ERR_FAIL_COND_V(script.is_null(), NULL);
+	obj->set_script(script.get_ref_ptr());
+	return obj;
 }
 void ScriptServer::get_global_class_list(List<StringName> *r_global_classes) {
 	const StringName *K = NULL;

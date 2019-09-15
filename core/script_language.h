@@ -37,6 +37,7 @@
 #include "core/resource.h"
 
 class ScriptLanguage;
+class Script;
 
 typedef void (*ScriptEditRequestFunction)(const String &p_path);
 
@@ -84,6 +85,9 @@ public:
 	static String get_global_class_path(const String &p_class);
 	static StringName get_global_class_base(const String &p_class);
 	static StringName get_global_class_native_base(const String &p_class);
+	static StringName get_global_class_name(const String &p_path, String *r_base_type = NULL, String *r_icon_path = NULL);
+	static Ref<Script> get_global_class_script(const StringName &p_class);
+	static Object *instantiate_global_class(const StringName &p_class);
 	static void get_global_class_list(List<StringName> *r_global_classes);
 	static void save_global_classes();
 
