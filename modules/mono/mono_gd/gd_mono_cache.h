@@ -103,6 +103,9 @@ struct CachedData {
 	GDMonoClass *class_ExportAttribute;
 	GDMonoField *field_ExportAttribute_hint;
 	GDMonoField *field_ExportAttribute_hintString;
+	GDMonoClass *class_ScriptClassAttribute;
+	GDMonoField *field_ScriptClassAttribute_name;
+	GDMonoField *field_ScriptClassAttribute_iconPath;
 	GDMonoClass *class_SignalAttribute;
 	GDMonoClass *class_ToolAttribute;
 	GDMonoClass *class_RemoteAttribute;

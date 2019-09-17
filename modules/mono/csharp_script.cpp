@@ -500,6 +500,30 @@ String CSharpLanguage::_get_indentation() const {
 	return "\t";
 }
 
+bool CSharpLanguage::handles_global_class_type(const String &p_type) const {
+	return p_type == "CSharpScript";
+}
+
+String CSharpLanguage::get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) const {
+	Ref<CSharpScript> script = ResourceLoader::load(p_path, "CSharpScript");
+	if (script.is_valid()) {
+		String name = script->get_script_class_name();
+		if (name.length()) {
+			if (r_base_type)
+				*r_base_type = "";
+			if (r_icon_path)
+				*r_icon_path = script->get_script_class_icon_path();
+			return name;
+		}
+	}
+
+	if (r_base_type)
+		*r_base_type = String();
+	if (r_icon_path)
+		*r_icon_path = String();
+	return String();
+}
+
 String CSharpLanguage::debug_get_error() const {
 
 	return _debug_error;
@@ -2707,6 +2731,16 @@ void CSharpScript::initialize_for_managed_type(Ref<CSharpScript> p_script, GDMon
 		p_script->tool = p_script->script_class->get_assembly() == GDMono::get_singleton()->get_tools_assembly();
 	}
 #endif
+
+	// Evaluate script's use of engine "Script Class" system.
+	if (p_script->script_class->has_attribute(CACHED_CLASS(ScriptClassAttribute))) {
+		MonoObject *attr = p_script->script_class->get_attribute(CACHED_CLASS(ScriptClassAttribute));
+		String script_class_name = CACHED_FIELD(ScriptClassAttribute, name)->get_string_value(attr);
+		String script_class_icon_path = CACHED_FIELD(ScriptClassAttribute, iconPath)->get_string_value(attr);
+		if (script_class_name.empty()) {
+			script_class_name = p_script->script_class->get_name();
+		}
+	}
 
 #ifdef DEBUG_ENABLED
 	// For debug builds, we must fetch from all native base methods as well.

@@ -133,6 +133,9 @@ void CachedData::clear_godot_api_cache() {
 	class_ExportAttribute = NULL;
 	field_ExportAttribute_hint = NULL;
 	field_ExportAttribute_hintString = NULL;
+	class_ScriptClassAttribute = NULL;
+	field_ScriptClassAttribute_name = NULL;
+	field_ScriptClassAttribute_iconPath = NULL;
 	class_SignalAttribute = NULL;
 	class_ToolAttribute = NULL;
 	class_RemoteAttribute = NULL;
