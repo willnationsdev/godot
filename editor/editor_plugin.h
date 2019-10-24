@@ -103,6 +103,9 @@ public:
 	void set_main_screen_editor(const String &p_name);
 	void set_distraction_free_mode(bool p_enter);
 
+	Ref<Texture> get_class_icon(const String &p_name, const String &p_fallback);
+	Ref<Texture> get_object_icon(const Object *p_object, const String &p_fallback);
+
 	EditorInterface();
 };
 

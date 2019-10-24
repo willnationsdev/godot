@@ -64,6 +64,7 @@
 #include "core/packed_data_container.h"
 #include "core/path_remap.h"
 #include "core/project_settings.h"
+#include "core/script_language.h"
 #include "core/translation.h"
 #include "core/undo_redo.h"
 
@@ -82,6 +83,7 @@ static _Engine *_engine = NULL;
 static _ClassDB *_classdb = NULL;
 static _Marshalls *_marshalls = NULL;
 static _JSON *_json = NULL;
+static _ScriptServer *_script_server = NULL;
 
 static IP *ip = NULL;
 
@@ -219,6 +221,7 @@ void register_core_types() {
 	_classdb = memnew(_ClassDB);
 	_marshalls = memnew(_Marshalls);
 	_json = memnew(_JSON);
+	_script_server = memnew(_ScriptServer);
 }
 
 void register_core_settings() {
@@ -248,6 +251,7 @@ void register_core_singletons() {
 	ClassDB::register_class<InputMap>();
 	ClassDB::register_class<_JSON>();
 	ClassDB::register_class<Expression>();
+	ClassDB::register_class<_ScriptServer>();
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ProjectSettings", ProjectSettings::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("IP", IP::get_singleton()));
@@ -262,6 +266,7 @@ void register_core_singletons() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Input", Input::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("InputMap", InputMap::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("JSON", _JSON::get_singleton()));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("ScriptServer", _script_server));
 }
 
 void unregister_core_types() {
@@ -273,6 +278,7 @@ void unregister_core_types() {
 	memdelete(_classdb);
 	memdelete(_marshalls);
 	memdelete(_json);
+	memdelete(_script_server);
 
 	memdelete(_geometry);
 

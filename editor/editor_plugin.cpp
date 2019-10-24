@@ -275,6 +275,14 @@ void EditorInterface::set_distraction_free_mode(bool p_enter) {
 	EditorNode::get_singleton()->set_distraction_free_mode(p_enter);
 }
 
+Ref<Texture> EditorInterface::get_class_icon(const String &p_class, const String &p_fallback) {
+	return EditorNode::get_singleton()->get_class_icon(p_class, p_fallback);
+}
+
+Ref<Texture> EditorInterface::get_object_icon(const Object *p_object, const String &p_fallback) {
+	return EditorNode::get_singleton()->get_object_icon(p_object, p_fallback);
+}
+
 EditorInterface *EditorInterface::singleton = NULL;
 
 void EditorInterface::_bind_methods() {
@@ -307,6 +315,9 @@ void EditorInterface::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_main_screen_editor", "name"), &EditorInterface::set_main_screen_editor);
 	ClassDB::bind_method(D_METHOD("set_distraction_free_mode", "enter"), &EditorInterface::set_distraction_free_mode);
+
+	ClassDB::bind_method(D_METHOD("get_class_icon", "class", "fallback"), &EditorInterface::get_class_icon);
+	ClassDB::bind_method(D_METHOD("get_object_icon", "object", "fallback"), &EditorInterface::get_object_icon);
 }
 
 EditorInterface::EditorInterface() {
