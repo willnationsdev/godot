@@ -3706,7 +3706,7 @@ StringName EditorNode::get_object_custom_type_name(const Object *p_object) const
 	if (script.is_valid()) {
 		Ref<Script> base_script = script;
 		while (base_script.is_valid()) {
-			StringName name = EditorNode::get_editor_data().script_class_get_name(base_script->get_path());
+			StringName name = ScriptServer::get_global_class_name(base_script->get_path());
 			if (name != StringName())
 				return name;
 
@@ -3752,12 +3752,10 @@ Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p
 	if (script.is_valid()) {
 		Ref<Script> base_script = script;
 		while (base_script.is_valid()) {
-			StringName name = EditorNode::get_editor_data().script_class_get_name(base_script->get_path());
-			String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(name);
-			Ref<ImageTexture> icon = _load_custom_class_icon(icon_path);
-			if (icon.is_valid()) {
-				return icon;
-			}
+			String icon_path;
+			StringName name = ScriptServer::get_global_class_name(base_script->get_path(), NULL, &icon_path);
+			if (icon_path.length())
+				return ResourceLoader::load(icon_path);
 
 			// should probably be deprecated in 4.x
 			StringName base = base_script->get_instance_base_type();
@@ -3794,10 +3792,14 @@ Ref<Texture> EditorNode::get_class_icon(const String &p_class, const String &p_f
 	}
 
 	if (ScriptServer::is_global_class(p_class)) {
-		String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(p_class);
-		Ref<ImageTexture> icon = _load_custom_class_icon(icon_path);
-		if (icon.is_valid()) {
-			return icon;
+		String icon_path;
+		ScriptServer::get_global_class_name(p_class, NULL, &icon_path);
+		RES icon;
+
+		if (FileAccess::exists(icon_path)) {
+			icon = ResourceLoader::load(icon_path);
+			if (icon.is_valid())
+				return icon;
 		}
 
 		Ref<Script> script = ResourceLoader::load(ScriptServer::get_global_class_path(p_class), "Script");

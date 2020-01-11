@@ -153,7 +153,7 @@ void CreateDialog::add_type(const String &p_type, HashMap<String, TreeItem *> &p
 			return;
 	} else {
 		if (!search_loaded_scripts.has(p_type)) {
-			search_loaded_scripts[p_type] = ed.script_class_load_script(p_type);
+			search_loaded_scripts[p_type] = ScriptServer::get_global_class_script(p_type);
 		}
 
 		if (!ScriptServer::is_global_class(p_type) || !ed.script_class_is_parent(p_type, base_type))
@@ -166,7 +166,7 @@ void CreateDialog::add_type(const String &p_type, HashMap<String, TreeItem *> &p
 		}
 	}
 
-	String inherits = cpp_type ? ClassDB::get_parent_class(p_type) : ed.script_class_get_base(p_type);
+	String inherits = cpp_type ? ClassDB::get_parent_class(p_type) : ScriptServer::get_global_class_base(p_type);
 
 	TreeItem *parent = p_root;
 
@@ -350,7 +350,7 @@ void CreateDialog::_update_search() {
 			String type2 = type;
 
 			if (!cpp_type && !search_loaded_scripts.has(type)) {
-				search_loaded_scripts[type] = ed.script_class_load_script(type);
+				search_loaded_scripts[type] = ScriptServer::get_global_class_script(type);
 			}
 
 			while (type2 != "" && (cpp_type ? ClassDB::is_parent_class(type2, base_type) : ed.script_class_is_parent(type2, base_type)) && type2 != base_type) {
@@ -360,10 +360,10 @@ void CreateDialog::_update_search() {
 					break;
 				}
 
-				type2 = cpp_type ? ClassDB::get_parent_class(type2) : ed.script_class_get_base(type2);
+				type2 = cpp_type ? ClassDB::get_parent_class(type2) : ScriptServer::get_global_class_base(type2);
 
 				if (!cpp_type && !search_loaded_scripts.has(type2)) {
-					search_loaded_scripts[type2] = ed.script_class_load_script(type2);
+					search_loaded_scripts[type2] = ScriptServer::get_global_class_script(type2);
 				}
 			}
 
@@ -527,7 +527,7 @@ Object *CreateDialog::instance_selected() {
 
 		if (custom != String()) {
 			if (ScriptServer::is_global_class(custom)) {
-				Object *obj = EditorNode::get_editor_data().script_class_instance(custom);
+				Object *obj = ScriptServer::instantiate_global_class(custom);
 				Node *n = Object::cast_to<Node>(obj);
 				if (n)
 					n->set_name(custom);

@@ -297,7 +297,7 @@ void CustomPropertyEditor::_menu_option(int p_which) {
 
 					if (!obj) {
 						if (ScriptServer::is_global_class(intype)) {
-							obj = EditorNode::get_editor_data().script_class_instance(intype);
+							obj = ScriptServer::instantiate_global_class(intype);
 						} else {
 							obj = EditorNode::get_editor_data().instance_custom_type(intype, "Resource");
 						}
@@ -1157,7 +1157,7 @@ void CustomPropertyEditor::_type_create_selected(int p_idx) {
 
 		if (!obj) {
 			if (ScriptServer::is_global_class(intype)) {
-				obj = EditorNode::get_editor_data().script_class_instance(intype);
+				obj = ScriptServer::instantiate_global_class(intype);
 			} else {
 				obj = EditorNode::get_editor_data().instance_custom_type(intype, "Resource");
 			}
@@ -1363,7 +1363,7 @@ void CustomPropertyEditor::_action_pressed(int p_which) {
 
 					if (!obj) {
 						if (ScriptServer::is_global_class(intype)) {
-							obj = EditorNode::get_editor_data().script_class_instance(intype);
+							obj = ScriptServer::instantiate_global_class(intype);
 						} else {
 							obj = EditorNode::get_editor_data().instance_custom_type(intype, "Resource");
 						}

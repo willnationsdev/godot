@@ -233,8 +233,6 @@ class EditorFileSystem : public Node {
 	volatile bool update_script_classes_queued;
 	void _queue_update_script_classes();
 
-	String _get_global_script_class(const String &p_type, const String &p_path, String *r_extends, String *r_icon_path) const;
-
 	static Error _resource_import(const String &p_path);
 
 	bool using_fat32_or_exfat; // Workaround for projects in FAT32 or exFAT filesystem (pendrives, most of the time)
