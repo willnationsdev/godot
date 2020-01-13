@@ -139,6 +139,7 @@ private:
 	Vector<Cell> cells;
 
 	bool collapsed; // won't show children
+	bool branch_visible;
 	bool disable_folding;
 	int custom_min_height;
 
@@ -229,6 +230,9 @@ public:
 
 	void set_collapsed(bool p_collapsed);
 	bool is_collapsed();
+
+	void set_branch_visible(bool p_visible);
+	bool is_branch_visible();
 
 	void set_custom_minimum_height(int p_height);
 	int get_custom_minimum_height() const;

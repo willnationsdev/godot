@@ -352,6 +352,19 @@ bool TreeItem::is_collapsed() {
 	return collapsed;
 }
 
+void TreeItem::set_branch_visible(bool p_visible) {
+	if (branch_visible == p_visible || !tree)
+		return;
+	branch_visible = p_visible;
+
+	_changed_notify();
+	tree->emit_signal("item_visibility_changed", this);
+}
+
+bool TreeItem::is_branch_visible() {
+	return branch_visible;
+}
+
 void TreeItem::set_custom_minimum_height(int p_height) {
 	custom_min_height = p_height;
 	_changed_notify();
@@ -802,6 +815,9 @@ void TreeItem::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_collapsed", "enable"), &TreeItem::set_collapsed);
 	ClassDB::bind_method(D_METHOD("is_collapsed"), &TreeItem::is_collapsed);
 
+	ClassDB::bind_method(D_METHOD("set_branch_visible", "enable"), &TreeItem::set_branch_visible);
+	ClassDB::bind_method(D_METHOD("is_branch_visible"), &TreeItem::is_branch_visible);
+
 	ClassDB::bind_method(D_METHOD("set_custom_minimum_height", "height"), &TreeItem::set_custom_minimum_height);
 	ClassDB::bind_method(D_METHOD("get_custom_minimum_height"), &TreeItem::get_custom_minimum_height);
 
@@ -867,6 +883,7 @@ void TreeItem::_bind_methods() {
 	}
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "collapsed"), "set_collapsed", "is_collapsed");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "branch_visible"), "set_branch_visible", "is_branch_visible");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_folding"), "set_disable_folding", "is_folding_disabled");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "custom_minimum_height", PROPERTY_HINT_RANGE, "0,1000,1"), "set_custom_minimum_height", "get_custom_minimum_height");
 
@@ -899,6 +916,7 @@ TreeItem::TreeItem(Tree *p_tree) {
 
 	tree = p_tree;
 	collapsed = false;
+	branch_visible = true;
 	disable_folding = false;
 	custom_min_height = 0;
 
@@ -1140,7 +1158,7 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 
 	/* Draw label, if height fits */
 
-	bool skip = (p_item == root && hide_root);
+	bool skip = (p_item == root && hide_root) || !p_item->is_branch_visible();
 
 	if (!skip && (p_pos.y + label_h - cache.offset.y) > 0) {
 
@@ -1483,7 +1501,7 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 		children_pos.y += htotal;
 	}
 
-	if (!p_item->collapsed) { /* if not collapsed, check the children */
+	if (!p_item->collapsed && p_item->branch_visible) { /* if not collapsed, check the children */
 
 		TreeItem *c = p_item->children;
 
@@ -3979,6 +3997,7 @@ void Tree::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("item_custom_button_pressed"));
 	ADD_SIGNAL(MethodInfo("item_double_clicked"));
 	ADD_SIGNAL(MethodInfo("item_collapsed", PropertyInfo(Variant::OBJECT, "item", PROPERTY_HINT_RESOURCE_TYPE, "TreeItem")));
+	ADD_SIGNAL(MethodInfo("item_visibility_changed", PropertyInfo(Variant::OBJECT, "item", PROPERTY_HINT_RESOURCE_TYPE, "TreeItem")));
 	//ADD_SIGNAL( MethodInfo("item_doubleclicked" ) );
 	ADD_SIGNAL(MethodInfo("button_pressed", PropertyInfo(Variant::OBJECT, "item", PROPERTY_HINT_RESOURCE_TYPE, "TreeItem"), PropertyInfo(Variant::INT, "column"), PropertyInfo(Variant::INT, "id")));
 	ADD_SIGNAL(MethodInfo("custom_popup_edited", PropertyInfo(Variant::BOOL, "arrow_clicked")));
