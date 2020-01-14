@@ -234,6 +234,8 @@ public:
 	void set_branch_visible(bool p_visible);
 	bool is_branch_visible();
 
+	bool is_hidden();
+
 	void set_custom_minimum_height(int p_height);
 	int get_custom_minimum_height() const;
 

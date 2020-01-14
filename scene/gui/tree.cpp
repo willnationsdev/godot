@@ -358,11 +358,19 @@ void TreeItem::set_branch_visible(bool p_visible) {
 	branch_visible = p_visible;
 
 	_changed_notify();
-	tree->emit_signal("item_visibility_changed", this);
+	tree->emit_signal("branch_visibility_changed", this);
 }
 
 bool TreeItem::is_branch_visible() {
 	return branch_visible;
+}
+
+bool TreeItem::is_hidden() {
+	bool visible = branch_visible;
+	TreeItem *parent = get_parent();
+	while (visible && parent)
+		visible &= parent->branch_visible;
+	return !visible;
 }
 
 void TreeItem::set_custom_minimum_height(int p_height) {
@@ -427,7 +435,7 @@ TreeItem *TreeItem::get_prev_visible(bool p_wrap) {
 	} else {
 
 		current = prev;
-		while (!current->collapsed && current->children) {
+		while (!current->collapsed && current->children && !current->is_hidden()) {
 			//go to the very end
 
 			current = current->children;
@@ -443,7 +451,7 @@ TreeItem *TreeItem::get_next_visible(bool p_wrap) {
 
 	TreeItem *current = this;
 
-	if (!current->collapsed && current->children) {
+	if (!current->collapsed && current->children && !current->is_hidden()) {
 
 		current = current->children;
 
@@ -1077,7 +1085,7 @@ int Tree::get_item_height(TreeItem *p_item) const {
 	int height = compute_item_height(p_item);
 	height += cache.vseparation;
 
-	if (!p_item->collapsed) { /* if not collapsed, check the children */
+	if (!p_item->collapsed && !p_item->is_hidden()) { /* if not collapsed, check the children */
 
 		TreeItem *c = p_item->children;
 
@@ -1501,7 +1509,7 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 		children_pos.y += htotal;
 	}
 
-	if (!p_item->collapsed && p_item->branch_visible) { /* if not collapsed, check the children */
+	if (!p_item->collapsed && !p_item->is_hidden()) { /* if not collapsed, check the children */
 
 		TreeItem *c = p_item->children;
 
@@ -1665,7 +1673,7 @@ void Tree::select_single_item(TreeItem *p_selected, TreeItem *p_current, int p_c
 
 	while (c) {
 
-		select_single_item(p_selected, c, p_col, p_prev, r_in_range, p_current->is_collapsed() || p_force_deselect);
+		select_single_item(p_selected, c, p_col, p_prev, r_in_range, p_current->is_collapsed() || p_current->is_hidden() || p_force_deselect);
 		c = c->next;
 	}
 }
@@ -2037,7 +2045,7 @@ int Tree::propagate_mouse_event(const Point2i &p_pos, int x_ofs, int y_ofs, bool
 			new_pos.y -= item_h;
 		}
 
-		if (!p_item->collapsed) { /* if not collapsed, check the children */
+		if (!p_item->collapsed && !p_item->is_hidden()) { /* if not collapsed, check the children */
 
 			TreeItem *c = p_item->children;
 
@@ -3711,6 +3719,8 @@ TreeItem *Tree::_find_item_at_pos(TreeItem *p_item, const Point2 &p_pos, int &r_
 
 	if (p_item->is_collapsed())
 		return NULL; // do not try children, it's collapsed
+	if (p_item->is_branch_visible())
+		return NULL; // do not try children, it's hidden
 
 	TreeItem *n = p_item->get_children();
 	while (n) {
@@ -3997,7 +4007,7 @@ void Tree::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("item_custom_button_pressed"));
 	ADD_SIGNAL(MethodInfo("item_double_clicked"));
 	ADD_SIGNAL(MethodInfo("item_collapsed", PropertyInfo(Variant::OBJECT, "item", PROPERTY_HINT_RESOURCE_TYPE, "TreeItem")));
-	ADD_SIGNAL(MethodInfo("item_visibility_changed", PropertyInfo(Variant::OBJECT, "item", PROPERTY_HINT_RESOURCE_TYPE, "TreeItem")));
+	ADD_SIGNAL(MethodInfo("branch_visibility_changed", PropertyInfo(Variant::OBJECT, "item", PROPERTY_HINT_RESOURCE_TYPE, "TreeItem")));
 	//ADD_SIGNAL( MethodInfo("item_doubleclicked" ) );
 	ADD_SIGNAL(MethodInfo("button_pressed", PropertyInfo(Variant::OBJECT, "item", PROPERTY_HINT_RESOURCE_TYPE, "TreeItem"), PropertyInfo(Variant::INT, "column"), PropertyInfo(Variant::INT, "id")));
 	ADD_SIGNAL(MethodInfo("custom_popup_edited", PropertyInfo(Variant::BOOL, "arrow_clicked")));
