@@ -70,6 +70,7 @@
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/dependency_editor.h"
 #include "editor/editor_about.h"
+#include "editor/editor_actions.h"
 #include "editor/editor_audio_buses.h"
 #include "editor/editor_export.h"
 #include "editor/editor_feature_profile.h"
@@ -3628,6 +3629,7 @@ void EditorNode::register_editor_types() {
 	ClassDB::register_class<EditorVCSInterface>();
 	ClassDB::register_virtual_class<ScriptEditor>();
 	ClassDB::register_virtual_class<EditorInterface>();
+	ClassDB::register_virtual_class<EditorActions>();
 	ClassDB::register_class<EditorExportPlugin>();
 	ClassDB::register_class<EditorResourceConversionPlugin>();
 	ClassDB::register_class<EditorSceneImporter>();
@@ -5563,6 +5565,8 @@ int EditorNode::execute_and_show_output(const String &p_title, const String &p_p
 }
 
 EditorNode::EditorNode() {
+
+	editor_actions.instance();
 
 	Input::get_singleton()->set_use_accumulated_input(true);
 	Resource::_get_local_scene_func = _resource_get_edited_scene;

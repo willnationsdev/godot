@@ -33,6 +33,7 @@
 
 #include "core/io/config_file.h"
 #include "core/undo_redo.h"
+#include "editor/editor_actions.h"
 #include "editor/editor_inspector.h"
 #include "editor/import/editor_import_plugin.h"
 #include "editor/import/resource_importer_scene.h"
@@ -55,6 +56,7 @@ class EditorFileSystem;
 class EditorToolAddons;
 class FileSystemDock;
 class ScriptEditor;
+class EditorActions;
 
 class EditorInterface : public Node {
 	GDCLASS(EditorInterface, Node);
@@ -76,6 +78,7 @@ public:
 	Node *get_edited_scene_root();
 	Array get_open_scenes() const;
 	ScriptEditor *get_script_editor();
+	Ref<EditorActions> get_editor_actions();
 
 	void select_file(const String &p_file);
 	String get_selected_path() const;

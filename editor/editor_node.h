@@ -31,6 +31,7 @@
 #ifndef EDITOR_NODE_H
 #define EDITOR_NODE_H
 
+#include "editor/editor_actions.h"
 #include "editor/editor_data.h"
 #include "editor/editor_folding.h"
 #include "editor/editor_run.h"
@@ -51,6 +52,7 @@ class Control;
 class DependencyEditor;
 class DependencyErrorDialog;
 class EditorAbout;
+class EditorActions;
 class EditorExport;
 class EditorFeatureProfileManager;
 class EditorFileServer;
@@ -425,6 +427,8 @@ private:
 	Label *version_label;
 	ToolButton *bottom_panel_raise;
 
+	Ref<EditorActions> editor_actions;
+
 	void _bottom_panel_raise_toggled(bool);
 
 	EditorInterface *editor_interface;
@@ -763,6 +767,8 @@ public:
 	static UndoRedo *get_undo_redo() { return &singleton->editor_data.get_undo_redo(); }
 
 	EditorSelection *get_editor_selection() { return editor_selection; }
+
+	static Ref<EditorActions> &get_actions() { return singleton->editor_actions; }
 
 	void set_convert_old_scene(bool p_old) { convert_old = p_old; }
 
