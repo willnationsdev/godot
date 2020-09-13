@@ -34,6 +34,7 @@
 #include "core/debugger/engine_debugger.h"
 #include "core/debugger/script_debugger.h"
 #include "core/project_settings.h"
+#include "core/io/resource_loader.h"
 
 #include <stdint.h>
 
@@ -248,6 +249,19 @@ StringName ScriptServer::get_global_class_native_base(const String &p_class) {
 		base = global_classes[base].base;
 	}
 	return base;
+}
+StringName ScriptServer::get_global_class_name(const String& p_path, String* r_base, String* r_icon_path) {
+	String type = ResourceLoader::get_resource_type(p_path);
+	for (int i = 0; i < get_language_count(); i++) {
+		ScriptLanguage *lang = get_language(i);
+		if (lang->handles_global_class_type(type)) {
+			StringName class_name = lang->get_global_class_name(p_path, r_base, r_icon_path);
+			if (class_name != StringName()) {
+				return class_name;
+			}
+		}
+	}
+	return StringName();
 }
 
 void ScriptServer::get_global_class_list(List<StringName> *r_global_classes) {

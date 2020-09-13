@@ -1135,6 +1135,10 @@ void EditorFileSystem::_notification(int p_what) {
 	}
 }
 
+String EditorFileSystem::_get_file_type(const String& p_file) const {
+	return get_file_type(p_file, nullptr);
+}
+
 bool EditorFileSystem::is_scanning() const {
 	return scanning || scanning_changes;
 }
@@ -1252,7 +1256,7 @@ bool EditorFileSystem::_find_file(const String &p_file, EditorFileSystemDirector
 	return cpos != -1;
 }
 
-String EditorFileSystem::get_file_type(const String &p_file) const {
+String EditorFileSystem::get_file_type(const String &p_file, String *r_script_class_name) const {
 	EditorFileSystemDirectory *fs = nullptr;
 	int cpos = -1;
 
@@ -1260,7 +1264,12 @@ String EditorFileSystem::get_file_type(const String &p_file) const {
 		return "";
 	}
 
-	return fs->files[cpos]->type;
+	EditorFileSystemDirectory::FileInfo *fi = fs->files[cpos];
+	if (r_script_class_name) {
+		*r_script_class_name = fi->script_class_name;
+	}
+
+	return fi->type;
 }
 
 EditorFileSystemDirectory *EditorFileSystem::find_file(const String &p_file, int *r_index) const {
@@ -2009,7 +2018,7 @@ void EditorFileSystem::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("scan_sources"), &EditorFileSystem::scan_changes);
 	ClassDB::bind_method(D_METHOD("update_file", "path"), &EditorFileSystem::update_file);
 	ClassDB::bind_method(D_METHOD("get_filesystem_path", "path"), &EditorFileSystem::get_filesystem_path);
-	ClassDB::bind_method(D_METHOD("get_file_type", "path"), &EditorFileSystem::get_file_type);
+	ClassDB::bind_method(D_METHOD("get_file_type", "path"), &EditorFileSystem::_get_file_type);
 	ClassDB::bind_method(D_METHOD("update_script_classes"), &EditorFileSystem::update_script_classes);
 
 	ADD_SIGNAL(MethodInfo("filesystem_changed"));

@@ -2355,15 +2355,16 @@ void EditorPropertyResource::_file_selected(const String &p_path) {
 	if (!property_types.empty()) {
 		bool any_type_matches = false;
 		const Vector<String> split_property_types = property_types.split(",");
+		String res_class = _get_file_script_name_or_default(res);
 		for (int i = 0; i < split_property_types.size(); ++i) {
-			if (res->is_class(split_property_types[i])) {
+			if (EditorNode::get_editor_data().class_equals_or_inherits(res_class, split_property_types[i])) {
 				any_type_matches = true;
 				break;
 			}
 		}
 
 		if (!any_type_matches) {
-			EditorNode::get_singleton()->show_warning(vformat(TTR("The selected resource (%s) does not match any type expected for this property (%s)."), res->get_class(), property_types));
+			EditorNode::get_singleton()->show_warning(vformat(TTR("The selected resource (%s) does not match any type expected for this property (%s)."), res_class, property_types));
 		}
 	}
 
@@ -2385,7 +2386,12 @@ void EditorPropertyResource::_menu_option(int p_which) {
 
 			List<String> extensions;
 			for (int i = 0; i < type.get_slice_count(","); i++) {
-				ResourceLoader::get_recognized_extensions_for_type(type.get_slice(",", i), &extensions);
+				String slice = type.get_slice(",", i);
+				ResourceLoader::get_recognized_extensions_for_type(slice, &extensions);
+				if (ScriptServer::is_global_class(slice)) {
+					String native_type = ScriptServer::get_global_class_native_base(slice);
+					ResourceLoader::get_recognized_extensions_for_type(native_type, &extensions);
+				}
 			}
 
 			Set<String> valid_extensions;
@@ -2608,7 +2614,7 @@ void EditorPropertyResource::_update_menu_items() {
 
 	menu->clear();
 
-	if (get_edited_property() == "script" && base_type == "Script" && Object::cast_to<Node>(get_edited_object())) {
+	if (get_edited_property() == "script" && base_type == "Script" && (Object::cast_to<Node>(get_edited_object()) || Object::cast_to<Resource>(get_edited_object()))) {
 		menu->add_icon_item(get_theme_icon("ScriptCreate", "EditorIcons"), TTR("New Script"), OBJ_MENU_NEW_SCRIPT);
 		menu->add_icon_item(get_theme_icon("ScriptExtend", "EditorIcons"), TTR("Extend Script"), OBJ_MENU_EXTEND_SCRIPT);
 		menu->add_separator();
@@ -2709,7 +2715,7 @@ void EditorPropertyResource::_update_menu_items() {
 			paste_valid = true;
 		} else {
 			for (int i = 0; i < base_type.get_slice_count(","); i++) {
-				if (ClassDB::is_parent_class(cb->get_class(), base_type.get_slice(",", i))) {
+				if (EditorNode::get_editor_data().class_equals_or_inherits(_get_file_script_name_or_default(cb), base_type.get_slice(",", i))) {
 					paste_valid = true;
 					break;
 				}
@@ -2825,6 +2831,18 @@ void EditorPropertyResource::_fold_other_editors(Object *p_self) {
 	}
 }
 
+String EditorPropertyResource::_get_file_script_name_or_default(const RES& p_resource) const {
+	Ref<Script> rscript = p_resource->get_script();
+	if (rscript.is_valid()) {
+		String rscript_path = rscript->get_path();
+		String file_script_name = EditorNode::get_editor_data().script_class_get_name(rscript_path);
+		if (!file_script_name.empty()) {
+			return file_script_name;
+		}
+	}
+	return p_resource->get_class();
+}
+
 void EditorPropertyResource::update_property() {
 	RES res = get_edited_object()->get(get_edited_property());
 
@@ -2907,7 +2925,7 @@ void EditorPropertyResource::update_property() {
 			assign->set_text(res->get_path().get_file());
 			assign->set_tooltip(res->get_path());
 		} else {
-			assign->set_text(res->get_class());
+			assign->set_text(_get_file_script_name_or_default(res));
 		}
 
 		if (res->get_path().is_resource_file()) {
@@ -3031,9 +3049,11 @@ bool EditorPropertyResource::_is_drop_valid(const Dictionary &p_drag_data) const
 	}
 
 	if (res.is_valid()) {
+		EditorData &ed = EditorNode::get_editor_data();
+		String res_class = _get_file_script_name_or_default(res);
 		for (int i = 0; i < allowed_types.size(); i++) {
 			String at = allowed_types[i].strip_edges();
-			if (ClassDB::is_parent_class(res->get_class(), at)) {
+			if (ed.class_equals_or_inherits(res_class, at)) {
 				return true;
 			}
 		}
@@ -3044,12 +3064,15 @@ bool EditorPropertyResource::_is_drop_valid(const Dictionary &p_drag_data) const
 
 		if (files.size() == 1) {
 			String file = files[0];
-			String ftype = EditorFileSystem::get_singleton()->get_file_type(file);
+			String stype;
+			String ftype = EditorFileSystem::get_singleton()->get_file_type(file, &stype);
 
 			if (ftype != "") {
+				EditorData &ed = EditorNode::get_editor_data();
+				String file_class = stype != String() ? stype : ftype;
 				for (int i = 0; i < allowed_types.size(); i++) {
 					String at = allowed_types[i].strip_edges();
-					if (ClassDB::is_parent_class(ftype, at)) {
+					if (ed.class_equals_or_inherits(file_class, at)) {
 						return true;
 					}
 				}
@@ -3090,9 +3113,11 @@ void EditorPropertyResource::drop_data_fw(const Point2 &p_point, const Variant &
 		bool need_convert = true;
 
 		Vector<String> allowed_types = base_type.split(",");
+		EditorData &ed = EditorNode::get_editor_data();
+		String res_class = _get_file_script_name_or_default(res);
 		for (int i = 0; i < allowed_types.size(); i++) {
 			String at = allowed_types[i].strip_edges();
-			if (ClassDB::is_parent_class(res->get_class(), at)) {
+			if (ed.class_equals_or_inherits(res_class, at)) {
 				need_convert = false;
 				break;
 			}
@@ -3101,21 +3126,21 @@ void EditorPropertyResource::drop_data_fw(const Point2 &p_point, const Variant &
 		if (need_convert) {
 			for (int i = 0; i < allowed_types.size(); i++) {
 				String at = allowed_types[i].strip_edges();
-				if (at == "StandardMaterial3D" && ClassDB::is_parent_class(res->get_class(), "Texture2D")) {
+				if (at == "StandardMaterial3D" && ed.class_equals_or_inherits(res_class, "Texture2D")) {
 					Ref<StandardMaterial3D> mat = memnew(StandardMaterial3D);
 					mat->set_texture(StandardMaterial3D::TextureParam::TEXTURE_ALBEDO, res);
 					res = mat;
 					break;
 				}
 
-				if (at == "ShaderMaterial" && ClassDB::is_parent_class(res->get_class(), "Shader")) {
+				if (at == "ShaderMaterial" && ed.class_equals_or_inherits(res_class, "Shader")) {
 					Ref<ShaderMaterial> mat = memnew(ShaderMaterial);
 					mat->set_shader(res);
 					res = mat;
 					break;
 				}
 
-				if (at == "Font" && ClassDB::is_parent_class(res->get_class(), "DynamicFontData")) {
+				if (at == "Font" && ed.class_equals_or_inherits(res_class, "DynamicFontData")) {
 					Ref<DynamicFont> font = memnew(DynamicFont);
 					font->set_font_data(res);
 					res = font;

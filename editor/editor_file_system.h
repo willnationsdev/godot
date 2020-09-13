@@ -243,6 +243,7 @@ class EditorFileSystem : public Node {
 
 protected:
 	void _notification(int p_what);
+	String _get_file_type(const String &p_file) const;
 	static void _bind_methods();
 
 public:
@@ -258,7 +259,7 @@ public:
 	void update_file(const String &p_file);
 
 	EditorFileSystemDirectory *get_filesystem_path(const String &p_path);
-	String get_file_type(const String &p_file) const;
+	String get_file_type(const String &p_file, String *r_script_class_name = nullptr) const;
 	EditorFileSystemDirectory *find_file(const String &p_file, int *r_index) const;
 
 	void reimport_files(const Vector<String> &p_files);
