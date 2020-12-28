@@ -2100,8 +2100,9 @@ void EditorPropertyResource::_file_selected(const String &p_path) {
 	if (!property_types.empty()) {
 		bool any_type_matches = false;
 		const Vector<String> split_property_types = property_types.split(",");
+		StringName res_class = _get_file_script_name_or_default(res);
 		for (int i = 0; i < split_property_types.size(); ++i) {
-			if (res->is_class(split_property_types[i])) {
+			if (EditorNode::get_editor_data().class_equals_or_inherits(res_class, split_property_types[i])) {
 				any_type_matches = true;
 				break;
 			}
@@ -2127,6 +2128,9 @@ void EditorPropertyResource::_menu_option(int p_which) {
 			}
 			file->set_mode(EditorFileDialog::MODE_OPEN_FILE);
 			String type = base_type;
+			if (ScriptServer::is_global_class(type)) {
+				type = ScriptServer::get_global_class_native_base(type);
+			}
 
 			List<String> extensions;
 			for (int i = 0; i < type.get_slice_count(","); i++) {
@@ -2416,9 +2420,8 @@ void EditorPropertyResource::_update_menu_items() {
 
 				inheritors_array.push_back(t);
 
-				if (!icon.is_valid()) {
-					icon = get_icon(has_icon(t, "EditorIcons") ? t : "Object", "EditorIcons");
-				}
+				if (!icon.is_valid())
+					icon = EditorNode::get_singleton()->get_class_icon(t, "Object");
 
 				int id = TYPE_BASE_ID + idx;
 				menu->add_icon_item(icon, vformat(TTR("New %s"), t), id);
@@ -2690,7 +2693,7 @@ void EditorPropertyResource::update_property() {
 			assign->set_text(res->get_path().get_file());
 			assign->set_tooltip(res->get_path());
 		} else {
-			assign->set_text(res->get_class());
+			assign->set_text(_get_file_script_name_or_default(res));
 		}
 
 		if (res->get_path().is_resource_file()) {
@@ -2811,7 +2814,7 @@ bool EditorPropertyResource::_is_drop_valid(const Dictionary &p_drag_data) const
 	if (res.is_valid()) {
 		for (int i = 0; i < allowed_type.get_slice_count(","); i++) {
 			String at = allowed_type.get_slice(",", i).strip_edges();
-			if (res.is_valid() && ClassDB::is_parent_class(res->get_class(), at)) {
+			if (res.is_valid() && EditorNode::get_editor_data().class_equals_or_inherits(_get_file_script_name_or_default(res), at)) {
 				return true;
 			}
 		}
@@ -2825,9 +2828,11 @@ bool EditorPropertyResource::_is_drop_valid(const Dictionary &p_drag_data) const
 			String ftype = EditorFileSystem::get_singleton()->get_file_type(file);
 
 			if (ftype != "") {
+				ftype = _get_file_script_name_or_default(ResourceLoader::load(file));
+
 				for (int i = 0; i < allowed_type.get_slice_count(","); i++) {
 					String at = allowed_type.get_slice(",", i).strip_edges();
-					if (ClassDB::is_parent_class(ftype, at)) {
+					if (EditorNode::get_editor_data().class_equals_or_inherits(ftype, at)) {
 						return true;
 					}
 				}
@@ -2877,6 +2882,20 @@ void EditorPropertyResource::drop_data_fw(const Point2 &p_point, const Variant &
 
 void EditorPropertyResource::set_use_sub_inspector(bool p_enable) {
 	use_sub_inspector = p_enable;
+}
+
+StringName EditorPropertyResource::_get_file_script_name_or_default(const RES &p_resource) const {
+	Ref<Script> rscript = p_resource->get_script();
+	if (rscript.is_valid()) {
+		String rscript_path = rscript->get_path();
+		int script_index;
+		EditorFileSystemDirectory *fsdir = EditorFileSystem::get_singleton()->find_file(rscript_path, &script_index);
+		ERR_FAIL_COND_V_MSG(!fsdir, p_resource->get_class(), "Failed to find filesystem directory for the resource's script at: " + rscript_path);
+		String file_script_name = fsdir->get_file_script_class_name(script_index);
+		if (!file_script_name.empty())
+			return file_script_name;
+	}
+	return p_resource->get_class();
 }
 
 void EditorPropertyResource::_bind_methods() {
@@ -3347,6 +3366,7 @@ bool EditorInspectorDefaultPlugin::parse_property(Object *p_object, Variant::Typ
 		case Variant::OBJECT: {
 			EditorPropertyResource *editor = memnew(EditorPropertyResource);
 			editor->setup(p_hint == PROPERTY_HINT_RESOURCE_TYPE ? p_hint_text : "Resource");
+			EditorData &ed = EditorNode::get_editor_data();
 
 			if (p_hint == PROPERTY_HINT_RESOURCE_TYPE) {
 				String open_in_new = EDITOR_GET("interface/inspector/resources_to_open_in_new_inspector");
@@ -3354,7 +3374,9 @@ bool EditorInspectorDefaultPlugin::parse_property(Object *p_object, Variant::Typ
 					String type = open_in_new.get_slicec(',', i).strip_edges();
 					for (int j = 0; j < p_hint_text.get_slice_count(","); j++) {
 						String inherits = p_hint_text.get_slicec(',', j);
-						if (ClassDB::is_parent_class(inherits, type)) {
+
+						//if (!ScriptServer::is_global_class(inherits) && ClassDB::is_parent_class(inherits, type)) {
+						if (ed.class_equals_or_inherits(inherits, type)) {
 							editor->set_use_sub_inspector(false);
 						}
 					}
