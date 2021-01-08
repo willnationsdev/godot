@@ -215,11 +215,12 @@ public:
 	void notify_edited_scene_changed();
 	void notify_resource_saved(const Ref<Resource> &p_resource);
 
-	bool script_class_is_parent(const String &p_class, const String &p_inherits);
-	StringName script_class_get_base(const String &p_class) const;
-	Variant script_class_instance(const String &p_class);
+	bool class_equals_or_inherits(const StringName &p_class, const StringName &p_inherits) const;
+	bool script_class_is_parent(const StringName &p_class, const StringName &p_inherits) const;
+	StringName script_class_get_base(const StringName &p_class) const;
+	Variant script_class_instance(const StringName &p_class) const;
 
-	Ref<Script> script_class_load_script(const String &p_class) const;
+	Ref<Script> script_class_load_script(const StringName &p_class) const;
 
 	Ref<Script> script_class_get_base_from_anonymous_path(const String &p_path) const;
 	StringName script_class_get_name(const String &p_path) const;

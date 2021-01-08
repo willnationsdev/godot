@@ -2692,7 +2692,9 @@ bool CSharpScript::_get_member_export(IMonoClassMember *p_member, bool p_inspect
 	}
 
 #ifdef TOOLS_ENABLED
-	int hint_res = _try_get_member_export_hint(p_member, type, variant_type, /* allow_generics: */ true, hint, hint_string);
+	PropertyHint given_hint = PropertyHint(CACHED_FIELD(ExportAttribute, hint)->get_int_value(attr));
+	String given_hint_string = CACHED_FIELD(ExportAttribute, hintString)->get_string_value(attr);
+	int hint_res = _try_get_member_export_hint(p_member, type, variant_type, given_hint, given_hint_string, /* allow_generics: */ true, hint, hint_string);
 
 	ERR_FAIL_COND_V_MSG(hint_res == -1, false,
 			"Error while trying to determine information about the exported member: '" +
@@ -2713,7 +2715,7 @@ bool CSharpScript::_get_member_export(IMonoClassMember *p_member, bool p_inspect
 }
 
 #ifdef TOOLS_ENABLED
-int CSharpScript::_try_get_member_export_hint(IMonoClassMember *p_member, ManagedType p_type, Variant::Type p_variant_type, bool p_allow_generics, PropertyHint &r_hint, String &r_hint_string) {
+int CSharpScript::_try_get_member_export_hint(IMonoClassMember *p_member, ManagedType p_type, Variant::Type p_variant_type, PropertyHint p_given_hint, String p_given_hint_string, bool p_allow_generics, PropertyHint &r_hint, String &r_hint_string) {
 
 	GD_MONO_ASSERT_THREAD_ATTACHED;
 
@@ -2775,6 +2777,17 @@ int CSharpScript::_try_get_member_export_hint(IMonoClassMember *p_member, Manage
 
 		r_hint = PROPERTY_HINT_RESOURCE_TYPE;
 		r_hint_string = NATIVE_GDMONOCLASS_NAME(field_native_class);
+
+		if (p_type.type_class->has_attribute(CACHED_CLASS(GlobalAttribute))) {
+			MonoObject *attr = p_type.type_class->get_attribute(CACHED_CLASS(GlobalAttribute));
+			StringName script_class_name = CACHED_FIELD(GlobalAttribute, name)->get_string_value(attr);
+			if (script_class_name != StringName()) {
+				r_hint_string = script_class_name;
+			}
+		} else if (!p_given_hint_string.empty()) {
+			r_hint_string = p_given_hint_string;
+		}
+
 	} else if (p_allow_generics && p_variant_type == Variant::ARRAY) {
 		// Nested arrays are not supported in the inspector
 
@@ -2790,7 +2803,7 @@ int CSharpScript::_try_get_member_export_hint(IMonoClassMember *p_member, Manage
 
 		ERR_FAIL_COND_V_MSG(elem_variant_type == Variant::NIL, -1, "Unknown array element type.");
 
-		int hint_res = _try_get_member_export_hint(p_member, elem_type, elem_variant_type, /* allow_generics: */ false, elem_hint, elem_hint_string);
+		int hint_res = _try_get_member_export_hint(p_member, elem_type, elem_variant_type, p_given_hint, p_given_hint_string, /* allow_generics: */ false, elem_hint, elem_hint_string);
 
 		ERR_FAIL_COND_V_MSG(hint_res == -1, -1, "Error while trying to determine information about the array element type.");
 

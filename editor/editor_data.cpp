@@ -871,7 +871,28 @@ void EditorData::get_plugin_window_layout(Ref<ConfigFile> p_layout) {
 	}
 }
 
-bool EditorData::script_class_is_parent(const String &p_class, const String &p_inherits) {
+bool EditorData::class_equals_or_inherits(const StringName &p_class, const StringName &p_inherits) const {
+	if (p_class == p_inherits) {
+		return true;
+	}
+	if (ScriptServer::is_global_class(p_class)) {
+		return script_class_is_parent(p_class, p_inherits);
+	}
+	if (custom_types.has(p_inherits)) {
+		const Vector<EditorData::CustomType> &v = custom_types[p_inherits];
+		for (int i = 0; i < v.size(); i++) {
+			if (v[i].name == p_class) {
+				return true;
+			}
+		}
+	}
+	if (ClassDB::class_exists(p_class)) {
+		return ClassDB::is_parent_class(p_class, p_inherits);
+	}
+	return false;
+}
+
+bool EditorData::script_class_is_parent(const StringName &p_class, const StringName &p_inherits) const {
 	if (!ScriptServer::is_global_class(p_class))
 		return false;
 	String base = script_class_get_base(p_class);
@@ -892,7 +913,7 @@ bool EditorData::script_class_is_parent(const String &p_class, const String &p_i
 	return true;
 }
 
-StringName EditorData::script_class_get_base(const String &p_class) const {
+StringName EditorData::script_class_get_base(const StringName &p_class) const {
 
 	Ref<Script> script = script_class_load_script(p_class);
 	if (script.is_null())
@@ -906,7 +927,7 @@ StringName EditorData::script_class_get_base(const String &p_class) const {
 	return script_class_get_name(base_script->get_path());
 }
 
-Variant EditorData::script_class_instance(const String &p_class) {
+Variant EditorData::script_class_instance(const StringName &p_class) const {
 	if (ScriptServer::is_global_class(p_class)) {
 		Variant obj = ClassDB::instance(ScriptServer::get_global_class_native_base(p_class));
 		if (obj) {
@@ -919,7 +940,7 @@ Variant EditorData::script_class_instance(const String &p_class) {
 	return Variant();
 }
 
-Ref<Script> EditorData::script_class_load_script(const String &p_class) const {
+Ref<Script> EditorData::script_class_load_script(const StringName &p_class) const {
 
 	if (!ScriptServer::is_global_class(p_class))
 		return Ref<Script>();
@@ -960,6 +981,9 @@ Ref<Script> EditorData::script_class_get_base_from_anonymous_path(const String &
 	do {
 		if (script_class_get_name(script->get_path()) != StringName()) {
 			return script;
+		}
+		if (script->get_path().find("::") != -1) {
+			WARN_PRINT_ONCE("If you remove a built-in script that derives a script class, inheritance cannot be determined. The entire script is removed.");
 		}
 		script = script->get_base_script();
 	} while (script.is_valid());
