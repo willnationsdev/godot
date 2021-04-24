@@ -616,6 +616,31 @@ public:
 
 } // namespace special
 
+class ScriptServer : public Object {
+	GDCLASS(ScriptServer, Object);
+
+	static ScriptServer *singleton;
+
+protected:
+	static void _bind_methods();
+
+	bool _set(const StringName &p_name, const Variant &p_value);
+	bool _get(const StringName &p_name, Variant &r_ret) const;
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+
+public:
+	static ScriptServer *get_singleton() { return singleton; }
+
+	bool is_global_class(const StringName &p_class) const;
+	String get_global_class_path(const StringName &p_class) const;
+	StringName get_global_class_base(const StringName &p_class) const;
+	StringName get_global_class_native_base(const StringName &p_class) const;
+	Variant instantiate_global_class(const StringName &p_class) const;
+	Array get_global_class_list() const;
+
+	ScriptServer() { singleton = this; }
+};
+
 class Engine : public Object {
 	GDCLASS(Engine, Object);
 

@@ -71,6 +71,7 @@
 #include "core/multiplayer/multiplayer_peer.h"
 #include "core/multiplayer/multiplayer_replicator.h"
 #include "core/object/class_db.h"
+#include "core/object/script_language.h"
 #include "core/object/undo_redo.h"
 #include "core/os/main_loop.h"
 #include "core/os/time.h"
@@ -92,6 +93,7 @@ static core_bind::OS *_os = nullptr;
 static core_bind::Engine *_engine = nullptr;
 static core_bind::special::ClassDB *_classdb = nullptr;
 static core_bind::Marshalls *_marshalls = nullptr;
+static core_bind::ScriptServer *_script_server = nullptr;
 static core_bind::EngineDebugger *_engine_debugger = nullptr;
 
 static IP *ip = nullptr;
@@ -257,6 +259,7 @@ void register_core_types() {
 	_engine = memnew(core_bind::Engine);
 	_classdb = memnew(core_bind::special::ClassDB);
 	_marshalls = memnew(core_bind::Marshalls);
+	_script_server = memnew(core_bind::ScriptServer);
 	_engine_debugger = memnew(core_bind::EngineDebugger);
 }
 
@@ -282,6 +285,7 @@ void register_core_singletons() {
 	GDREGISTER_CLASS(core_bind::Engine);
 	GDREGISTER_CLASS(core_bind::special::ClassDB);
 	GDREGISTER_CLASS(core_bind::Marshalls);
+	GDREGISTER_CLASS(core_bind::ScriptServer);
 	GDREGISTER_CLASS(TranslationServer);
 	GDREGISTER_VIRTUAL_CLASS(Input);
 	GDREGISTER_CLASS(InputMap);
@@ -299,6 +303,7 @@ void register_core_singletons() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Engine", core_bind::Engine::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ClassDB", _classdb));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Marshalls", core_bind::Marshalls::get_singleton()));
+	Engine::get_singleton()->add_singleton(Engine::Singleton("ScriptServer", core_bind::ScriptServer::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("TranslationServer", TranslationServer::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Input", Input::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("InputMap", InputMap::get_singleton()));
@@ -327,6 +332,7 @@ void unregister_core_types() {
 	memdelete(_engine);
 	memdelete(_classdb);
 	memdelete(_marshalls);
+	memdelete(_script_server);
 	memdelete(_engine_debugger);
 
 	memdelete(_geometry_2d);

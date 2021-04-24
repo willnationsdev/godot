@@ -38,6 +38,7 @@
 #include "core/io/marshalls.h"
 #include "core/math/geometry_2d.h"
 #include "core/math/geometry_3d.h"
+#include "core/object/script_language.h"
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
 
@@ -2183,6 +2184,72 @@ void ClassDB::_bind_methods() {
 }
 
 } // namespace special
+
+////// _ScriptServer //////
+
+bool ScriptServer::_set(const StringName &p_name, const Variant &p_value) {
+	return false;
+}
+
+bool ScriptServer::_get(const StringName &p_name, Variant &r_ret) const {
+	if (::ScriptServer::is_global_class(p_name)) {
+		r_ret = ::ResourceLoader::load(::ScriptServer::get_global_class_path(p_name), "Script");
+		return true;
+	}
+	return false;
+}
+
+void ScriptServer::_get_property_list(List<PropertyInfo> *p_list) const {
+	ERR_FAIL_COND(!p_list);
+	List<StringName> names;
+	::ScriptServer::get_global_class_list(&names);
+	for (List<StringName>::Element *E = names.front(); E; E = E->next()) {
+		StringName n = E->get();
+		String class_name = String(n).get_file().get_extension();
+		p_list->push_back(PropertyInfo(Variant::OBJECT, class_name, PROPERTY_HINT_RESOURCE_TYPE, "Script", PROPERTY_USAGE_NETWORK, ::ResourceLoader::get_resource_type(::ScriptServer::get_global_class_path(n))));
+	}
+}
+
+bool ScriptServer::is_global_class(const StringName &p_class) const {
+	return ::ScriptServer::is_global_class(p_class);
+}
+
+String ScriptServer::get_global_class_path(const StringName &p_class) const {
+	return ::ScriptServer::get_global_class_path(p_class);
+}
+
+StringName ScriptServer::get_global_class_base(const StringName &p_class) const {
+	return ::ScriptServer::get_global_class_base(p_class);
+}
+
+StringName ScriptServer::get_global_class_native_base(const StringName &p_class) const {
+	return ::ScriptServer::get_global_class_native_base(p_class);
+}
+
+Variant ScriptServer::instantiate_global_class(const StringName &p_class) const {
+	return ::ScriptServer::instantiate_global_class(p_class);
+}
+
+Array ScriptServer::get_global_class_list() const {
+	Array ret;
+	List<StringName> lst;
+	::ScriptServer::get_global_class_list(&lst);
+	for (List<StringName>::Element *E = lst.front(); E; E = E->next()) {
+		ret.push_back(E->get());
+	}
+	return ret;
+}
+
+void ScriptServer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("is_global_class", "class"), &ScriptServer::is_global_class);
+	ClassDB::bind_method(D_METHOD("get_global_class_path", "class"), &ScriptServer::get_global_class_path);
+	ClassDB::bind_method(D_METHOD("get_global_class_base", "class"), &ScriptServer::get_global_class_base);
+	ClassDB::bind_method(D_METHOD("get_global_class_native_base", "class"), &ScriptServer::get_global_class_native_base);
+	ClassDB::bind_method(D_METHOD("instantiate_global_class", "class"), &ScriptServer::instantiate_global_class);
+	ClassDB::bind_method(D_METHOD("get_global_class_list"), &ScriptServer::get_global_class_list);
+}
+
+ScriptServer *ScriptServer::singleton = NULL;
 
 ////// Engine //////
 
