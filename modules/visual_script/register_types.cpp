@@ -68,6 +68,7 @@ void register_visual_script_types() {
 	GDREGISTER_CLASS(VisualScriptClassConstant);
 	GDREGISTER_CLASS(VisualScriptMathConstant);
 	GDREGISTER_CLASS(VisualScriptBasicTypeConstant);
+	GDREGISTER_CLASS(VisualScriptScriptClass);
 	GDREGISTER_CLASS(VisualScriptEngineSingleton);
 	GDREGISTER_CLASS(VisualScriptSceneNode);
 	GDREGISTER_CLASS(VisualScriptSceneTree);

@@ -237,7 +237,7 @@ void CreateDialog::_add_type(const String &p_type, const TypeCategory p_type_cat
 		if (ScriptServer::is_global_class(p_type)) {
 			inherits = EditorNode::get_editor_data().script_class_get_base(p_type);
 			if (inherits.is_empty()) {
-				Ref<Script> script = ScriptServer::get_global_class_script(p_type);
+				Ref<Script> script = EditorNode::get_editor_data().script_class_load_script(p_type);
 				ERR_FAIL_COND(script.is_null());
 
 				Ref<Script> base = script->get_base_script();
