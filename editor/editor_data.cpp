@@ -972,7 +972,7 @@ void EditorData::script_class_set_icon_path(const StringName &p_class, const Str
 	_script_class_icon_paths[p_class] = p_icon_path;
 }
 
-String EditorData::script_class_get_icon_path(const StringName &p_class) const {
+String EditorData::script_class_get_icon_path(const String &p_class) const {
 	if (!ScriptServer::is_global_class(p_class)) {
 		return String();
 	}
