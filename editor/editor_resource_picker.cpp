@@ -58,7 +58,15 @@ void EditorResourcePicker::_update_resource() {
 		} else if (edited_resource->get_path().is_resource_file()) {
 			assign_button->set_text(edited_resource->get_path().get_file());
 		} else {
-			assign_button->set_text(edited_resource->get_class());
+			String class_name = edited_resource->get_class();
+			Ref<Script> res_script = edited_resource->get_script();
+			if (res_script.is_valid()) {
+				String script_name = EditorNode::get_editor_data().script_class_get_name(res_script->get_path());
+				if (!script_name.is_empty()) {
+					class_name = script_name;
+				}
+			}
+			assign_button->set_text(class_name);
 		}
 
 		String resource_path;
@@ -118,9 +126,19 @@ void EditorResourcePicker::_file_selected(const String &p_path) {
 	if (!base_type.is_empty()) {
 		bool any_type_matches = false;
 
+		StringName res_type = loaded_resource->get_class();
+		Ref<Script> res_script = loaded_resource->get_script();
+		if (res_script.is_valid()) {
+			StringName script_type = ScriptServer::get_global_class_name(res_script->get_path());
+			if (script_type != StringName()) {
+				res_type = script_type;
+			}
+		}
+
 		for (int i = 0; i < base_type.get_slice_count(","); i++) {
 			String base = base_type.get_slice(",", i);
-			if (loaded_resource->is_class(base)) {
+
+			if (EditorNode::get_editor_data().class_equals_or_inherits(res_type, base)) {
 				any_type_matches = true;
 				break;
 			}
@@ -186,7 +204,9 @@ void EditorResourcePicker::_update_menu_items() {
 			paste_valid = true;
 		} else {
 			for (int i = 0; i < base_type.get_slice_count(","); i++) {
-				if (ClassDB::is_parent_class(cb->get_class(), base_type.get_slice(",", i))) {
+				StringName script_name = EditorNode::get_editor_data().script_class_get_name(cb->get_path());
+				StringName class_name = script_name != StringName() ? script_name : StringName(cb->get_class());
+				if (EditorNode::get_editor_data().class_equals_or_inherits(class_name, base_type.get_slice(",", i))) {
 					paste_valid = true;
 					break;
 				}
@@ -233,6 +253,10 @@ void EditorResourcePicker::_edit_menu_cbk(int p_which) {
 			for (int i = 0; i < base_type.get_slice_count(","); i++) {
 				String base = base_type.get_slice(",", i);
 				ResourceLoader::get_recognized_extensions_for_type(base, &extensions);
+				if (ScriptServer::is_global_class(base)) {
+					String native = ScriptServer::get_global_class_native_base(base);
+					ResourceLoader::get_recognized_extensions_for_type(native, &extensions);
+				}
 			}
 
 			Set<String> valid_extensions;
@@ -296,10 +320,20 @@ void EditorResourcePicker::_edit_menu_cbk(int p_which) {
 				propvalues.push_back(p);
 			}
 
-			String orig_type = edited_resource->get_class();
-			Object *inst = ClassDB::instantiate(orig_type);
-			Ref<Resource> unique_resource = Ref<Resource>(Object::cast_to<Resource>(inst));
-			ERR_FAIL_COND(unique_resource.is_null());
+			Ref<Resource> inst;
+			Ref<Script> res_script = edited_resource->get_script();
+			if (res_script.is_valid()) {
+				StringName script_name = EditorNode::get_editor_data().script_class_get_name(res_script->get_path());
+				if (ScriptServer::is_global_class(script_name)) {
+					inst = ScriptServer::instantiate_global_class(script_name);
+				}
+			}
+			if (inst.is_null()) {
+				inst = ClassDB::instantiate(edited_resource->get_class());
+			}
+			ERR_FAIL_COND_MSG(inst.is_null(), "Failed to instantiate resource during Make Unique.");
+			Ref<Resource> unique_resource = Ref<Resource>(inst);
+			ERR_FAIL_COND_MSG(unique_resource.is_null(), "Failed to copy resource reference during Make Unique.");
 
 			for (const Pair<String, Variant> &p : propvalues) {
 				unique_resource->set(p.first, p.second);
@@ -359,13 +393,7 @@ void EditorResourcePicker::_edit_menu_cbk(int p_which) {
 			Variant obj;
 
 			if (ScriptServer::is_global_class(intype)) {
-				obj = ClassDB::instantiate(ScriptServer::get_global_class_native_base(intype));
-				if (obj) {
-					Ref<Script> script = ResourceLoader::load(ScriptServer::get_global_class_path(intype));
-					if (script.is_valid()) {
-						((Object *)obj)->set_script(script);
-					}
-				}
+				obj = ScriptServer::instantiate_global_class(intype);
 			} else {
 				obj = ClassDB::instantiate(intype);
 			}
@@ -498,7 +526,9 @@ void EditorResourcePicker::_get_allowed_types(bool p_with_convert, Set<String> *
 			List<StringName> allowed_subtypes;
 
 			List<StringName> inheriters;
-			ClassDB::get_inheriters_from_class(base, &inheriters);
+			if (!ScriptServer::is_global_class(base)) {
+				ClassDB::get_inheriters_from_class(base, &inheriters);
+			}
 			for (const StringName &subtype_name : inheriters) {
 				p_vector->insert(subtype_name);
 				allowed_subtypes.push_back(subtype_name);
@@ -640,8 +670,11 @@ void EditorResourcePicker::drop_data_fw(const Point2 &p_point, const Variant &p_
 			for (Set<String>::Element *E = allowed_types.front(); E; E = E->next()) {
 				String at = E->get().strip_edges();
 
-				if (at == "BaseMaterial3D" && ClassDB::is_parent_class(dropped_resource->get_class(), "Texture2D")) {
-					// Use existing resource if possible and only replace its data.
+				EditorData &ed = EditorNode::get_editor_data();
+				StringName script_name = ed.script_class_get_name(dropped_resource->get_path());
+				String class_name = script_name != StringName() ? script_name : StringName(dropped_resource->get_class());
+
+				if (at == "BaseMaterial3D" && ed.class_equals_or_inherits(class_name, "Texture2D")) {
 					Ref<StandardMaterial3D> mat = edited_resource;
 					if (!mat.is_valid()) {
 						mat.instantiate();
@@ -651,7 +684,7 @@ void EditorResourcePicker::drop_data_fw(const Point2 &p_point, const Variant &p_
 					break;
 				}
 
-				if (at == "ShaderMaterial" && ClassDB::is_parent_class(dropped_resource->get_class(), "Shader")) {
+				if (at == "ShaderMaterial" && ed.class_equals_or_inherits(class_name, "Shader")) {
 					Ref<ShaderMaterial> mat = edited_resource;
 					if (!mat.is_valid()) {
 						mat.instantiate();
@@ -661,7 +694,7 @@ void EditorResourcePicker::drop_data_fw(const Point2 &p_point, const Variant &p_
 					break;
 				}
 
-				if (at == "Font" && ClassDB::is_parent_class(dropped_resource->get_class(), "FontData")) {
+				if (at == "Font" && ed.class_equals_or_inherits(class_name, "FontData")) {
 					Ref<Font> font = edited_resource;
 					if (!font.is_valid()) {
 						font.instantiate();
@@ -671,7 +704,7 @@ void EditorResourcePicker::drop_data_fw(const Point2 &p_point, const Variant &p_
 					break;
 				}
 
-				if (at == "Texture2D" && ClassDB::is_parent_class(dropped_resource->get_class(), "Image")) {
+				if (at == "Texture2D" && ed.class_equals_or_inherits(dropped_resource->get_class(), "Image")) {
 					Ref<ImageTexture> texture = edited_resource;
 					if (!texture.is_valid()) {
 						texture.instantiate();
