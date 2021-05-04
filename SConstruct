@@ -137,6 +137,7 @@ opts.Add("extra_suffix", "Custom extra suffix added to the base filename of all 
 opts.Add(BoolVariable("vsproj", "Generate a Visual Studio solution", False))
 opts.Add(BoolVariable("disable_3d", "Disable 3D nodes for a smaller executable", False))
 opts.Add(BoolVariable("disable_advanced_gui", "Disable advanced GUI nodes and behaviors", False))
+opts.Add(BoolVariable("disable_editordeps", "Disable editor-related nodes and behaviors", False))
 opts.Add(BoolVariable("modules_enabled_by_default", "If no, disable all modules except ones explicitly enabled", True))
 opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", False))
 opts.Add("system_certs_path", "Use this path as SSL certificates default for editor (for package maintainers)", "")
@@ -624,6 +625,15 @@ if selected_platform in platform_list:
             Exit(255)
         else:
             env.Append(CPPDEFINES=["ADVANCED_GUI_DISABLED"])
+    if env["disable_editordeps"]:
+        if env["tools"]:
+            print(
+                "Build option 'disable_editordeps=yes' cannot be used with 'tools=yes' (editor), "
+                "only with 'tools=no' (export template)."
+            )
+            Exit(255)
+        else:
+            env.Append(CPPDEFINES=["EDITORDEPS_DISABLED"])
     if env["minizip"]:
         env.Append(CPPDEFINES=["MINIZIP_ENABLED"])
 
@@ -669,6 +679,7 @@ if selected_platform in platform_list:
     SConscript("core/SCsub")
     SConscript("servers/SCsub")
     SConscript("scene/SCsub")
+    SConscript("editordeps/SCsub")
     SConscript("editor/SCsub")
     SConscript("drivers/SCsub")
 
