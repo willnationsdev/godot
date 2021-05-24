@@ -44,6 +44,7 @@ def get_doc_classes():
         "VisualScriptReturn",
         "VisualScriptSceneNode",
         "VisualScriptSceneTree",
+        "VisualScriptScriptClass",
         "VisualScriptSelect",
         "VisualScriptSelf",
         "VisualScriptSequence",

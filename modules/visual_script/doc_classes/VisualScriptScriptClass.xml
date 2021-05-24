@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="VisualScriptScriptClass" inherits="VisualScriptNode" version="4.0">
+	<brief_description>
+		A getter for global Script classes.
+	</brief_description>
+	<description>
+		Provides an easy way to refer to global classes defined in any language.
+		[b]Input Ports:[/b]
+		none
+		[b]Output Ports:[/b]
+		- \[ClassName\] (Script): [code]get[/code]
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_script_class" qualifiers="const">
+			<return type="StringName" />
+			<description>
+				Returns the name of the currently selected global Script class.
+			</description>
+		</method>
+		<method name="set_script_class">
+			<return type="void" />
+			<argument index="0" name="name" type="StringName" />
+			<description>
+				Assigns a new global Script class name, changing which reference this node returns.
+			</description>
+		</method>
+	</methods>
+</class>
