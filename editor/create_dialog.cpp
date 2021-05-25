@@ -34,7 +34,7 @@
 #include "core/os/keyboard.h"
 #include "editor_feature_profile.h"
 #include "editor_node.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 
 void CreateDialog::popup_create(bool p_dont_clear, bool p_replace_mode, const String &p_select_type) {

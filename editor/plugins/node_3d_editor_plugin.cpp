@@ -38,7 +38,7 @@
 #include "core/templates/sort_array.h"
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/editor_node.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "editor/node_3d_editor_gizmos.h"
 #include "editor/plugins/animation_player_editor_plugin.h"

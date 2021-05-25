@@ -37,7 +37,7 @@
 #include "editor_file_system.h"
 #include "editor_log.h"
 #include "editor_node.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 #include "scene/gui/margin_container.h"
 

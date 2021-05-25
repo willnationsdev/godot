@@ -37,7 +37,7 @@
 #include "core/string/string_builder.h"
 #include "editor/create_dialog.h"
 #include "editor/editor_node.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_file_system.h"
 
 void ScriptCreateDialog::_theme_changed() {

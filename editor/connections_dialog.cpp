@@ -33,7 +33,7 @@
 #include "core/string/print_string.h"
 #include "editor/doc_tools.h"
 #include "editor_node.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 #include "plugins/script_editor_plugin.h"
 #include "scene/gui/label.h"

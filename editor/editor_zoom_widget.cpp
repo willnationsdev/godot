@@ -31,7 +31,7 @@
 #include "editor_zoom_widget.h"
 
 #include "core/os/keyboard.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 
 void EditorZoomWidget::_update_zoom_label() {

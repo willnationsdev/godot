@@ -86,7 +86,7 @@
 #include "editor/editor_resource_preview.h"
 #include "editor/editor_run_native.h"
 #include "editor/editor_run_script.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_spin_slider.h"
 #include "editor/editor_themes.h"

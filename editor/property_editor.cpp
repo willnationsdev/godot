@@ -47,7 +47,7 @@
 #include "editor/editor_file_system.h"
 #include "editor/editor_help.h"
 #include "editor/editor_node.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "editor/filesystem_dock.h"
 #include "editor/multi_node_edit.h"

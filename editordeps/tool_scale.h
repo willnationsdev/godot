@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  register_editordeps_types.cpp                                        */
+/*  app_scale.h                                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,38 +28,15 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "register_editordeps_types.h"
+#ifndef TOOL_SCALE_H
+#define TOOL_SCALE_H
 
-#ifndef EDITORDEPS_DISABLED
+float tool_get_scale();
 
-#include "core/config/project_settings.h"
-#include "core/object/class_db.h"
-#include "core/os/os.h"
-#include "editordeps_string_names.h"
-#include "input_event_configuration_dialog.h"
-#include "tool_scale.h"
-
-void register_editordeps_types() {
-	EditorDepsStringNames::create();
-
-	GLOBAL_DEF("application/config/tool_scale", 1.0f);
-
-	ClassDB::register_class<InputEventConfigurationDialog>();
-
-	OS::get_singleton()->yield(); //may take time to init
-
-}
-
-void unregister_editordeps_types() {
-	EditorDepsStringNames::free();
-}
-
+#ifdef TOOLS_ENABLED
+#include "editor_scale.h"
 #else
-
-void register_editordeps_types() {
-}
-
-void unregister_editordeps_types() {
-}
-
+#define EDSCALE (tool_get_scale())
 #endif
+
+#endif // APP_SCALE_H

@@ -32,7 +32,7 @@
 
 #include "core/config/project_settings.h"
 #include "core/io/resource_loader.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 
 void ResourcePreloaderEditor::_gui_input(Ref<InputEvent> p_event) {

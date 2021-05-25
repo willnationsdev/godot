@@ -32,7 +32,7 @@
 
 #include "core/string/print_string.h"
 #include "editor_node.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 #include "editor_themes.h"
 #include "modules/regex/regex.h"

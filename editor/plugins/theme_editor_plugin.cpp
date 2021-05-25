@@ -33,7 +33,7 @@
 #include "core/os/file_access.h"
 #include "core/os/keyboard.h"
 #include "core/version.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/progress_dialog.h"
 #include "scene/gui/progress_bar.h"
 

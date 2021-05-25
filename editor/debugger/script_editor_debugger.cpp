@@ -43,7 +43,7 @@
 #include "editor/debugger/editor_visual_profiler.h"
 #include "editor/editor_log.h"
 #include "editor/editor_node.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
 #include "editor/plugins/editor_debugger_plugin.h"

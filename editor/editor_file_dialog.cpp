@@ -37,7 +37,7 @@
 #include "dependency_editor.h"
 #include "editor_file_system.h"
 #include "editor_resource_preview.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 #include "scene/gui/center_container.h"
 #include "scene/gui/label.h"

@@ -31,7 +31,7 @@
 #include "editor_network_profiler.h"
 
 #include "core/os/os.h"
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 
 void EditorNetworkProfiler::_bind_methods() {

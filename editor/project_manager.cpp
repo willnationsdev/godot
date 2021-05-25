@@ -41,7 +41,7 @@
 #include "core/string/translation.h"
 #include "core/version.h"
 #include "core/version_hash.gen.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 #include "editor_themes.h"
 #include "scene/gui/center_container.h"

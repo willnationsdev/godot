@@ -33,7 +33,7 @@
 #include "core/io/resource_loader.h"
 #include "editor_fonts.h"
 #include "editor_icons.gen.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 
 #include "modules/modules_enabled.gen.h"

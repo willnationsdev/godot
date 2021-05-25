@@ -40,7 +40,7 @@
 #include "editor_feature_profile.h"
 #include "editor_node.h"
 #include "editor_resource_preview.h"
-#include "editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor_settings.h"
 #include "import_dock.h"
 #include "scene/main/window.h"

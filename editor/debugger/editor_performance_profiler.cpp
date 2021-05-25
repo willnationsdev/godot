@@ -30,7 +30,7 @@
 
 #include "editor_performance_profiler.h"
 
-#include "editor/editor_scale.h"
+#include "editordeps/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "main/performance.h"
 
