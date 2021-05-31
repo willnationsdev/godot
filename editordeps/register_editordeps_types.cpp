@@ -36,6 +36,7 @@
 #include "core/object/class_db.h"
 #include "core/os/os.h"
 #include "editordeps_string_names.h"
+#include "tool_input_event_dialog.h"
 #include "tool_scale.h"
 
 void register_editordeps_types() {
@@ -43,7 +44,10 @@ void register_editordeps_types() {
 
 	GLOBAL_DEF("application/config/tool_scale", 1.0f);
 
+	ClassDB::register_class<ToolInputEventDialog>();
+
 	OS::get_singleton()->yield(); //may take time to init
+
 }
 
 void unregister_editordeps_types() {

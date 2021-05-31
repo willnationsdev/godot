@@ -32,93 +32,7 @@
 #define ACTION_MAP_EDITOR_H
 
 #include "editor/editor_data.h"
-
-// Confirmation Dialog used when configuring an input event.
-// Separate from ActionMapEditor for code cleanliness and separation of responsibilities.
-class InputEventConfigurationDialog : public ConfirmationDialog {
-	GDCLASS(InputEventConfigurationDialog, ConfirmationDialog);
-
-public:
-	enum InputType {
-		INPUT_KEY = 1,
-		INPUT_MOUSE_BUTTON = 2,
-		INPUT_JOY_BUTTON = 4,
-		INPUT_JOY_MOTION = 8
-	};
-
-private:
-	struct IconCache {
-		Ref<Texture2D> keyboard;
-		Ref<Texture2D> mouse;
-		Ref<Texture2D> joypad_button;
-		Ref<Texture2D> joypad_axis;
-	} icon_cache;
-
-	Ref<InputEvent> event = Ref<InputEvent>();
-
-	TabContainer *tab_container;
-
-	// Listening for input
-	Label *event_as_text;
-
-	// List of All Key/Mouse/Joypad input options.
-	int allowed_input_types;
-	Tree *input_list_tree;
-	LineEdit *input_list_search;
-
-	// Additional Options, shown depending on event selected
-	VBoxContainer *additional_options_container;
-
-	HBoxContainer *device_container;
-	OptionButton *device_id_option;
-
-	HBoxContainer *mod_container; // Contains the subcontainer and the store command checkbox.
-
-	enum ModCheckbox {
-		MOD_ALT,
-		MOD_SHIFT,
-		MOD_COMMAND,
-		MOD_CTRL,
-		MOD_META,
-		MOD_MAX
-	};
-	String mods[MOD_MAX] = { "Alt", "Shift", "Command", "Ctrl", "Metakey" };
-
-	CheckBox *mod_checkboxes[MOD_MAX];
-	CheckBox *store_command_checkbox;
-
-	CheckBox *physical_key_checkbox;
-
-	void _set_event(const Ref<InputEvent> &p_event);
-
-	void _tab_selected(int p_tab);
-	void _listen_window_input(const Ref<InputEvent> &p_event);
-
-	void _search_term_updated(const String &p_term);
-	void _update_input_list();
-	void _input_list_item_selected();
-
-	void _mod_toggled(bool p_checked, int p_index);
-	void _store_command_toggled(bool p_checked);
-	void _physical_keycode_toggled(bool p_checked);
-
-	void _set_current_device(int i_device);
-	int _get_current_device() const;
-	String _get_device_string(int i_device) const;
-
-protected:
-	void _notification(int p_what);
-
-public:
-	// Pass an existing event to configure it. Alternatively, pass no event to start with a blank configuration.
-	void popup_and_configure(const Ref<InputEvent> &p_event = Ref<InputEvent>());
-	Ref<InputEvent> get_event() const;
-	String get_event_text(const Ref<InputEvent> &p_event);
-
-	void set_allowed_input_types(int p_type_masks);
-
-	InputEventConfigurationDialog();
-};
+#include "editordeps/tool_input_event_dialog.h"
 
 class ActionMapEditor : public Control {
 	GDCLASS(ActionMapEditor, Control);
@@ -143,7 +57,7 @@ private:
 	Vector<ActionInfo> actions_cache;
 	Tree *action_tree;
 
-	// Storing which action/event is currently being edited in the InputEventConfigurationDialog.
+	// Storing which action/event is currently being edited in the ToolInputEventDialog.
 
 	Dictionary current_action = Dictionary();
 	String current_action_name = String();
@@ -151,7 +65,7 @@ private:
 
 	// Popups
 
-	InputEventConfigurationDialog *event_config_dialog;
+	ToolInputEventDialog *event_config_dialog;
 	AcceptDialog *message;
 
 	// Filtering and Adding actions
@@ -183,7 +97,7 @@ protected:
 
 public:
 	LineEdit *get_search_box() const;
-	InputEventConfigurationDialog *get_configuration_dialog();
+	ToolInputEventDialog *get_configuration_dialog();
 
 	// Dictionary represents an Action with "events" (Array) and "deadzone" (float) items. Pass with no param to update list from cached action map.
 	void update_action_list(const Vector<ActionInfo> &p_action_infos = Vector<ActionInfo>());

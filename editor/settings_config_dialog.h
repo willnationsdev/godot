@@ -73,7 +73,7 @@ class EditorSettingsDialog : public AcceptDialog {
 	// Shortcuts
 	String shortcut_filter;
 	Tree *shortcuts;
-	InputEventConfigurationDialog *shortcut_editor;
+	ToolInputEventDialog *shortcut_editor;
 	String shortcut_being_edited;
 
 	virtual void cancel_pressed() override;

@@ -627,9 +627,9 @@ EditorSettingsDialog::EditorSettingsDialog() {
 	tab_shortcuts->add_child(shortcuts);
 
 	// Adding event dialog
-	shortcut_editor = memnew(InputEventConfigurationDialog);
+	shortcut_editor = memnew(ToolInputEventDialog);
 	shortcut_editor->connect("confirmed", callable_mp(this, &EditorSettingsDialog::_event_config_confirmed));
-	shortcut_editor->set_allowed_input_types(InputEventConfigurationDialog::InputType::INPUT_KEY);
+	shortcut_editor->set_allowed_input_types(ToolInputEventDialog::InputType::INPUT_KEY);
 	add_child(shortcut_editor);
 
 	set_hide_on_ok(true);
