@@ -483,12 +483,22 @@ GDScriptParser::DataType GDScriptAnalyzer::resolve_datatype(GDScriptParser::Type
 		if (parser->script_path == ScriptServer::get_global_class_path(first)) {
 			result = parser->head->get_datatype();
 		} else {
-			Ref<GDScriptParserRef> ref = get_parser_for(ScriptServer::get_global_class_path(first));
-			if (!ref.is_valid() || ref->raise_status(GDScriptParserRef::INTERFACE_SOLVED) != OK) {
-				push_error(vformat(R"(Could not parse global class "%s" from "%s".)", first, ScriptServer::get_global_class_path(first)), p_type);
-				return GDScriptParser::DataType();
+			String first_path = ScriptServer::get_global_class_path(first);
+			if (ResourceLoader::get_resource_type(first_path) == GDScript::get_class_static()) {
+				Ref<GDScriptParserRef> ref = get_parser_for(first_path);
+				if (!ref.is_valid() || ref->raise_status(GDScriptParserRef::INTERFACE_SOLVED) != OK) {
+					push_error(vformat(R"(Could not parse global class "%s" from "%s".)", first, ScriptServer::get_global_class_path(first)), p_type);
+					return GDScriptParser::DataType();
+				}
+				result = ref->get_parser()->head->get_datatype();
+			} else {
+				result.kind = GDScriptParser::DataType::Kind::SCRIPT;
+				result.script_path = first_path;
+				result.script_type = ResourceLoader::load(first_path, Script::get_class_static());
+				if (result.script_type.is_valid()) {
+					result.native_type = result.script_type->get_instance_base_type();
+				}
 			}
-			result = ref->get_parser()->head->get_datatype();
 		}
 	} else if (ProjectSettings::get_singleton()->has_autoload(first) && ProjectSettings::get_singleton()->get_autoload(first).is_singleton) {
 		const ProjectSettings::AutoloadInfo &autoload = ProjectSettings::get_singleton()->get_autoload(first);
