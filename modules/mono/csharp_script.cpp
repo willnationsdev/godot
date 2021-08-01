@@ -1006,9 +1006,7 @@ void CSharpLanguage::reload_assemblies(bool p_soft_reload) {
 
 #ifdef TOOLS_ENABLED
 		EditorFileSystem::get_singleton()->remove_compiled_lang_script_class_file_cache(script->get_path());
-		EditorData &ed = EditorNode::get_editor_data();
-		ed.script_class_set_name(script->get_path(), script->get_script_class_name());
-		ed.script_class_set_icon_path(script->get_script_class_name(), script->get_script_class_icon_path());
+		EditorNode::get_editor_data().script_class_set_icon_path(script->get_script_class_name(), script->get_script_class_icon_path());
 #endif
 
 		if (!script->get_path().is_empty()) {

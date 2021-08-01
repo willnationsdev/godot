@@ -589,10 +589,10 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 				Ref<Script> existing = n->get_script();
 				Ref<Script> base = NULL;
 				if (existing.is_valid()) {
-					StringName script_class_name = ed.script_class_get_name(existing->get_path());
+					StringName script_class_name = ScriptServer::get_global_class_name(existing->get_path());
 					if (script_class_name != StringName()) {
 						update_array.clear();
-						print_error("Unable to remove script class '" + script_class_name + "'. Can only remove anonymous scripts.");
+						print_error(vformat("Unable to remove script class '%s'. Can only remove anonymous scripts.", script_class_name));
 						break;
 					}
 					base = ed.script_class_get_base_from_anonymous_path(existing->get_path());
@@ -608,7 +608,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 							}
 							if (!ct_name.is_empty()) {
 								update_array.clear();
-								print_error("Unable to remove custom type '" + ct_name + "'. Can only remove anonymous scripts.");
+								print_error(vformat("Unable to remove custom type '%s'. Can only remove anonymous scripts.", ct_name));
 								break;
 							}
 						}
@@ -1169,10 +1169,8 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 			if (TOOL_CREATE_FAVORITE == p_tool) {
 				String name = selected_favorite_root.get_slicec(' ', 0);
 				if (ScriptServer::is_global_class(name)) {
-					new_node = Object::cast_to<Node>(ClassDB::instantiate(ScriptServer::get_global_class_native_base(name)));
-					Ref<Script> script = ResourceLoader::load(ScriptServer::get_global_class_path(name), "Script");
-					if (new_node && script.is_valid()) {
-						new_node->set_script(script);
+					new_node = Object::cast_to<Node>(ScriptServer::instantiate_global_class(name));
+					if (new_node) {
 						new_node->set_name(name);
 					}
 				} else {
@@ -2181,7 +2179,7 @@ void SceneTreeDock::_update_script_button() {
 		Node *n = editor_selection->get_selected_node_list()[0];
 		Ref<Script> s = n->get_script();
 		if (s.is_valid()) {
-			if (EditorNode::get_editor_data().script_class_get_name(s->get_path()) != StringName()) {
+			if (ScriptServer::get_global_class_name(s->get_path()) != StringName()) {
 				button_create_script->hide();
 				button_extend_script->show();
 				button_detach_script->hide();
@@ -2202,7 +2200,7 @@ void SceneTreeDock::_update_script_button() {
 			Node *n = Object::cast_to<Node>(selection[i]);
 			Ref<Script> s = n->get_script();
 			if (s.is_valid()) {
-				if (EditorNode::get_editor_data().script_class_get_name(s->get_path()) != StringName()) {
+				if (ScriptServer::get_global_class_name(s->get_path()) != StringName()) {
 					button_extend_script->show();
 					button_detach_script->hide();
 				} else {
@@ -2389,7 +2387,7 @@ void SceneTreeDock::replace_node(Node *p_node, Node *p_by_node, bool p_keep_prop
 		n->get_property_list(&pinfo);
 
 		Ref<Script> s = n->get_script();
-		if (s.is_valid() && EditorNode::get_editor_data().script_class_get_name(s->get_path()) != StringName()) {
+		if (s.is_valid() && ScriptServer::get_global_class_name(s->get_path()) != StringName()) {
 			n->set_script(Variant());
 		}
 
@@ -2795,7 +2793,7 @@ void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 		existing_script = selected->get_script();
 
 		if (EditorNode::get_singleton()->get_object_custom_type_base(selected) == existing_script ||
-				(existing_script.is_valid() && EditorNode::get_editor_data().script_class_get_name(existing_script->get_path()) != StringName())) {
+				(existing_script.is_valid() && ScriptServer::get_global_class_name(existing_script->get_path()) != StringName())) {
 			existing_script_removable = false;
 		}
 	}
@@ -3008,7 +3006,7 @@ void SceneTreeDock::attach_script_to_selected(bool p_extend) {
 		for (int i = 0; i < ScriptServer::get_language_count(); i++) {
 			ScriptLanguage *l = ScriptServer::get_language(i);
 			if (l->get_type() == existing->get_class()) {
-				String name = EditorNode::get_editor_data().script_class_get_name(existing->get_path());
+				String name = ScriptServer::get_global_class_name(existing->get_path());
 				if (ScriptServer::is_global_class(name) && EDITOR_GET("interface/editors/derive_script_globals_by_name").operator bool()) {
 					inherits = name;
 				} else if (l->can_inherit_from_file()) {

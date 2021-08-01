@@ -1118,17 +1118,13 @@ void VisualShaderEditor::update_custom_nodes() {
 	List<StringName> class_list;
 	ScriptServer::get_global_class_list(&class_list);
 	Dictionary added;
-	for (int i = 0; i < class_list.size(); i++) {
-		if (ScriptServer::get_global_class_native_base(class_list[i]) == "VisualShaderNodeCustom") {
-			String script_path = ScriptServer::get_global_class_path(class_list[i]);
-			Ref<Resource> res = ResourceLoader::load(script_path);
-			ERR_FAIL_COND(res.is_null());
-			ERR_FAIL_COND(!res->is_class("Script"));
-			Ref<Script> script = Ref<Script>(res);
-
-			Ref<VisualShaderNodeCustom> ref;
-			ref.instantiate();
-			ref->set_script(script);
+	EditorData &ed = EditorNode::get_editor_data();
+	StringName base = VisualShaderNodeCustom::get_class_static();
+	for (StringName type : class_list) {
+		if (ed.script_class_is_parent(type, base)) {
+			Ref<Script> script = ScriptServer::get_global_class_script(type);
+			Ref<VisualShaderNodeCustom> ref = ScriptServer::instantiate_global_class(type);
+			ERR_CONTINUE_MSG(ref.is_null(), vformat("Failed to instantiate %s '%s'. Skipping its inclusion in the editor.", VisualShaderNodeCustom::get_class_static(), type));
 
 			String name;
 			if (ref->has_method("_get_name")) {

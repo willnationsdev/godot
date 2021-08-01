@@ -38,6 +38,7 @@
 #include "core/templates/pair.h"
 
 class ScriptLanguage;
+class Script;
 
 typedef void (*ScriptEditRequestFunction)(const String &p_path);
 
@@ -59,6 +60,7 @@ class ScriptServer {
 	};
 
 	static HashMap<StringName, GlobalScriptClass> global_classes;
+	static HashMap<String, StringName> global_class_paths;
 
 public:
 	static ScriptEditRequestFunction edit_request_func;
@@ -84,6 +86,8 @@ public:
 	static String get_global_class_path(const StringName &p_class);
 	static StringName get_global_class_base(const StringName &p_class);
 	static StringName get_global_class_native_base(const StringName &p_class);
+	static StringName get_global_class_name(const String &p_path);
+	static Ref<Script> get_global_class_script(const StringName &p_class);
 	static Variant instantiate_global_class(const StringName &p_class);
 	static void get_global_class_list(List<StringName> *r_global_classes);
 	static void save_global_classes();

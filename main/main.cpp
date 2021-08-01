@@ -2201,9 +2201,8 @@ bool Main::start() {
 			return false;
 		}
 	} else { // Not based on script path.
-		if (!editor && !ClassDB::class_exists(main_loop_type) && ScriptServer::is_global_class(main_loop_type)) {
-			String script_path = ScriptServer::get_global_class_path(main_loop_type);
-			Ref<Script> script_res = ResourceLoader::load(script_path);
+		if (!editor && ScriptServer::is_global_class(main_loop_type)) {
+			Ref<Script> script_res = ScriptServer::get_global_class_script(main_loop_type);
 			StringName script_base = ScriptServer::get_global_class_native_base(main_loop_type);
 			Object *obj = ClassDB::instantiate(script_base);
 			MainLoop *script_loop = Object::cast_to<MainLoop>(obj);

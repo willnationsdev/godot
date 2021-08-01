@@ -61,7 +61,7 @@ void EditorResourcePicker::_update_resource() {
 			String class_name = edited_resource->get_class();
 			Ref<Script> res_script = edited_resource->get_script();
 			if (res_script.is_valid()) {
-				String script_name = EditorNode::get_editor_data().script_class_get_name(res_script->get_path());
+				String script_name = ScriptServer::get_global_class_name(res_script->get_path());
 				if (!script_name.is_empty()) {
 					class_name = script_name;
 				}
@@ -204,7 +204,7 @@ void EditorResourcePicker::_update_menu_items() {
 			paste_valid = true;
 		} else {
 			for (int i = 0; i < base_type.get_slice_count(","); i++) {
-				StringName script_name = EditorNode::get_editor_data().script_class_get_name(cb->get_path());
+				StringName script_name = ScriptServer::get_global_class_name(cb->get_path());
 				StringName class_name = script_name != StringName() ? script_name : StringName(cb->get_class());
 				if (EditorNode::get_editor_data().class_equals_or_inherits(class_name, base_type.get_slice(",", i))) {
 					paste_valid = true;
@@ -323,7 +323,7 @@ void EditorResourcePicker::_edit_menu_cbk(int p_which) {
 			Ref<Resource> inst;
 			Ref<Script> res_script = edited_resource->get_script();
 			if (res_script.is_valid()) {
-				StringName script_name = EditorNode::get_editor_data().script_class_get_name(res_script->get_path());
+				StringName script_name = ScriptServer::get_global_class_name(res_script->get_path());
 				if (ScriptServer::is_global_class(script_name)) {
 					inst = ScriptServer::instantiate_global_class(script_name);
 				}
@@ -671,7 +671,7 @@ void EditorResourcePicker::drop_data_fw(const Point2 &p_point, const Variant &p_
 				String at = E->get().strip_edges();
 
 				EditorData &ed = EditorNode::get_editor_data();
-				StringName script_name = ed.script_class_get_name(dropped_resource->get_path());
+				StringName script_name = ScriptServer::get_global_class_name(dropped_resource->get_path());
 				String class_name = script_name != StringName() ? script_name : StringName(dropped_resource->get_class());
 
 				if (at == "BaseMaterial3D" && ed.class_equals_or_inherits(class_name, "Texture2D")) {

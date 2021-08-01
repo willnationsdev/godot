@@ -105,18 +105,7 @@ void VersionControlEditorPlugin::_initialize_vcs() {
 	const int id = set_up_choice->get_selected_id();
 	String selected_addon = set_up_choice->get_item_text(id);
 
-	String path = ScriptServer::get_global_class_path(selected_addon);
-	Ref<Script> script = ResourceLoader::load(path);
-
-	ERR_FAIL_COND_MSG(!script.is_valid(), "VCS Addon path is invalid");
-
-	EditorVCSInterface *vcs_interface = memnew(EditorVCSInterface);
-	ScriptInstance *addon_script_instance = script->instance_create(vcs_interface);
-
-	ERR_FAIL_COND_MSG(!addon_script_instance, "Failed to create addon script instance.");
-
-	// The addon is attached as a script to the VCS interface as a proxy end-point
-	vcs_interface->set_script_and_instance(script, addon_script_instance);
+	EditorVCSInterface *vcs_interface = Object::cast_to<EditorVCSInterface>(ScriptServer::instantiate_global_class(selected_addon));
 
 	EditorVCSInterface::set_singleton(vcs_interface);
 	EditorFileSystem::get_singleton()->connect("filesystem_changed", callable_mp(this, &VersionControlEditorPlugin::_refresh_stage_area));
@@ -339,14 +328,12 @@ void VersionControlEditorPlugin::register_editor() {
 void VersionControlEditorPlugin::fetch_available_vcs_addon_names() {
 	List<StringName> global_classes;
 	ScriptServer::get_global_class_list(&global_classes);
+	EditorData &ed = EditorNode::get_editor_data();
+	StringName base = EditorVCSInterface::get_class_static();
 
-	for (int i = 0; i != global_classes.size(); i++) {
-		String path = ScriptServer::get_global_class_path(global_classes[i]);
-		Ref<Script> script = ResourceLoader::load(path);
-		ERR_FAIL_COND(script.is_null());
-
-		if (script->get_instance_base_type() == "EditorVCSInterface") {
-			available_addons.push_back(global_classes[i]);
+	for (StringName type : global_classes) {
+		if (ed.script_class_is_parent(type, base)) {
+			available_addons.push_back(type);
 		}
 	}
 }

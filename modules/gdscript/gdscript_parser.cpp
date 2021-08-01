@@ -3563,16 +3563,7 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 				variable->export_info.hint_string = export_type.class_type->identifier->name;
 			} break;
 			case GDScriptParser::DataType::SCRIPT: {
-#ifdef TOOLS_ENABLED
-				StringName script_name;
-				if (Engine::get_singleton()->is_editor_hint()) {
-					script_name = EditorNode::get_editor_data().script_class_get_name(export_type.script_path);
-				} else {
-					script_name = export_type.script_type->get_language()->get_global_class_name(export_type.script_path);
-				}
-#else
-				StringName script_name = export_type.script_type->get_language()->get_global_class_name(export_type.script_path);
-#endif
+				StringName script_name = ScriptServer::get_global_class_name(export_type.script_path);
 				if (ScriptServer::is_global_class(script_name)) {
 					StringName native = ScriptServer::get_global_class_native_base(script_name);
 					if (!ClassDB::is_parent_class(native, "Resource")) {

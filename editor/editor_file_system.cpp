@@ -1487,7 +1487,6 @@ void EditorFileSystem::_scan_script_classes(EditorFileSystemDirectory *p_dir) {
 		}
 		ScriptServer::add_global_class(files[i]->script_class_name, files[i]->script_class_extends, lang, p_dir->get_file_path(i));
 		EditorNode::get_editor_data().script_class_set_icon_path(files[i]->script_class_name, files[i]->script_class_icon_path);
-		EditorNode::get_editor_data().script_class_set_name(p_dir->get_file_path(i), files[i]->script_class_name);
 	}
 	for (int i = 0; i < p_dir->get_subdir_count(); i++) {
 		_scan_script_classes(p_dir->get_subdir(i));
@@ -1532,7 +1531,6 @@ void EditorFileSystem::update_file_script_class_metadata(const String &p_path, c
 	if (p_name != StringName() && !ScriptServer::is_global_class(p_name)) {
 		ScriptServer::add_global_class(p_name, p_base, p_language, p_path);
 		EditorData &ed = EditorNode::get_editor_data();
-		ed.script_class_set_name(p_path, p_name);
 		ed.script_class_set_icon_path(p_name, p_icon_path);
 	}
 }

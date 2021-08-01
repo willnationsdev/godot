@@ -2432,7 +2432,7 @@ void EditorInspector::update_tree() {
 					base_type = script->get_instance_base_type();
 				}
 				while (script.is_valid()) {
-					StringName name = EditorNode::get_editor_data().script_class_get_name(script->get_path());
+					StringName name = ScriptServer::get_global_class_name(script->get_path());
 					String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(name);
 					if (name != StringName() && icon_path.length()) {
 						category->icon = ResourceLoader::load(icon_path, "Texture");
@@ -3478,7 +3478,7 @@ void EditorInspector::_update_script_class_properties(const Object &p_object, Li
 	Set<StringName> added;
 	for (const Ref<Script> &s : classes) {
 		String path = s->get_path();
-		String name = EditorNode::get_editor_data().script_class_get_name(path);
+		String name = ScriptServer::get_global_class_name(path);
 		if (name.is_empty()) {
 			if (!s->is_built_in()) {
 				name = path.get_file();

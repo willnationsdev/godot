@@ -141,7 +141,6 @@ private:
 	bool _find_updated_instances(Node *p_root, Node *p_node, Set<String> &checked_paths);
 
 	HashMap<StringName, String> _script_class_icon_paths;
-	HashMap<String, StringName> _script_class_file_to_path;
 
 public:
 	EditorPlugin *get_editor(Object *p_object);
@@ -220,11 +219,7 @@ public:
 	StringName script_class_get_base(const StringName &p_class) const;
 	Variant script_class_instance(const StringName &p_class) const;
 
-	Ref<Script> script_class_load_script(const StringName &p_class) const;
-
 	Ref<Script> script_class_get_base_from_anonymous_path(const String &p_path) const;
-	StringName script_class_get_name(const String &p_path) const;
-	void script_class_set_name(const String &p_path, const StringName &p_class);
 
 	String script_class_get_icon_path(const StringName &p_class) const;
 	void script_class_set_icon_path(const StringName &p_class, const String &p_icon_path);

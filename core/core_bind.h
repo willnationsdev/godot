@@ -635,6 +635,8 @@ public:
 	String get_global_class_path(const StringName &p_class) const;
 	StringName get_global_class_base(const StringName &p_class) const;
 	StringName get_global_class_native_base(const StringName &p_class) const;
+	StringName get_global_class_name(const String &p_path) const;
+	Ref<Script> get_global_class_script(const StringName &p_class) const;
 	Variant instantiate_global_class(const StringName &p_class) const;
 	Array get_global_class_list() const;
 

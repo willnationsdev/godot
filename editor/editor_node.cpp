@@ -3911,7 +3911,7 @@ Ref<Script> EditorNode::get_object_custom_type_base(const Object *p_object) cons
 
 	if (script.is_valid()) {
 		// Uncommenting would break things! Consider adding a parameter if you need it.
-		// StringName name = EditorNode::get_editor_data().script_class_get_name(base_script->get_path());
+		// StringName name = ScriptServer::get_global_class_name(base_script->get_path());
 		// if (name != StringName())
 		// 	return name;
 
@@ -3946,7 +3946,7 @@ StringName EditorNode::get_object_custom_type_name(const Object *p_object) const
 	if (script.is_valid()) {
 		Ref<Script> base_script = script;
 		while (base_script.is_valid()) {
-			StringName name = EditorNode::get_editor_data().script_class_get_name(base_script->get_path());
+			StringName name = ScriptServer::get_global_class_name(base_script->get_path());
 			if (name != StringName()) {
 				return name;
 			}
@@ -4008,7 +4008,7 @@ Ref<Texture2D> EditorNode::get_object_icon(const Object *p_object, const String 
 	if (script.is_valid()) {
 		Ref<Script> base_script = script;
 		while (base_script.is_valid()) {
-			StringName name = EditorNode::get_editor_data().script_class_get_name(base_script->get_path());
+			StringName name = ScriptServer::get_global_class_name(base_script->get_path());
 			String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(name);
 			Ref<ImageTexture> icon = _load_custom_class_icon(icon_path);
 			if (icon.is_valid()) {
@@ -4051,11 +4051,11 @@ Ref<Texture2D> EditorNode::get_class_icon(const String &p_class, const String &p
 	EditorData &ed = get_editor_data();
 	if (ScriptServer::is_global_class(p_class)) {
 		Ref<ImageTexture> icon;
-		Ref<Script> script = ed.script_class_load_script(p_class);
+		Ref<Script> script = ScriptServer::get_global_class_script(p_class);
 		StringName name = p_class;
 
 		while (script.is_valid()) {
-			name = ed.script_class_get_name(script->get_path());
+			name = ScriptServer::get_global_class_name(script->get_path());
 			String current_icon_path = ed.script_class_get_icon_path(name);
 			icon = _load_custom_class_icon(current_icon_path);
 			if (icon.is_valid()) {

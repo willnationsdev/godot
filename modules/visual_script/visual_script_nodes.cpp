@@ -2303,7 +2303,7 @@ PropertyInfo VisualScriptScriptClass::get_input_value_port_info(int p_idx) const
 
 PropertyInfo VisualScriptScriptClass::get_output_value_port_info(int p_idx) const {
 	if (ScriptServer::is_global_class(script_class)) {
-		Ref<Script> script = ResourceLoader::load(ScriptServer::get_global_class_path(script_class), "Script");
+		Ref<Script> script = ScriptServer::get_global_class_script(script_class);
 		return PropertyInfo(Variant::OBJECT, script_class, PROPERTY_HINT_RESOURCE_TYPE, script->get_class(), PROPERTY_USAGE_DEFAULT, script->get_class());
 	}
 	return PropertyInfo(Variant::OBJECT, script_class, PROPERTY_HINT_RESOURCE_TYPE, "Script", PROPERTY_USAGE_DEFAULT, "Script");
@@ -2336,7 +2336,7 @@ public:
 
 VisualScriptNodeInstance *VisualScriptScriptClass::instantiate(VisualScriptInstance *p_instance) {
 	VisualScriptNodeInstanceScriptClass *instance = memnew(VisualScriptNodeInstanceScriptClass);
-	instance->script = script_class != StringName() ? ResourceLoader::load(ScriptServer::get_global_class_path(script_class), "Script") : RES();
+	instance->script = script_class != StringName() ? ScriptServer::get_global_class_script(script_class) : Ref<Script>();
 	return instance;
 }
 

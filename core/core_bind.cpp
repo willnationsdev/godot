@@ -2226,6 +2226,14 @@ StringName ScriptServer::get_global_class_native_base(const StringName &p_class)
 	return ::ScriptServer::get_global_class_native_base(p_class);
 }
 
+StringName ScriptServer::get_global_class_name(const String &p_path) const {
+	return ::ScriptServer::get_global_class_name(p_path);
+}
+
+Ref<Script> ScriptServer::get_global_class_script(const StringName &p_class) const {
+	return ::ScriptServer::get_global_class_script(p_class);
+}
+
 Variant ScriptServer::instantiate_global_class(const StringName &p_class) const {
 	return ::ScriptServer::instantiate_global_class(p_class);
 }
@@ -2245,6 +2253,8 @@ void ScriptServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_global_class_path", "class"), &ScriptServer::get_global_class_path);
 	ClassDB::bind_method(D_METHOD("get_global_class_base", "class"), &ScriptServer::get_global_class_base);
 	ClassDB::bind_method(D_METHOD("get_global_class_native_base", "class"), &ScriptServer::get_global_class_native_base);
+	ClassDB::bind_method(D_METHOD("get_global_class_name", "path"), &ScriptServer::get_global_class_name);
+	ClassDB::bind_method(D_METHOD("get_global_class_script", "class"), &ScriptServer::get_global_class_script);
 	ClassDB::bind_method(D_METHOD("instantiate_global_class", "class"), &ScriptServer::instantiate_global_class);
 	ClassDB::bind_method(D_METHOD("get_global_class_list"), &ScriptServer::get_global_class_list);
 }

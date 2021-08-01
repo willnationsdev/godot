@@ -199,8 +199,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 		Color accent = get_theme_color(SNAME("accent_color"), SNAME("Editor"));
 
 		Ref<Script> script = p_node->get_script();
-		EditorData &ed = EditorNode::get_editor_data();
-		if (!script.is_null() && ed.script_class_get_name(script->get_path()) == StringName() &&
+		if (!script.is_null() && ScriptServer::get_global_class_name(script->get_path()) == StringName() &&
 				EditorNode::get_singleton()->get_object_custom_type_base(p_node) != script) {
 			//has script
 			item->add_button(0, get_theme_icon(SNAME("Script"), SNAME("EditorIcons")), BUTTON_SCRIPT);
@@ -337,7 +336,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 		if (script.is_valid()) {
 			item->add_button(0, get_theme_icon(SNAME("Script"), SNAME("EditorIcons")), BUTTON_SCRIPT, false, TTR("Open Script:") + " " + script->get_path());
 			if (EditorNode::get_singleton()->get_object_custom_type_base(p_node) == script ||
-					EditorNode::get_editor_data().script_class_get_name(script->get_path()) != StringName()) {
+					ScriptServer::get_global_class_name(script->get_path()) != StringName()) {
 				item->set_button_color(0, item->get_button_count(0) - 1, Color(1, 1, 1, 0.5));
 			}
 		}
