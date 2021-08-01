@@ -241,7 +241,7 @@ StringName ScriptServer::get_global_class_language(const StringName &p_class) {
 }
 
 String ScriptServer::get_global_class_path(const StringName &p_class) {
-	ERR_FAIL_COND_V(!global_classes.has(p_class), StringName());
+	ERR_FAIL_COND_V(!global_classes.has(p_class), String());
 	return global_classes[p_class].path;
 }
 StringName ScriptServer::get_global_class_name(const String &p_path) {
