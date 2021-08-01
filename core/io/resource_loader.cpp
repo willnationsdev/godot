@@ -102,8 +102,11 @@ void ResourceFormatLoader::get_recognized_extensions_for_type(const String &p_ty
 }
 
 void ResourceLoader::get_recognized_extensions_for_type(const String &p_type, List<String> *p_extensions) {
+	StringName native = ScriptServer::is_global_class(p_type) ? ScriptServer::get_global_class_native_base(p_type) : StringName(p_type);
 	for (int i = 0; i < loader_count; i++) {
-		loader[i]->get_recognized_extensions_for_type(p_type, p_extensions);
+		Ref<ResourceFormatLoader> current = loader[i];
+		String type = !current->get_script().is_null() ? p_type : String(native);
+		current->get_recognized_extensions_for_type(type, p_extensions);
 	}
 }
 
