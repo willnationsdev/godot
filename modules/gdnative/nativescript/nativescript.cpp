@@ -136,11 +136,11 @@ bool NativeScript::inherits_script(const Ref<Script> &p_script) const {
 	return false;
 }
 
-void NativeScript::set_class_name(String p_class_name) {
+void NativeScript::set_class_name(StringName p_class_name) {
 	class_name = p_class_name;
 }
 
-String NativeScript::get_class_name() const {
+StringName NativeScript::get_class_name() const {
 	return class_name;
 }
 
@@ -170,11 +170,11 @@ Ref<GDNativeLibrary> NativeScript::get_library() const {
 	return library;
 }
 
-void NativeScript::set_script_class_name(String p_type) {
+void NativeScript::set_script_class_name(StringName p_type) {
 	script_class_name = p_type;
 }
 
-String NativeScript::get_script_class_name() const {
+StringName NativeScript::get_script_class_name() const {
 	return script_class_name;
 }
 
@@ -1607,13 +1607,13 @@ void NativeScriptLanguage::thread_exit() {
 
 #endif // NO_THREADS
 
-bool NativeScriptLanguage::handles_global_class_type(const String &p_type) const {
-	return p_type == "NativeScript";
+bool NativeScriptLanguage::handles_global_class_type(const StringName &p_type) const {
+	return p_type == SNAME("NativeScript");
 }
 
-String NativeScriptLanguage::get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) const {
+StringName NativeScriptLanguage::get_global_class_name(const String &p_path, StringName *r_base_type, String *r_icon_path) const {
 	if (!p_path.is_empty()) {
-		Ref<NativeScript> script = ResourceLoader::load(p_path, "NativeScript");
+		Ref<NativeScript> script = ResourceLoader::load(p_path, NativeScript::get_class_static());
 		if (script.is_valid()) {
 			if (r_base_type) {
 				*r_base_type = script->get_instance_base_type();
@@ -1624,13 +1624,13 @@ String NativeScriptLanguage::get_global_class_name(const String &p_path, String 
 			return script->get_script_class_name();
 		}
 		if (r_base_type) {
-			*r_base_type = String();
+			*r_base_type = StringName();
 		}
 		if (r_icon_path) {
 			*r_icon_path = String();
 		}
 	}
-	return String();
+	return StringName();
 }
 
 void NativeReloadNode::_bind_methods() {

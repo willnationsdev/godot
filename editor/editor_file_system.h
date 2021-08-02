@@ -62,8 +62,8 @@ class EditorFileSystemDirectory : public Object {
 		String import_group_file;
 		Vector<String> deps;
 		bool verified = false; //used for checking changes
-		String script_class_name;
-		String script_class_extends;
+		StringName script_class_name;
+		StringName script_class_extends;
 		String script_class_icon_path;
 	};
 
@@ -94,9 +94,6 @@ public:
 	Vector<String> get_file_deps(int p_idx) const;
 	bool get_file_import_is_valid(int p_idx) const;
 	uint64_t get_file_modified_time(int p_idx) const;
-	String get_file_script_class_name(int p_idx) const; //used for scripts
-	String get_file_script_class_extends(int p_idx) const; //used for scripts
-	String get_file_script_class_icon_path(int p_idx) const; //used for scripts
 
 	EditorFileSystemDirectory *get_parent();
 
@@ -168,8 +165,8 @@ class EditorFileSystem : public Node {
 		Vector<String> deps;
 		bool import_valid = false;
 		String import_group_file;
-		String script_class_name;
-		String script_class_extends;
+		StringName script_class_name;
+		StringName script_class_extends;
 		String script_class_icon_path;
 	};
 
@@ -234,7 +231,7 @@ class EditorFileSystem : public Node {
 	SafeFlag update_script_classes_queued;
 	void _queue_update_script_classes();
 
-	String _get_global_script_class(const String &p_type, const String &p_path, String *r_extends = nullptr, String *r_icon_path = nullptr) const;
+	StringName _get_global_script_class(const String &p_type, const String &p_path, StringName *r_extends = nullptr, String *r_icon_path = nullptr) const;
 
 	static Error _resource_import(const String &p_path);
 

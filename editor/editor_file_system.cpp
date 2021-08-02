@@ -149,18 +149,6 @@ uint64_t EditorFileSystemDirectory::get_file_modified_time(int p_idx) const {
 	return files[p_idx]->modified_time;
 }
 
-String EditorFileSystemDirectory::get_file_script_class_name(int p_idx) const {
-	return files[p_idx]->script_class_name;
-}
-
-String EditorFileSystemDirectory::get_file_script_class_extends(int p_idx) const {
-	return files[p_idx]->script_class_extends;
-}
-
-String EditorFileSystemDirectory::get_file_script_class_icon_path(int p_idx) const {
-	return files[p_idx]->script_class_icon_path;
-}
-
 StringName EditorFileSystemDirectory::get_file_type(int p_idx) const {
 	ERR_FAIL_INDEX_V(p_idx, files.size(), "");
 	return files[p_idx]->type;
@@ -181,8 +169,6 @@ void EditorFileSystemDirectory::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_file", "idx"), &EditorFileSystemDirectory::get_file);
 	ClassDB::bind_method(D_METHOD("get_file_path", "idx"), &EditorFileSystemDirectory::get_file_path);
 	ClassDB::bind_method(D_METHOD("get_file_type", "idx"), &EditorFileSystemDirectory::get_file_type);
-	ClassDB::bind_method(D_METHOD("get_file_script_class_name", "idx"), &EditorFileSystemDirectory::get_file_script_class_name);
-	ClassDB::bind_method(D_METHOD("get_file_script_class_extends", "idx"), &EditorFileSystemDirectory::get_file_script_class_extends);
 	ClassDB::bind_method(D_METHOD("get_file_import_is_valid", "idx"), &EditorFileSystemDirectory::get_file_import_is_valid);
 	ClassDB::bind_method(D_METHOD("get_name"), &EditorFileSystemDirectory::get_name);
 	ClassDB::bind_method(D_METHOD("get_path"), &EditorFileSystemDirectory::get_path);
@@ -1444,38 +1430,38 @@ Vector<String> EditorFileSystem::_get_dependencies(const String &p_path) {
 	return ret;
 }
 
-String EditorFileSystem::_get_global_script_class(const String &p_type, const String &p_path, String *r_extends, String *r_icon_path) const {
+StringName EditorFileSystem::_get_global_script_class(const String &p_type, const String &p_path, StringName *r_extends, String *r_icon_path) const {
 	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
 		ScriptLanguage *lang = ScriptServer::get_language(i);
 		if (lang->handles_global_class_type(p_type)) {
 			if (lang->has_delayed_script_class_metadata() && compiled_lang_script_class_file_cache.has(p_path)) {
 				Dictionary d = compiled_lang_script_class_file_cache[p_path];
 				if (r_extends) {
-					*r_extends = d["base"].operator String();
+					*r_extends = d["base"].operator StringName();
 				}
 				if (r_icon_path) {
 					*r_icon_path = d.has("icon_path") ? d["icon_path"] : "";
 				}
-				return d["class"].operator String();
+				return d["class"].operator StringName();
 			} else {
 				return lang->get_global_class_name(p_path, r_extends, r_icon_path);
 			}
 		}
 	}
 	if (r_extends) {
-		*r_extends = "";
+		*r_extends = StringName();
 	}
 	if (r_icon_path) {
 		*r_icon_path = "";
 	}
-	return "";
+	return StringName();
 }
 
 void EditorFileSystem::_scan_script_classes(EditorFileSystemDirectory *p_dir) {
 	int filecount = p_dir->files.size();
 	const EditorFileSystemDirectory::FileInfo *const *files = p_dir->files.ptr();
 	for (int i = 0; i < filecount; i++) {
-		if (files[i]->script_class_name.is_empty()) {
+		if (files[i]->script_class_name == StringName()) {
 			continue;
 		}
 
@@ -1549,10 +1535,12 @@ void EditorFileSystem::init_compiled_lang_script_class_file_cache() {
 		}
 		for (int i = 0; i < script_classes.size(); i++) {
 			Dictionary d = script_classes[i];
-			StringName c = d["class"];
-			String p = d["path"];
 			StringName lg = d["language"];
+
 			if (compiled_language_names.has(lg)) {
+				StringName c = d["class"];
+				String p = d["path"];
+
 				String ip = script_class_icons[c];
 				d["icon_path"] = ip;
 				compiled_lang_script_class_file_cache[p] = d;

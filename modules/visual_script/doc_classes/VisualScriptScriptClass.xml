@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="VisualScriptScriptClass" inherits="VisualScriptNode" version="4.0">
 	<brief_description>
-		A getter for global Script classes.
+		A Visual Script node for accessing global script classes defined in any language.
 	</brief_description>
 	<description>
-		Provides an easy way to refer to global classes defined in any language.
-		[b]Input Ports:[/b]
-		none
-		[b]Output Ports:[/b]
-		- \[ClassName\] (Script): [code]get[/code]
+		A Visual Script node for accessing global script classes defined in any language.
 	</description>
 	<tutorials>
 	</tutorials>

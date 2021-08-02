@@ -2071,11 +2071,11 @@ bool GDScriptLanguage::is_control_flow_keyword(String p_keyword) const {
 			p_keyword == "while";
 }
 
-bool GDScriptLanguage::handles_global_class_type(const String &p_type) const {
-	return p_type == "GDScript";
+bool GDScriptLanguage::handles_global_class_type(const StringName &p_type) const {
+	return p_type == SNAME("GDScript");
 }
 
-String GDScriptLanguage::get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) const {
+StringName GDScriptLanguage::get_global_class_name(const String &p_path, StringName *r_base_type, String *r_icon_path) const {
 	Vector<uint8_t> sourcef;
 	Error err;
 	FileAccessRef f = FileAccess::open(p_path, FileAccess::READ, &err);
@@ -2160,12 +2160,12 @@ String GDScriptLanguage::get_global_class_name(const String &p_path, String *r_b
 						break;
 					}
 				} else {
-					*r_base_type = "RefCounted";
+					*r_base_type = SNAME("RefCounted");
 					subclass = nullptr;
 				}
 			}
 		}
-		return c->identifier != nullptr ? String(c->identifier->name) : String();
+		return c->identifier != nullptr ? c->identifier->name : StringName();
 	}
 
 	return String();

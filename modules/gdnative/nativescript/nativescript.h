@@ -112,7 +112,7 @@ class NativeScript : public Script {
 
 	String class_name;
 
-	String script_class_name;
+	StringName script_class_name;
 	String script_class_icon_path;
 
 	Mutex owners_lock;
@@ -126,14 +126,14 @@ public:
 
 	bool inherits_script(const Ref<Script> &p_script) const override;
 
-	void set_class_name(String p_class_name);
-	String get_class_name() const;
+	void set_class_name(StringName p_class_name);
+	StringName get_class_name() const;
 
 	void set_library(Ref<GDNativeLibrary> p_library);
 	Ref<GDNativeLibrary> get_library() const;
 
-	void set_script_class_name(String p_type);
-	String get_script_class_name() const;
+	void set_script_class_name(StringName p_type);
+	StringName get_script_class_name() const;
 	void set_script_class_icon_path(String p_icon_path);
 	String get_script_class_icon_path() const;
 
@@ -354,8 +354,8 @@ public:
 	void set_global_type_tag(int p_idx, StringName p_class_name, const void *p_type_tag);
 	const void *get_global_type_tag(int p_idx, StringName p_class_name) const;
 
-	virtual bool handles_global_class_type(const String &p_type) const;
-	virtual String get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) const;
+	virtual bool handles_global_class_type(const StringName &p_type) const;
+	virtual StringName get_global_class_name(const String &p_path, StringName *r_base_type, String *r_icon_path) const;
 
 	void profiling_add_data(StringName p_signature, uint64_t p_time);
 };

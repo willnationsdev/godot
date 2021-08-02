@@ -543,12 +543,12 @@ String CSharpLanguage::_get_indentation() const {
 	return "\t";
 }
 
-bool CSharpLanguage::handles_global_class_type(const String &p_type) const {
-	return p_type == "CSharpScript";
+bool CSharpLanguage::handles_global_class_type(const StringName &p_type) const {
+	return p_type == SNAME("CSharpScript");
 }
 
-String CSharpLanguage::get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) const {
-	Ref<CSharpScript> script = ResourceLoader::load(p_path, "CSharpScript");
+StringName CSharpLanguage::get_global_class_name(const String &p_path, StringName *r_base_type, String *r_icon_path) const {
+	Ref<CSharpScript> script = ResourceLoader::load(p_path, CSharpScript::get_class_static());
 	if (script.is_valid()) {
 		String name = script->get_script_class_name();
 		if (name.length()) {
@@ -568,10 +568,10 @@ String CSharpLanguage::get_global_class_name(const String &p_path, String *r_bas
 	}
 
 	if (r_base_type)
-		*r_base_type = String();
+		*r_base_type = StringName();
 	if (r_icon_path)
 		*r_icon_path = String();
-	return String();
+	return StringName();
 }
 
 String CSharpLanguage::debug_get_error() const {

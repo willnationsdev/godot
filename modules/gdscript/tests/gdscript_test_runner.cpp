@@ -264,10 +264,10 @@ bool GDScriptTestRunner::generate_class_index() {
 	StringName gdscript_name = GDScriptLanguage::get_singleton()->get_name();
 	for (int i = 0; i < tests.size(); i++) {
 		GDScriptTest test = tests[i];
-		String base_type;
+		StringName base_type;
 
-		String class_name = GDScriptLanguage::get_singleton()->get_global_class_name(test.get_source_file(), &base_type);
-		if (class_name.is_empty()) {
+		StringName class_name = GDScriptLanguage::get_singleton()->get_global_class_name(test.get_source_file(), &base_type);
+		if (class_name == StringName()) {
 			continue;
 		}
 		ERR_FAIL_COND_V_MSG(ScriptServer::is_global_class(class_name), false,

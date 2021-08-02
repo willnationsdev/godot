@@ -24,30 +24,6 @@
 				Returns the [StringName] names of all global script class names known by the ScriptServer.
 			</description>
 		</method>
-		<method name="get_global_class_map" qualifiers="const">
-			<return type="Dictionary" />
-			<description>
-				Returns a Dictionary of all information known by the ScriptServer. If a project contained two GDScript files, "BaseNode" that extends [Node] and "DerivedNode" that extends "BaseNode", then the Dictionary might look like this:
-				[codeblock]
-				{
-				    @"BaseNode": {
-				        "language": @"GDScript",
-				        "path": "res://base_node.gd",
-				        "base": @"Node",
-				        "native": @"Node",
-				        "icon_path": "res://base_node.svg"
-				    },
-				    @"DerivedNode": {
-				        "language": @"GDScript",
-				        "path": "res://derived_node.gd",
-				        "base": @"BaseNode",
-				        "native": @"Node",
-				        "icon_path": null
-				    }
-				}
-				[/codeblock]
-			</description>
-		</method>
 		<method name="get_global_class_name" qualifiers="const">
 			<return type="StringName" />
 			<argument index="0" name="path" type="String" />

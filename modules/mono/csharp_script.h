@@ -493,8 +493,8 @@ public:
 	virtual bool has_delayed_script_class_metadata() const override { return true; }
 
 	/* SCRIPT CLASS FUNCTIONS */
-	virtual bool handles_global_class_type(const String &p_type) const;
-	virtual String get_global_class_name(const String &p_path, String *r_base_type = NULL, String *r_icon_path = NULL) const;
+	virtual bool handles_global_class_type(const StringName &p_type) const;
+	virtual StringName get_global_class_name(const String &p_path, StringName *r_base_type = NULL, String *r_icon_path = NULL) const;
 
 	/* DEBUGGER FUNCTIONS */
 	String debug_get_error() const override;

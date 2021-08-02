@@ -2254,12 +2254,12 @@ Error VisualScriptLanguage::execute_file(const String &p_path) {
 void VisualScriptLanguage::finish() {
 }
 
-bool VisualScriptLanguage::handles_global_class_type(const String &p_type) const {
-	return p_type == "VisualScript";
+bool VisualScriptLanguage::handles_global_class_type(const StringName &p_type) const {
+	return p_type == SNAME("VisualScript");
 }
 
-String VisualScriptLanguage::get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) const {
-	Ref<VisualScript> script = ResourceLoader::load(p_path, "VisualScript");
+StringName VisualScriptLanguage::get_global_class_name(const String &p_path, StringName *r_base_type, String *r_icon_path) const {
+	Ref<VisualScript> script = ResourceLoader::load(p_path, VisualScript::get_class_static());
 	if (script.is_null()) {
 		if (r_base_type)
 			*r_base_type = StringName();
