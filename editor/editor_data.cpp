@@ -941,6 +941,12 @@ StringName EditorData::script_class_get_base(const StringName &p_class) const {
 		return StringName();
 	}
 
+	StringName base = ScriptServer::get_global_class_base(p_class);
+
+	if (base != StringName()) {
+		return base;
+	}
+
 	Ref<Script> script = ScriptServer::get_global_class_script(p_class);
 	if (script.is_null()) {
 		return StringName();
