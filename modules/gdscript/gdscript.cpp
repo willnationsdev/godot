@@ -2086,51 +2086,28 @@ StringName GDScriptLanguage::get_global_class_name(const String &p_path, StringN
 	String source = f->get_as_utf8_string();
 
 	GDScriptParser parser;
+	GDScriptAnalyzer analyzer(&parser);
 	err = parser.parse(source, p_path, false);
 
-	// TODO: Simplify this code by using the analyzer to get full inheritance.
-	if (err == OK) {
+	if (err == OK && analyzer.analyze() == OK) {
 		const GDScriptParser::ClassNode *c = parser.get_tree();
-		if (r_icon_path) {
-			if (c->icon_path.is_empty() || c->icon_path.is_absolute_path()) {
-				*r_icon_path = c->icon_path;
-			} else if (c->icon_path.is_relative_path()) {
-				*r_icon_path = p_path.get_base_dir().plus_file(c->icon_path).simplify_path();
-			}
+
+		if (r_icon_path && !c->icon_path.is_empty()) {
+			*r_icon_path = c->icon_path;
 		}
-		if (r_base_type) {
-			const GDScriptParser::ClassNode *subclass = c;
-			String path = p_path;
-			GDScriptParser subparser;
-			while (subclass) {
-				if (subclass->extends_used) {
-					if (!subclass->extends_path.is_empty()) {
-						if (subclass->extends.size() == 0) {
-							get_global_class_name(subclass->extends_path, r_base_type);
-							subclass = nullptr;
-							break;
-						} else {
-							Vector<StringName> extend_classes = subclass->extends;
+		if (
+			r_base_type
+		) {
+			if (c->extends_used) {
+				const GDScriptParser::ClassNode *subclass = c;
 
-							FileAccessRef subfile = FileAccess::open(subclass->extends_path, FileAccess::READ);
-							if (!subfile) {
-								break;
-							}
-							String subsource = subfile->get_as_utf8_string();
-
-							if (subsource.is_empty()) {
-								break;
-							}
-							String subpath = subclass->extends_path;
-							if (subpath.is_relative_path()) {
-								subpath = path.get_base_dir().plus_file(subpath).simplify_path();
-							}
-
-							if (OK != subparser.parse(subsource, subpath, false)) {
-								break;
-							}
-							path = subpath;
-							subclass = subparser.get_tree();
+				while (
+					subclass->base_type.kind == GDScriptParser::DataType::CLASS &&
+					subclass->base_type.class_type != nullptr &&
+					subclass->base_type.class_type->identifier == nullptr
+				) {
+					subclass = subclass->base_type.class_type;
+				}
 
 							while (extend_classes.size() > 0) {
 								bool found = false;
@@ -2165,6 +2142,7 @@ StringName GDScriptLanguage::get_global_class_name(const String &p_path, StringN
 				}
 			}
 		}
+
 		return c->identifier != nullptr ? c->identifier->name : StringName();
 	}
 
