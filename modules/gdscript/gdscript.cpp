@@ -2109,37 +2109,17 @@ StringName GDScriptLanguage::get_global_class_name(const String &p_path, StringN
 					subclass = subclass->base_type.class_type;
 				}
 
-							while (extend_classes.size() > 0) {
-								bool found = false;
-								for (int i = 0; i < subclass->members.size(); i++) {
-									if (subclass->members[i].type != GDScriptParser::ClassNode::Member::CLASS) {
-										continue;
-									}
-
-									const GDScriptParser::ClassNode *inner_class = subclass->members[i].m_class;
-									if (inner_class->identifier->name == extend_classes[0]) {
-										extend_classes.remove_at(0);
-										found = true;
-										subclass = inner_class;
-										break;
-									}
-								}
-								if (!found) {
-									subclass = nullptr;
-									break;
-								}
-							}
-						}
-					} else if (subclass->extends.size() == 1) {
-						*r_base_type = subclass->extends[0];
-						subclass = nullptr;
-					} else {
-						break;
-					}
-				} else {
-					*r_base_type = SNAME("RefCounted");
-					subclass = nullptr;
-				}
+				if (subclass->base_type.kind == GDScriptParser::DataType::CLASS) {
+					*r_base_type = c->base_type.class_type->identifier->name;
+				} else if (subclass->base_type.kind == GDScriptParser::DataType::ENUM)
+				{
+					*r_base_type = c->base_type.enum_type;
+				} else if (subclass->base_type.kind == GDScriptParser::DataType::NATIVE)
+				{
+					*r_base_type = c->base_type.native_type;
+				} 
+			} else {
+				*r_base_type = SNAME("RefCounted");
 			}
 		}
 
