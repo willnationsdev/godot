@@ -2117,7 +2117,7 @@ StringName GDScriptLanguage::get_global_class_name(const String &p_path, StringN
 				} else if (subclass->base_type.kind == GDScriptParser::DataType::NATIVE)
 				{
 					*r_base_type = c->base_type.native_type;
-				} 
+				}
 			} else {
 				*r_base_type = SNAME("RefCounted");
 			}
