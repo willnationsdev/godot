@@ -82,7 +82,7 @@ void EditorZoomWidget::set_zoom_by_increments(int p_increment_count, bool p_inte
 
 	if (p_integer_only) {
 		// Only visit integer scaling factors above 100%, and fractions with an integer denominator below 100%
-		// (1/2 = 50%, 1/3 = 33.33%, 1/4 = 25%, …).
+		// (1/2 = 50%, 1/3 = 33.33%, 1/4 = 25%, ...).
 		// This is useful when working on pixel art projects to avoid distortion.
 		// This algorithm is designed to handle fractional start zoom values correctly
 		// (e.g. 190% will zoom up to 200% and down to 100%).

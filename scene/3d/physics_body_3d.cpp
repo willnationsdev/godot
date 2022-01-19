@@ -1477,7 +1477,7 @@ void CharacterBody3D::_move_and_slide_grounded(double p_delta, bool p_was_on_flo
 				motion = motion.normalized() * MAX(0, (motion_slide_up.length() - travel_slide_up.length()));
 			}
 		}
-		// When you move forward in a downward slope you don’t collide because you will be in the air.
+		// When you move forward in a downward slope you don't collide because you will be in the air.
 		// This test ensures that constant speed is applied, only if the player is still on the ground after the snap is applied.
 		else if (floor_constant_speed && first_slide && _on_floor_if_snapped(p_was_on_floor, vel_dir_facing_up)) {
 			can_apply_constant_speed = false;

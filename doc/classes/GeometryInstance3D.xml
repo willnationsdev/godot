@@ -105,13 +105,13 @@
 			The standard texel density for lightmapping with [LightmapGI].
 		</constant>
 		<constant name="LIGHTMAP_SCALE_2X" value="1" enum="LightmapScale">
-			Multiplies texel density by 2× for lightmapping with [LightmapGI]. To ensure consistency in texel density, use this when scaling a mesh by a factor between 1.5 and 3.0.
+			Multiplies texel density by 2x for lightmapping with [LightmapGI]. To ensure consistency in texel density, use this when scaling a mesh by a factor between 1.5 and 3.0.
 		</constant>
 		<constant name="LIGHTMAP_SCALE_4X" value="2" enum="LightmapScale">
-			Multiplies texel density by 4× for lightmapping with [LightmapGI]. To ensure consistency in texel density, use this when scaling a mesh by a factor between 3.0 and 6.0.
+			Multiplies texel density by 4x for lightmapping with [LightmapGI]. To ensure consistency in texel density, use this when scaling a mesh by a factor between 3.0 and 6.0.
 		</constant>
 		<constant name="LIGHTMAP_SCALE_8X" value="3" enum="LightmapScale">
-			Multiplies texel density by 8× for lightmapping with [LightmapGI]. To ensure consistency in texel density, use this when scaling a mesh by a factor greater than 6.0.
+			Multiplies texel density by 8x for lightmapping with [LightmapGI]. To ensure consistency in texel density, use this when scaling a mesh by a factor greater than 6.0.
 		</constant>
 		<constant name="LIGHTMAP_SCALE_MAX" value="4" enum="LightmapScale">
 			Represents the size of the [enum LightmapScale] enum.

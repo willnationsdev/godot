@@ -874,10 +874,10 @@ public:
 		rvb->add_child(rs_button);
 		l = memnew(Label);
 		l->set_text(
-				String::utf8("•  ") + TTR("Supports desktop platforms only.") +
-				String::utf8("\n•  ") + TTR("Advanced 3D graphics available.") +
-				String::utf8("\n•  ") + TTR("Can scale to large complex scenes.") +
-				String::utf8("\n•  ") + TTR("Slower rendering of simple scenes."));
+				String::utf8("o  ") + TTR("Supports desktop platforms only.") +
+				String::utf8("\no  ") + TTR("Advanced 3D graphics available.") +
+				String::utf8("\no  ") + TTR("Can scale to large complex scenes.") +
+				String::utf8("\no  ") + TTR("Slower rendering of simple scenes."));
 		l->set_modulate(Color(1, 1, 1, 0.7));
 		rvb->add_child(l);
 
@@ -893,10 +893,10 @@ public:
 		rvb->add_child(rs_button);
 		l = memnew(Label);
 		l->set_text(
-				String::utf8("•  ") + TTR("Supports desktop + mobile platforms.") +
-				String::utf8("\n•  ") + TTR("Less advanced 3D graphics.") +
-				String::utf8("\n•  ") + TTR("Less scalable for complex scenes.") +
-				String::utf8("\n•  ") + TTR("Faster rendering of simple scenes."));
+				String::utf8("o  ") + TTR("Supports desktop + mobile platforms.") +
+				String::utf8("\no  ") + TTR("Less advanced 3D graphics.") +
+				String::utf8("\no  ") + TTR("Less scalable for complex scenes.") +
+				String::utf8("\no  ") + TTR("Faster rendering of simple scenes."));
 		l->set_modulate(Color(1, 1, 1, 0.7));
 		rvb->add_child(l);
 

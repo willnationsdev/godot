@@ -53,7 +53,7 @@
 				[codeblock]
 				a = char(65)      # a is "A"
 				a = char(65 + 32) # a is "a"
-				a = char(8364)    # a is "€"
+				a = char(8364)    # a is "EUR"
 				[/codeblock]
 			</description>
 		</method>

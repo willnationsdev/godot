@@ -56,7 +56,7 @@
 			The steering angle for the wheel. Setting this to a non-zero value will result in the vehicle turning when it's moving.
 		</member>
 		<member name="suspension_max_force" type="float" setter="set_suspension_max_force" getter="get_suspension_max_force" default="6000.0">
-			The maximum force the spring can resist. This value should be higher than a quarter of the [member RigidDynamicBody3D.mass] of the [VehicleBody3D] or the spring will not carry the weight of the vehicle. Good results are often obtained by a value that is about 3× to 4× this number.
+			The maximum force the spring can resist. This value should be higher than a quarter of the [member RigidDynamicBody3D.mass] of the [VehicleBody3D] or the spring will not carry the weight of the vehicle. Good results are often obtained by a value that is about 3x to 4x this number.
 		</member>
 		<member name="suspension_stiffness" type="float" setter="set_suspension_stiffness" getter="get_suspension_stiffness" default="5.88">
 			This value defines the stiffness of the suspension. Use a value lower than 50 for an off-road car, a value between 50 and 100 for a race car and try something around 200 for something like a Formula 1 car.

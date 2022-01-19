@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace Godot
 {
     /// <summary>
-    /// 2×3 matrix (2 rows, 3 columns) used for 2D linear transformations.
+    /// 2x3 matrix (2 rows, 3 columns) used for 2D linear transformations.
     /// It can represent transformations such as translation, rotation, or scaling.
     /// It consists of a three <see cref="Vector2"/> values: x, y, and the origin.
     ///

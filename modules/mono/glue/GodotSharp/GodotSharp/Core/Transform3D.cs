@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace Godot
 {
     /// <summary>
-    /// 3×4 matrix (3 rows, 4 columns) used for 3D linear transformations.
+    /// 3x4 matrix (3 rows, 4 columns) used for 3D linear transformations.
     /// It can represent transformations such as translation, rotation, or scaling.
     /// It consists of a <see cref="Basis"/> (first 3 columns) and a
     /// <see cref="Vector3"/> for the origin (last column).

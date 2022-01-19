@@ -335,13 +335,13 @@
 			Multisample antialiasing mode disabled. This is the default value, and is also the fastest setting.
 		</constant>
 		<constant name="MSAA_2X" value="1" enum="MSAA">
-			Use 2× Multisample Antialiasing. This has a moderate performance cost. It helps reduce aliasing noticeably, but 4× MSAA still looks substantially better.
+			Use 2x Multisample Antialiasing. This has a moderate performance cost. It helps reduce aliasing noticeably, but 4x MSAA still looks substantially better.
 		</constant>
 		<constant name="MSAA_4X" value="2" enum="MSAA">
-			Use 4× Multisample Antialiasing. This has a significant performance cost, and is generally a good compromise between performance and quality.
+			Use 4x Multisample Antialiasing. This has a significant performance cost, and is generally a good compromise between performance and quality.
 		</constant>
 		<constant name="MSAA_8X" value="3" enum="MSAA">
-			Use 8× Multisample Antialiasing. This has a very high performance cost. The difference between 4× and 8× MSAA may not always be visible in real gameplay conditions. Likely unsupported on low-end and older hardware.
+			Use 8x Multisample Antialiasing. This has a very high performance cost. The difference between 4x and 8x MSAA may not always be visible in real gameplay conditions. Likely unsupported on low-end and older hardware.
 		</constant>
 		<constant name="MSAA_MAX" value="4" enum="MSAA">
 			Represents the size of the [enum MSAA] enum.

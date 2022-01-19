@@ -141,7 +141,7 @@ void AnimationNode::make_invalid(const String &p_reason) {
 	if (!state->invalid_reasons.is_empty()) {
 		state->invalid_reasons += "\n";
 	}
-	state->invalid_reasons += String::utf8("•  ") + p_reason;
+	state->invalid_reasons += String::utf8("o  ") + p_reason;
 }
 
 real_t AnimationNode::blend_input(int p_input, real_t p_time, bool p_seek, real_t p_blend, FilterAction p_filter, bool p_optimize) {

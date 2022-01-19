@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace Godot
 {
     /// <summary>
-    /// 3×3 matrix used for 3D rotation and scale.
+    /// 3x3 matrix used for 3D rotation and scale.
     /// Almost always used as an orthogonal basis for a Transform.
     ///
     /// Contains 3 vector fields X, Y and Z as its columns, which are typically

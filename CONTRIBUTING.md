@@ -259,4 +259,4 @@ or a bug you want to fix), the following channels can be used:
 
 Thanks for your interest in contributing!
 
-—The Godot development team
+-The Godot development team

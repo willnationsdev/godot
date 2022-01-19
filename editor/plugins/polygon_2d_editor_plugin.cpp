@@ -248,7 +248,7 @@ void Polygon2DEditor::_uv_edit_mode_select(int p_mode) {
 		bone_paint_strength->hide();
 		bone_paint_radius->hide();
 		bone_paint_radius_label->hide();
-	} else if (p_mode == 3) { //bones´
+	} else if (p_mode == 3) { //bones'
 
 		for (int i = 0; i <= UV_MODE_REMOVE_POLYGON; i++) {
 			uv_button[i]->hide();

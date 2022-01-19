@@ -3556,7 +3556,7 @@ DisplayServerOSX::WindowID DisplayServerOSX::_create_window(WindowMode p_mode, V
 		position.y *= -1;
 		position += _get_screens_origin();
 
-		// initWithContentRect uses bottom-left corner of the window’s frame as origin.
+		// initWithContentRect uses bottom-left corner of the window's frame as origin.
 		wd.window_object = [[GodotWindow alloc]
 				initWithContentRect:NSMakeRect(position.x / scale, (position.y - p_rect.size.height) / scale, p_rect.size.width / scale, p_rect.size.height / scale)
 						  styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable

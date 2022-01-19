@@ -2096,26 +2096,22 @@ StringName GDScriptLanguage::get_global_class_name(const String &p_path, StringN
 			*r_icon_path = c->icon_path;
 		}
 		if (
-			r_base_type
-		) {
+				r_base_type) {
 			if (c->extends_used) {
 				const GDScriptParser::ClassNode *subclass = c;
 
 				while (
-					subclass->base_type.kind == GDScriptParser::DataType::CLASS &&
-					subclass->base_type.class_type != nullptr &&
-					subclass->base_type.class_type->identifier == nullptr
-				) {
+						subclass->base_type.kind == GDScriptParser::DataType::CLASS &&
+						subclass->base_type.class_type != nullptr &&
+						subclass->base_type.class_type->identifier == nullptr) {
 					subclass = subclass->base_type.class_type;
 				}
 
 				if (subclass->base_type.kind == GDScriptParser::DataType::CLASS) {
 					*r_base_type = c->base_type.class_type->identifier->name;
-				} else if (subclass->base_type.kind == GDScriptParser::DataType::ENUM)
-				{
+				} else if (subclass->base_type.kind == GDScriptParser::DataType::ENUM) {
 					*r_base_type = c->base_type.enum_type;
-				} else if (subclass->base_type.kind == GDScriptParser::DataType::NATIVE)
-				{
+				} else if (subclass->base_type.kind == GDScriptParser::DataType::NATIVE) {
 					*r_base_type = c->base_type.native_type;
 				}
 			} else {

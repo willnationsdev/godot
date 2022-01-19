@@ -45,7 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - New `Basis.rotate_to_align()` function.
   - Refactored the BoneAttachment3D node.
   - Removed the `process_list` functions.
-- [New GradientTexture2D resource (useful for 2D lights, particles, …)](https://github.com/godotengine/godot/pull/53234).
+- [New GradientTexture2D resource (useful for 2D lights, particles, ...)](https://github.com/godotengine/godot/pull/53234).
 - [Support for gettext PO template generation from scene and script files.](https://github.com/godotengine/godot/pull/39415)
   - Translation parser plugins can be written to allow extracting strings from custom file types.
 - [New Time singleton to replace date/time handling methods in the OS singleton.](https://github.com/godotengine/godot/pull/49123)
@@ -87,7 +87,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 #### GDScript
 
 - GDScript was rewritten from scratch with a cleaner approach.
-  - Annotations to replace keywords in certain cases (`@export`, `@onready`, `@rpc()`, `@tool`, `@warning_ignore()`, …).
+  - Annotations to replace keywords in certain cases (`@export`, `@onready`, `@rpc()`, `@tool`, `@warning_ignore()`, ...).
   - Typed arrays (`var array_of_nodes: Array[Node]`). Any type can be used, including custom classes.
   - See individual progress reports for more information:
     [#1](https://godotengine.org/article/gdscript-progress-report-writing-tokenizer),
@@ -242,7 +242,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 #### Audio
 
-- [Increased the default AudioStreamPlayer3D unit size to (1 → 10) to make sounds more audible while setting up the node.](https://github.com/godotengine/godot/pull/38224)
+- [Increased the default AudioStreamPlayer3D unit size to (1 -> 10) to make sounds more audible while setting up the node.](https://github.com/godotengine/godot/pull/38224)
 - Renamed the audio-related `FFT_Size` enum to `FFTSize` for consistency.
 
 #### Core
@@ -260,13 +260,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Renamed the built-in Transform type to Transform3D.
 - Renamed Node3D's `translation` property to `position` for consistency with Node2D.
 - Moved YSort functionality to a Node2D property.
-- Viewports now use a size of 512×512 by default to make them visible out of the box.
+- Viewports now use a size of 512x512 by default to make them visible out of the box.
 - [Screen orientation is now represented as an enum in the Project Settings.](https://github.com/godotengine/godot/pull/48939)
 - [Renamed 3D nodes to contain an explicit "3D" prefix for clarity and consistency](https://github.com/godotengine/godot/pull/37340).
 - Renamed various nodes:
-  - Spatial → Node3D
-  - GIProbe → VoxelGI
-  - BakedLightmap → LightmapGI
+  - Spatial -> Node3D
+  - GIProbe -> VoxelGI
+  - BakedLightmap -> LightmapGI
   - Light2D -> PointLight2D
   - VisibilityNotifier2D -> VisibleOnScreenNotifier2D
   - VisibilityNotifier3D -> VisibleOnScreenNotifier3D
@@ -288,7 +288,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hovering layer checkboxes in the inspector now results in visual feedback.
   - Clicking between two checkboxes will now enable the checkbox that was last highlighted instead of doing nothing.
 - CSV profiler measures can now be saved anywhere on the filesystem, not just in the project folder.
-- Improved the 2D zooming algorithm to always visit powers of two (50%, 100%, 200%, …) and avoid floating-point precision issues.
+- Improved the 2D zooming algorithm to always visit powers of two (50%, 100%, 200%, ...) and avoid floating-point precision issues.
 - Times are now displayed as milliseconds in the profiler and performance monitors (instead of seconds).
 - Improved the batch rename dialog usability and design consistency.
   - Clarified error messages when there are regular expression errors.
@@ -401,8 +401,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed OpenGL ES 2.0 renderer (replaced by the new mobile-oriented OpenGL 3 renderer).
   - Vulkan, OpenGL 3.3, OpenGL ES 3.0 or WebGL 2.0 support is now required to run Godot.
-- [Removed support for 16× MSAA due to driver bugs and low performance.](https://github.com/godotengine/godot/pull/49063)
-  - For high-quality offline rendering, using supersampling together with 8× MSAA is a better option anyway.
+- [Removed support for 16x MSAA due to driver bugs and low performance.](https://github.com/godotengine/godot/pull/49063)
+  - For high-quality offline rendering, using supersampling together with 8x MSAA is a better option anyway.
 
 ### Fixed
 
@@ -746,7 +746,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `HTTPRequest.timeout` property (defaults to 0, which is disabled).
 - `HTTPRequest.download_chunk_size` property.
   - This value can be adjusted to reduce the allocation overhead and file writes when downloading large files.
-  - The default value was increased for faster downloads (4 KB → 64 KB).
+  - The default value was increased for faster downloads (4 KB -> 64 KB).
 - WebSocket improvements.
   - Support for SSL in WebSocketServer.
   - WebSocketClient can now use custom SSL certificates (except on HTML5).
@@ -827,7 +827,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The editor now uses the font hinting algorithm that best matches the OS' default.
   - Hinting is set to "None" on macOS, and set to "Light" on Windows and Linux.
   - This can be changed in the Editor Settings.
-- The editor window dimming when a popup appears is now less intense (60% → 50%).
+- The editor window dimming when a popup appears is now less intense (60% -> 50%).
   - The animation was also removed as it made the editor feel sluggish at lower FPS.
 - Several editor menus have been reorganized for consistency and conciseness.
 - Undo/Redo now supports more actions throughout the editor.
@@ -842,14 +842,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Optimized the variant reference function, making complex scripts slightly faster.
 - Disabled high-quality voxel cone tracing by default.
   - This makes GIProbe much faster out of the box, at the cost of less realistic reflections.
-- Lowered the default maximum directional shadow distance (200 → 100).
+- Lowered the default maximum directional shadow distance (200 -> 100).
   - This makes directional shadow rendering consistent between the editor and running project when using the default Camera node settings.
 - Tweaked the default depth fog maximum distance to be independent of the Camera's `far` value (0..100).
   - This makes fog display consistent between the editor and a running project.
-- Tweaked the default height fog values to be more logical (0..100 → 10..0).
+- Tweaked the default height fog values to be more logical (0..100 -> 10..0).
   - This means height fog will be drawn from top-to-bottom, instead of being drawn from bottom-to-top.
 - Significantly improved SSAO performance by using a lower sample count.
-  - SSAO now uses 3×3 blurring by default, resulting in less visible noise patterns.
+  - SSAO now uses 3x3 blurring by default, resulting in less visible noise patterns.
 - When "Keep 3D Linear" is enabled, colors are no longer clamped to [0, 1] when using Linear tonemapping.
   - This allows rendering HDR values in floating-point texture targets for further processing or saving HDR data into files.
 - The lightmap baker now calculates lightmap sizes dynamically based on surface area.
@@ -909,8 +909,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved the Asset Library page loading transitions.
 - Tweaked the Asset Library detail page layout for better readability.
 - Audio mixer faders now use a non-linear algorithm to better fit human hearing.
-- Tooltips now appear faster when hovering elements in the editor (0.7 seconds → 0.5 seconds).
-- Increased the low-processor usage mode's default maximum refresh rate (125 FPS → 144 FPS).
+- Tooltips now appear faster when hovering elements in the editor (0.7 seconds -> 0.5 seconds).
+- Increased the low-processor usage mode's default maximum refresh rate (125 FPS -> 144 FPS).
   - This makes the editor feel slightly smoother on 144 Hz displays.
 - Tree scrolling when dragging now uses a larger drag margin, making drag-and-drop more convenient.
 - Holding <kbd>Ctrl</kbd> now toggles snapping in GraphEdit.
@@ -930,8 +930,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Smooth path point and curve tangents now use different icons to be distinguished from sharp points.
   - Tangent lines are now gray in the Path2D and Path editors.
   - Path2D lines are now antialiased.
-- Increased the TileSet and polygon UV editor's maximum zoom levels (400% → 1600%).
-- Decreased the maximum allowed StyleBoxFlat corner detail (128 → 20).
+- Increased the TileSet and polygon UV editor's maximum zoom levels (400% -> 1600%).
+- Decreased the maximum allowed StyleBoxFlat corner detail (128 -> 20).
   - This prevents slowness and glitches caused by using overly detailed corners.
 - 3D collision shapes and RayCasts are now drawn in gray when disabled.
 - Improved RayCast2D and one-way collision drawing.
@@ -972,14 +972,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - If there is more than one node to delete, the number of nodes to delete is displayed.
 - Improved the "Snap Object to Floor" functionality in the 3D editor.
   - An error message is now displayed if no nodes could be snapped.
-  - Increased the maximum snapping height (10 → 20).
-  - Increased the maximum snapping tolerance (0.1 → 0.2).
+  - Increased the maximum snapping height (10 -> 20).
+  - Increased the maximum snapping tolerance (0.1 -> 0.2).
 - 2D/3D selections, rotations and selected texts are now highlighted with the editor theme's accent color.
 - 3D light gizmos are now tinted using the light's color, making navigation easier while using the unshaded display mode.
 - Improved the 3D light and AudioStreamPlayer3D gizmos to better represent their depth in the 3D world.
 - Tweaked the 3D manipulator gizmo's colors for better visibility.
 - Tweaked the 2D and 3D axis colors for consistency with gizmo colors.
-- Increased the default 3D manipulator gizmo opacity (0.2 → 0.4).
+- Increased the default 3D manipulator gizmo opacity (0.2 -> 0.4).
 - The multiline text editor popup dialog's width is now capped on large displays.
   - This prevents lines from becoming very long, which could hamper text readability.
 - Non-printable escape characters are now stripped when pasting text into a LineEdit.
@@ -1208,7 +1208,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     - standalone expressions,
     - discarded return values from functions,
     - unreachable code after a `return` statement,
-    - …
+    - ...
   - Warnings can be disabled in the Project Settings or by writing special comments.
 - [GDScript keyword `class_name` to register scripts as classes.](https://docs.godotengine.org/en/latest/getting_started/step_by_step/scripting_continued.html#register-scripts-as-classes)
 - Simple expression language independent from GDScript, used by inspector boxes that accept numeric values.
@@ -1264,7 +1264,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Servers can now access IP and port information of peers in high-level networking.
 - High-level multiplayer API decoupled from SceneTree (see `SceneTree.multiplayer_api`/`SceneTree.custom_multiplayer_api`), can now be extended.
 - `Input.set_default_cursor_shape()` to change the default shape in the viewport.
-- Custom cursors can now be as large as 256×256 (needed to be exactly 32×32 before).
+- Custom cursors can now be as large as 256x256 (needed to be exactly 32x32 before).
 - Support for radio-looking items with icon in `PopupMenu`s.
 - Drag and drop to rearrange Editor docks.
 - TileSet's `TileMode` is now exposed to GDScript.
@@ -1355,8 +1355,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Indentation guides are now displayed when indenting using spaces.
 - Multi-line strings are now highlighted as strings rather than as comments in the script editor.
   - This is because GDScript does not officially support multiline comments.
-- Increased the script editor's line spacing (4 pixels → 6 pixels).
-- Increased the caret width in the script editor (1 pixel → 2 pixels).
+- Increased the script editor's line spacing (4 pixels -> 6 pixels).
+- Increased the caret width in the script editor (1 pixel -> 2 pixels).
 - The project manager window is now resized to match the editor scale.
 - The asset library now makes use of threading, making loading more responsive.
 - Line spacing in the script editor, underlines and caret widths are now resized to match the editor scale.
@@ -1520,17 +1520,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Increased the default low-processor-usage mode FPS limit (60 → 125).
+- Increased the default low-processor-usage mode FPS limit (60 -> 125).
   - This makes the editor smoother and more responsive.
-- Increased the default 3D editor camera's field of view (55 → 70).
-- Increased the default 3D Camera node's field of view (65 → 70).
-- Changed the default editor font (Droid Sans → [Noto Sans](https://www.google.com/get/noto/)).
-- Changed the default script editor font (Source Code Pro → [Hack](https://sourcefoundry.org/hack/))
+- Increased the default 3D editor camera's field of view (55 -> 70).
+- Increased the default 3D Camera node's field of view (65 -> 70).
+- Changed the default editor font (Droid Sans -> [Noto Sans](https://www.google.com/get/noto/)).
+- Changed the default script editor font (Source Code Pro -> [Hack](https://sourcefoundry.org/hack/))
 - Renamed `engine.cfg` to `project.godot`.
   - This allows users to open a project by double-clicking the file if Godot is associated to `.godot` files.
 - Some methods from the `OS` singleton were moved to the new `Engine` singleton.
 - Switched from [GLEW](http://glew.sourceforge.net/) to [GLAD](https://glad.dav1d.de/) for OpenGL wrapping.
-- Changed the SCons build flag for simple logs (`colored=yes` → `verbose=no`).
+- Changed the SCons build flag for simple logs (`colored=yes` -> `verbose=no`).
 - The HTML5 platform now uses WebGL 2.0 (instead of 1.0).
 - Redesigned the Godot logo to be more legible at small sizes.
 
