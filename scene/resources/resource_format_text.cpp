@@ -33,6 +33,7 @@
 #include "core/config/project_settings.h"
 #include "core/io/dir_access.h"
 #include "core/io/missing_resource.h"
+#include "core/io/resource.h"
 #include "core/io/resource_format_binary.h"
 #include "core/version.h"
 
@@ -1416,6 +1417,133 @@ ResourceUID::ID ResourceLoaderText::get_uid(Ref<FileAccess> p_f) {
 	return ResourceUID::INVALID_ID;
 }
 
+Error ResourceLoaderText::_parse_only_ext_resource_value(VariantParser::Token &token, Variant &value, VariantParser::Stream *p_stream, int &line, String &r_err_str, VariantParser::ResourceParser *p_res_parser = nullptr) {
+	if (token.type != VariantParser::TK_IDENTIFIER || token.value != "ExtResource") {
+		return OK;
+	}
+
+	VariantParser::get_token(p_stream, token, line, r_err_str);
+	if (token.type != VariantParser::TK_PARENTHESIS_OPEN) {
+		r_err_str = "Expected '('";
+		return ERR_PARSE_ERROR;
+	}
+
+	// Extract ext_resource's id
+	VariantParser::get_token(p_stream, token, line, r_err_str);
+	if (token.type != VariantParser::TK_NUMBER && token.type != VariantParser::TK_STRING) {
+		r_err_str = "Expected number (old style sub-resource index) or String (ext-resource ID)";
+		return ERR_PARSE_ERROR;
+	}
+	value = token.value;
+
+	VariantParser::get_token(p_stream, token, line, r_err_str);
+	if (token.type != VariantParser::TK_PARENTHESIS_CLOSE) {
+		r_err_str = "Expected ')'";
+		return ERR_PARSE_ERROR;
+	}
+
+	return OK;
+}
+
+// Returns empty string if the attached script could not be fetched.
+String ResourceLoaderText::get_attached_script_path(Ref<FileAccess> p_f) {
+	// Opening itself is pattern is also seen in resource_format_binary.cpp.
+	// It makes it convenient to not have to call open before this method.
+	open(p_f);
+
+	f = p_f;
+	stream.f = f;
+
+	ignore_resource_parsing = true;
+	Map<String, String> res_id_to_script_path;
+
+	while (next_tag.name == "ext_resource") {
+		if (!next_tag.fields.has("path")) {
+			return "";
+		}
+
+		if (!next_tag.fields.has("type")) {
+			return "";
+		}
+
+		if (!next_tag.fields.has("id")) {
+			return "";
+		}
+
+		String type = next_tag.fields["type"];
+
+		// Adds all script tags
+		if (type == "Script") {
+			res_id_to_script_path[next_tag.fields["id"]] = next_tag.fields["path"];
+		}
+
+		error = VariantParser::parse_tag(&stream, lines, error_text, next_tag);
+
+		if (error) {
+			_printerr();
+		}
+
+		resource_current++;
+	}
+
+	// Find resource tag to begin parsing properties
+	while (next_tag.name != "resource") {
+		error = VariantParser::parse_tag(&stream, lines, error_text, next_tag);
+		if (error) {
+			return "";
+		}
+	}
+
+	resource_current++;
+
+	while (true) {
+		String assign;
+		Variant value;
+
+		error = VariantParser::parse_tag_assign_with_value_func_eof(&stream, lines, error_text, next_tag, assign, value, &rp, false, _parse_only_ext_resource_value);
+
+		if (error) {
+			if (error != ERR_FILE_EOF) {
+				_printerr();
+			}
+			return "";
+		}
+
+		if (!assign.is_empty()) {
+			if (assign == "script") {
+				// The value returned by our custom value parse function should be the id of the resource.
+				if (!res_id_to_script_path.has(value)) {
+					error = ERR_PARSE_ERROR;
+					error_text = "Expected script resource to exist within resource file!";
+					_printerr();
+					return "";
+				}
+				String path = res_id_to_script_path[value];
+
+				if (path.is_relative_path()) {
+					// Path is relative to file being loaded, so convert to a resource path.
+					path = ProjectSettings::get_singleton()->localize_path(local_path.get_base_dir().plus_file(path));
+				}
+
+				if (remaps.has(path)) {
+					path = remaps[path];
+				}
+
+				return path;
+			}
+		} else if (!next_tag.name.is_empty()) {
+			error = ERR_FILE_CORRUPT;
+			error_text = "Extra tag found when parsing main resource file";
+			_printerr();
+			return "";
+		} else {
+			break;
+		}
+	}
+
+	return "";
+}
+
 /////////////////////
 
 Ref<Resource> ResourceFormatLoaderText::load(const String &p_path, const String &p_original_path, Error *r_error, bool p_use_sub_threads, float *r_progress, CacheMode p_cache_mode) {
@@ -1511,6 +1639,21 @@ ResourceUID::ID ResourceFormatLoaderText::get_resource_uid(const String &p_path)
 	loader.local_path = ProjectSettings::get_singleton()->localize_path(p_path);
 	loader.res_path = loader.local_path;
 	return loader.get_uid(f);
+}
+
+String ResourceFormatLoaderText::get_attached_script_path(const String &p_path) const {
+	String type = get_resource_type(p_path);
+	if (!Resource::is_script_extendable_resource(type)) {
+		return "";
+	}
+
+	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ);
+	if (f.is_null()) {
+		return "";
+	}
+
+	ResourceLoaderText loader;
+	return loader.get_attached_script_path(f);
 }
 
 void ResourceFormatLoaderText::get_dependencies(const String &p_path, List<String> *p_dependencies, bool p_add_types) {

@@ -120,6 +120,7 @@ public:
 
 	Node *get_local_scene() const;
 
+	static bool is_script_extendable_resource(const StringName &p_class);
 #ifdef TOOLS_ENABLED
 
 	uint32_t hash_edited_version() const;

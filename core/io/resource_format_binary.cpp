@@ -865,6 +865,53 @@ String ResourceLoaderBinary::get_unicode_string() {
 	return s;
 }
 
+String ResourceLoaderBinary::get_attached_script_path(Ref<FileAccess> p_f) {
+	open(p_f, false, true);
+	if (error) {
+		return "";
+	}
+	int main_resource_idx = internal_resources.size() - 1;
+
+	// TODO
+	/*for (const ExtResource &E : external_resources) {
+		if (E.type == Script::get_class_static())
+			return E.path;
+	}*/
+
+	uint64_t offset = internal_resources[main_resource_idx].offset;
+
+	f->seek(offset);
+
+	String t = get_unicode_string();
+
+	int pc = f->get_32();
+	for (int j = 0; j < pc; j++) {
+		StringName name = _get_string();
+
+		if (name == StringName()) {
+			error = ERR_FILE_CORRUPT;
+			ERR_FAIL_V("");
+		}
+
+		Variant value;
+		uint32_t type = f->get_32();
+		// Note that OBJECT_EXTERNAL_RESOURCE is old resource file format
+		if (name != StringName("script") || type != VARIANT_OBJECT) {
+			return "";
+		}
+
+		uint32_t objtype = f->get_32();
+		if (objtype != OBJECT_EXTERNAL_RESOURCE_INDEX) {
+			return "";
+		}
+
+		int erindex = f->get_32();
+		return external_resources[erindex].path;
+	}
+
+	return "";
+}
+
 void ResourceLoaderBinary::get_dependencies(Ref<FileAccess> p_f, List<String> *p_dependencies, bool p_add_types) {
 	open(p_f, false, true);
 	if (error) {
@@ -1118,6 +1165,21 @@ void ResourceFormatLoaderBinary::get_recognized_extensions(List<String> *p_exten
 
 bool ResourceFormatLoaderBinary::handles_type(const String &p_type) const {
 	return true; //handles all
+}
+
+String ResourceFormatLoaderBinary::get_attached_script_path(const String &p_path) const {
+	String type = get_resource_type(p_path);
+	if (!Resource::is_script_extendable_resource(type)) {
+		return "";
+	}
+
+	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ);
+	ERR_FAIL_COND_V_MSG(f.is_null(), "", "Cannot open file '" + p_path + "'.");
+
+	ResourceLoaderBinary loader;
+	loader.local_path = ProjectSettings::get_singleton()->localize_path(p_path);
+	loader.res_path = loader.local_path;
+	return loader.get_attached_script_path(f);
 }
 
 void ResourceFormatLoaderBinary::get_dependencies(const String &p_path, List<String> *p_dependencies, bool p_add_types) {

@@ -320,6 +320,11 @@ void Resource::notify_change_to_owners() {
 	}
 }
 
+// We assume that only Resources can have attached scripts (excluding Scripts and PackedScenes, which still extend Resource).
+bool Resource::is_script_extendable_resource(const StringName &p_class) {
+	return ClassDB::is_parent_class(p_class, Resource::get_class_static()) && !ClassDB::is_parent_class(p_class, Script::get_class_static()) && !ClassDB::is_parent_class(p_class, "PackedScene");
+}
+
 #ifdef TOOLS_ENABLED
 
 uint32_t Resource::hash_edited_version() const {

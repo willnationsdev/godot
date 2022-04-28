@@ -53,14 +53,29 @@
 
 FileSystemDock *FileSystemDock::singleton = nullptr;
 
-Ref<Texture2D> FileSystemDock::_get_tree_item_icon(bool p_is_valid, String p_file_type) {
-	Ref<Texture2D> file_icon;
+Ref<Texture2D> FileSystemDock::_get_file_icon(bool p_is_valid, String p_file_type, String p_file_path) {
+	EditorFileSystemDirectory *dir = EditorFileSystem::get_singleton()->get_filesystem_path(p_file_path.get_base_dir());
+	int index = dir->find_file_index(p_file_path.get_file());
+	return _get_file_icon(p_is_valid, p_file_type, dir, index);
+}
+
+Ref<Texture2D> FileSystemDock::_get_file_icon(bool p_is_valid, String p_file_type, EditorFileSystemDirectory *p_dir, int p_file_index) {
 	if (!p_is_valid) {
-		file_icon = get_theme_icon(SNAME("ImportFail"), SNAME("EditorIcons"));
-	} else {
-		file_icon = (has_theme_icon(p_file_type, SNAME("EditorIcons"))) ? get_theme_icon(p_file_type, SNAME("EditorIcons")) : get_theme_icon(SNAME("File"), SNAME("EditorIcons"));
+		return get_theme_icon(SNAME("ImportFail"), SNAME("EditorIcons"));
 	}
-	return file_icon;
+	// Fetches the resourse icon using the EditorNode's script icon cache and EditorFileSystemDirectory's FileInfo cache.
+	String resource_script_name = p_dir->get_file_resource_script_class_name(p_file_index);
+	if (!resource_script_name.is_empty()) {
+		return EditorNode::get_singleton()->get_class_icon(resource_script_name);
+	}
+	if (has_theme_icon(p_file_type, SNAME("EditorIcons"))) {
+		return get_theme_icon(p_file_type, SNAME("EditorIcons"));
+	}
+	if (ClassDB::is_parent_class(p_file_type, Resource::get_class_static())) {
+		// Use default Resource icon if there is no custom icon for a resource.
+		return EditorNode::get_singleton()->get_class_icon(Resource::get_class_static());
+	}
+	return get_theme_icon(SNAME("File"), SNAME("EditorIcons"));
 }
 
 bool FileSystemDock::_create_tree(TreeItem *p_parent, EditorFileSystemDirectory *p_dir, Vector<String> &uncollapsed_paths, bool p_select_in_favorites, bool p_unfold_path) {
@@ -145,7 +160,8 @@ bool FileSystemDock::_create_tree(TreeItem *p_parent, EditorFileSystemDirectory 
 			TreeItem *file_item = tree->create_item(subdirectory_item);
 			file_item->set_text(0, fi.name);
 			file_item->set_structured_text_bidi_override(0, TextServer::STRUCTURED_TEXT_FILE);
-			file_item->set_icon(0, _get_tree_item_icon(!fi.import_broken, fi.type));
+			file_item->set_icon(0, _get_file_icon(!fi.import_broken, fi.type, p_dir, p_dir->find_file_index(fi.name)));
+
 			String file_metadata = lpath.plus_file(fi.name);
 			file_item->set_metadata(0, file_metadata);
 			if (!p_select_in_favorites && path == file_metadata) {
@@ -264,7 +280,7 @@ void FileSystemDock::_update_tree(const Vector<String> &p_uncollapsed_paths, boo
 			int index;
 			EditorFileSystemDirectory *dir = EditorFileSystem::get_singleton()->find_file(fave, &index);
 			if (dir) {
-				icon = _get_tree_item_icon(dir->get_file_import_is_valid(index), dir->get_file_type(index));
+				icon = _get_file_icon(dir->get_file_import_is_valid(index), dir->get_file_type(index), dir, index);
 			} else {
 				icon = get_theme_icon(SNAME("File"), SNAME("EditorIcons"));
 			}
@@ -353,6 +369,8 @@ void FileSystemDock::_notification(int p_what) {
 			EditorFeatureProfileManager::get_singleton()->connect("current_feature_profile_changed", callable_mp(this, &FileSystemDock::_feature_profile_changed));
 
 			EditorFileSystem::get_singleton()->connect("filesystem_changed", callable_mp(this, &FileSystemDock::_fs_changed));
+			EditorFileSystem::get_singleton()->connect("script_classes_loaded", callable_mp(this, &FileSystemDock::_fs_changed));
+
 			EditorResourcePreview::get_singleton()->connect("preview_invalidated", callable_mp(this, &FileSystemDock::_preview_invalidated));
 
 			button_reload->set_icon(get_theme_icon(SNAME("Reload"), SNAME("EditorIcons")));
@@ -906,12 +924,11 @@ void FileSystemDock::_update_file_list(bool p_keep_selection) {
 
 		String tooltip = fpath;
 
+		type_icon = _get_file_icon(true, ftype, fpath);
 		// Select the icons.
 		if (!finfo->import_broken) {
-			type_icon = (has_theme_icon(ftype, SNAME("EditorIcons"))) ? get_theme_icon(ftype, SNAME("EditorIcons")) : get_theme_icon(SNAME("Object"), SNAME("EditorIcons"));
 			big_icon = file_thumbnail;
 		} else {
-			type_icon = get_theme_icon(SNAME("ImportFail"), SNAME("EditorIcons"));
 			big_icon = file_thumbnail_broken;
 			tooltip += "\n" + TTR("Status: Import of file failed. Please fix file and reimport manually.");
 		}
@@ -1069,6 +1086,11 @@ void FileSystemDock::_preview_invalidated(const String &p_path) {
 }
 
 void FileSystemDock::_fs_changed() {
+	if (EditorFileSystem::get_singleton()->is_update_script_classes_queued()) {
+		// We only want to refresh the FileSystemDock AFTER script classes are updated, as
+		// that will update the custom class icons we use for our tree and list items.
+		return;
+	}
 	button_hist_prev->set_disabled(history_pos == 0);
 	button_hist_next->set_disabled(history_pos == history.size() - 1);
 	scanning_vb->hide();

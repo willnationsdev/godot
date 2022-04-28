@@ -86,6 +86,15 @@ String ResourceFormatLoader::get_resource_type(const String &p_path) const {
 	return "";
 }
 
+String ResourceFormatLoader::get_attached_script_path(const String &p_path) const {
+	String script_path;
+	if (GDVIRTUAL_CALL(_get_attached_script_path, p_path, script_path)) {
+		return script_path;
+	}
+
+	return "";
+}
+
 ResourceUID::ID ResourceFormatLoader::get_resource_uid(const String &p_path) const {
 	int64_t uid;
 	if (GDVIRTUAL_CALL(_get_resource_uid, p_path, uid)) {
@@ -176,6 +185,7 @@ void ResourceFormatLoader::_bind_methods() {
 	GDVIRTUAL_BIND(_get_recognized_extensions);
 	GDVIRTUAL_BIND(_handles_type, "type");
 	GDVIRTUAL_BIND(_get_resource_type, "path");
+	GDVIRTUAL_BIND(_get_attached_script_path, "path");
 	GDVIRTUAL_BIND(_get_resource_uid, "path");
 	GDVIRTUAL_BIND(_get_dependencies, "path", "add_types");
 	GDVIRTUAL_BIND(_rename_dependencies, "path", "renames");
@@ -754,6 +764,19 @@ ResourceUID::ID ResourceLoader::get_resource_uid(const String &p_path) {
 	}
 
 	return ResourceUID::INVALID_ID;
+}
+
+String ResourceLoader::get_attached_script_path(const String &p_path) {
+	String local_path = _validate_local_path(p_path);
+
+	for (int i = 0; i < loader_count; i++) {
+		String path = loader[i]->get_attached_script_path(local_path);
+		if (!path.is_empty()) {
+			return path;
+		}
+	}
+
+	return "";
 }
 
 String ResourceLoader::_path_remap(const String &p_path, bool *r_translation_remapped) {
