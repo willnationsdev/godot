@@ -35,6 +35,7 @@
 #include "core/io/missing_resource.h"
 #include "core/io/resource.h"
 #include "core/io/resource_format_binary.h"
+#include "core/templates/hash_map.h"
 #include "core/version.h"
 
 // Version 2: changed names for Basis, AABB, Vectors, etc.
@@ -1455,7 +1456,7 @@ String ResourceLoaderText::get_attached_script_path(Ref<FileAccess> p_f) {
 	stream.f = f;
 
 	ignore_resource_parsing = true;
-	Map<String, String> res_id_to_script_path;
+	HashMap<String, String> res_id_to_script_path;
 
 	while (next_tag.name == "ext_resource") {
 		if (!next_tag.fields.has("path")) {
