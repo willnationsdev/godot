@@ -2278,6 +2278,33 @@ ScriptLanguage *Engine::get_script_language(int p_index) const {
 	return ScriptServer::get_language(p_index);
 }
 
+Vector<StringName> Engine::get_global_script_class_list()
+{
+	List<StringName> names;
+	Vector<StringName> ret;
+	ScriptServer::get_global_class_list(&names);
+	for (const StringName& name : names) {
+		ret.push_back(name);
+	}
+	return ret;
+}
+
+StringName Engine::get_global_script_class_base(const StringName &p_class) {
+	return ScriptServer::get_global_class_base(p_class);
+}
+
+StringName Engine::get_global_script_class_native_base(const StringName &p_class) {
+	return ScriptServer::get_global_class_native_base(p_class);
+}
+
+StringName Engine::get_global_script_class_language(const StringName &p_class) {
+	return ScriptServer::get_global_class_language(p_class);
+}
+
+String Engine::get_global_script_class_path(const StringName &p_class) {
+	return ScriptServer::get_global_class_path(p_class);
+}
+
 void Engine::set_editor_hint(bool p_enabled) {
 	::Engine::get_singleton()->set_editor_hint(p_enabled);
 }
@@ -2332,6 +2359,12 @@ void Engine::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("register_script_language", "language"), &Engine::register_script_language);
 	ClassDB::bind_method(D_METHOD("get_script_language_count"), &Engine::get_script_language_count);
 	ClassDB::bind_method(D_METHOD("get_script_language", "index"), &Engine::get_script_language);
+
+	ClassDB::bind_method(D_METHOD("get_global_script_class_list"), &Engine::get_global_script_class_list);
+	ClassDB::bind_method(D_METHOD("get_global_script_class_base", "class"), &Engine::get_global_script_class_base);
+	ClassDB::bind_method(D_METHOD("get_global_script_class_native_base", "class"), &Engine::get_global_script_class_native_base);
+	ClassDB::bind_method(D_METHOD("get_global_script_class_language", "class"), &Engine::get_global_script_class_language);
+	ClassDB::bind_method(D_METHOD("get_global_script_class_path", "class"), &Engine::get_global_script_class_path);
 
 	ClassDB::bind_method(D_METHOD("is_editor_hint"), &Engine::is_editor_hint);
 

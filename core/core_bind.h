@@ -671,6 +671,12 @@ public:
 	int get_script_language_count();
 	ScriptLanguage *get_script_language(int p_index) const;
 
+	Vector<StringName> get_global_script_class_list();
+	StringName get_global_script_class_base(const StringName &p_class);
+	StringName get_global_script_class_native_base(const StringName &p_class);
+	StringName get_global_script_class_language(const StringName &p_class);
+	String get_global_script_class_path(const StringName &p_class);
+
 	void set_editor_hint(bool p_enabled);
 	bool is_editor_hint() const;
 
