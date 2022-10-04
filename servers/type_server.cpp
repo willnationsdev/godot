@@ -1,207 +1,497 @@
+/*************************************************************************/
+/*  type_server.cpp                                                      */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                      https://godotengine.org                          */
+/*************************************************************************/
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+
 #include "servers/type_server.h"
+
 #include "core/core_bind.h"
 
-#define ERR_NO_BEST_FIT_MSG "A best fit type operator could not be determined."
-
-StringName TypeServer::get_operator_name() const {
-	return SNAME("TypeServer");
+void TypeOperator::configure(bool p_eager, bool p_handled, Variant result) {
+	_eager = p_eager;
+	_handled = p_handled;
+	_result = result;
 }
 
-int TypeServer::has_priority(const Variant &p_type, TypeOpKind p_op_kind) const {
-	return INT_MAX;
-}
-
-PackedStringArray TypeServer::get_type_list(bool p_no_named = false, bool p_no_anonymous = true) const {
+PackedStringArray TypeOperator::get_type_list(bool p_no_named = false, bool p_no_anonymous = true) const {
 	PackedStringArray ret;
-	for (const TypeOperator *op : _operators) {
-		ret.append_array(op->get_type_list(p_no_named, p_no_anonymous));
+	if (GDVIRTUAL_CALL(_get_type_list, p_no_named, p_no_anonymous, ret)) {
+		return ret;
 	}
 	return ret;
 }
 
-PackedStringArray TypeServer::get_inheriters_from_type(const Variant &p_type) const {
+PackedStringArray TypeOperator::get_inheriters_from_type(const Variant &p_type) const {
 	PackedStringArray ret;
-	Vector<TypeOperator *> ops = filter_operators(p_type, TYPE_OP_KIND_QUERY_INHERITANCE, TYPE_OP_FILTER_SUPPORTS);
-	for (const TypeOperator *op : ops) {
-		ret.append_array(op->get_inheriters_from_type(p_type));
+	if (GDVIRTUAL_CALL(_get_inheriters_from_type, p_type, ret)) {
+		return ret;
 	}
 	return ret;
 }
 
-StringName TypeServer::get_parent_type(const Variant &p_type) const {
-	TypeOperator *optr = find_best_fit_operator(p_type, TYPE_OP_KIND_QUERY_INHERITANCE);
-	ERR_FAIL_COND_V_MSG(!optr, StringName(), ERR_NO_BEST_FIT_MSG);
-	return optr->get_parent_type(p_type);
-}
-
-bool TypeServer::type_exists(const Variant &p_type) const {
-	Vector<TypeOperator *> ops = filter_operators(p_type, TYPE_OP_KIND_QUERY_STATUS, TYPE_OP_FILTER_SUPPORTS);
-	for (const TypeOperator *op : ops) {
-		if (op->type_exists(p_type)) {
-			return true;
-		}
+StringName TypeOperator::get_parent_type(const Variant &p_type) const {
+	StringName ret;
+	if (GDVIRTUAL_CALL(_get_parent_type, p_type, ret)) {
+		return ret;
 	}
-	return false;
+	return ret;
 }
 
-bool TypeServer::is_parent_type(const Variant &p_type, const Variant &p_inherits) const {
-	Vector<TypeOperator *> ops = filter_operators(p_type, TYPE_OP_KIND_QUERY_INHERITANCE, TYPE_OP_FILTER_SUPPORTS);
-	for (const TypeOperator *op : ops) {
-		if (op->type_exists(p_type)) {
-			return true;
-		}
+bool TypeOperator::type_exists(const Variant &p_type) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_type_exists, p_type, ret)) {
+		return ret;
 	}
-	return false;
+	return ret;
 }
 
-bool TypeServer::can_instantiate(const Variant &p_type) const {
-	Vector<TypeOperator *> ops = filter_operators(p_type, TYPE_OP_KIND_QUERY_STATUS, TYPE_OP_FILTER_SUPPORTS);
-	for (const TypeOperator *op : ops) {
-		if (op->can_instantiate(p_type)) {
-			return true;
-		}
+bool TypeOperator::is_parent_type(const Variant &p_type, const Variant &p_inherits) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_is_parent_type, p_type, p_inherits, ret)) {
+		return ret;
 	}
-	return false;
+	return ret;
 }
 
-Variant TypeServer::instantiate(const Variant &p_type) const {
-	TypeOperator *optr = find_best_fit_operator(p_type, TYPE_OP_KIND_INSTANTIATE);
-	ERR_FAIL_COND_V_MSG(!optr, Variant(), ERR_NO_BEST_FIT_MSG);
-	return optr->instantiate(p_type);
+bool TypeOperator::can_instantiate(const Variant &p_type) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_can_instantiate, p_type, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-bool TypeServer::has_signal(const Variant &p_type, StringName p_signal) const {
-	
-}
-Dictionary TypeServer::get_signal(const Variant &p_type, StringName p_signal) const {
-	
-}
-TypedArray<Dictionary> TypeServer::get_signal_list(const Variant &p_type, bool p_no_inheritance) const {
-	
+Variant TypeOperator::instantiate(const Variant &p_type) const {
+	Variant ret;
+	if (GDVIRTUAL_CALL(_instantiate, p_type, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-TypedArray<Dictionary> TypeServer::get_property_list(const Variant &p_type, bool p_no_inheritance) const {
-	
-}
-Variant TypeServer::get_property(const Variant &p_source, const StringName &p_property) const {
-	
-}
-Error TypeServer::set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value) const {
-	
+bool TypeOperator::has_signal(const Variant &p_type, StringName p_signal) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_has_signal, p_type, p_signal, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-bool TypeServer::has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance) const {
-	
+Dictionary TypeOperator::get_signal(const Variant &p_type, StringName p_signal) const {
+	Dictionary ret;
+	if (GDVIRTUAL_CALL(_get_signal, p_type, p_signal, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-TypedArray<Dictionary> TypeServer::get_method_list(const Variant &p_type, bool p_no_inheritance) const {
-	
+TypedArray<Dictionary> TypeOperator::get_type_signal_list(const Variant &p_type, bool p_no_inheritance) const {
+	TypedArray<Dictionary> ret;
+	if (GDVIRTUAL_CALL(_get_type_signal_list, p_type, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-PackedStringArray TypeServer::get_integer_constant_list(const Variant &p_type, bool p_no_inheritance) const {
-	
-}
-bool TypeServer::has_integer_constant(const Variant &p_type, const StringName &p_name) const {
-	
-}
-int64_t TypeServer::get_integer_constant(const Variant &p_type, const StringName &p_name) const {
-	
+TypedArray<Dictionary> TypeOperator::get_type_property_list(const Variant &p_type, bool p_no_inheritance) const {
+	TypedArray<Dictionary> ret;
+	if (GDVIRTUAL_CALL(_get_type_property_list, p_type, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-bool TypeServer::has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
-	
-}
-PackedStringArray TypeServer::get_enum_list(const Variant &p_type, bool p_no_inheritance) const {
-	
-}
-PackedStringArray TypeServer::get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance) const {
-	
-}
-StringName TypeServer::get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
-	
+Variant TypeOperator::get_property(const Variant &p_source, const StringName &p_property) const {
+	Variant ret;
+	if (GDVIRTUAL_CALL(_get_property, p_source, p_property, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-bool TypeServer::is_type_enabled(const Variant &p_type) const {
-	
+Error TypeOperator::set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value) const {
+	Error ret;
+	if (GDVIRTUAL_CALL(_set_property, p_source, p_property, p_value, ret)) {
+		return ret;
+	}
+	return ret;
 }
 
-const Vector<TypeOperator *> &TypeServer::filter_operators(const Variant& p_type, TypeOpKind p_op_kind, TypeOpFilter p_op_filter) const {
-	Vector<TypeOperator *> ops;
-	ERR_FAIL_COND_V(_operators.is_empty(), ops);
-	ops.resize(_operators.size());
-	ops.fill(nullptr);
-	int idx = 0;
-	TypeOperator *parent = _operators[0]; // start at first/root.
-	ops.write[idx++] = parent;
-	int max = parent->has_priority(p_type, p_op_kind);
+bool TypeOperator::has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_has_method, p_type, p_method, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
+}
 
-	// TODO: Finish rewriting this into a sort of tree-like structure.
-	// 1. To be considered, `has_priority` must return a positive number.
-	// 2. Of those, break it down to those which exist at the deepest levels of the tree (with the longest chain of parents).
-	// 3. Of those, order them by their priority level in descending order and insert them into the `ops` array.
-	// This then ensures that the returned array contains only those operators that have the highest level of specificity for handling the provided type and kind of operation
-	// with the first element being the one most suitable for processing the request if it is handled by a single operator.
+TypedArray<Dictionary> TypeOperator::get_type_method_list(const Variant &p_type, bool p_no_inheritance) const {
+	TypedArray<Dictionary> ret;
+	if (GDVIRTUAL_CALL(_get_type_method_list, p_type, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
+}
 
-	// Also....looking at all this.....it seems like this stuff is becoming excessively complicated.
-	// I should probably just go with whatever is gonna be simplest *first*, and
-	// then add in whatever complexity is needed for actionable & verified, missing requirements.
+PackedStringArray TypeOperator::get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance) const {
+	PackedStringArray ret;
+	if (GDVIRTUAL_CALL(_get_type_integer_constant_list, p_type, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
+}
 
-	for (int i = 1; i < _operators.size(); i++) {
+bool TypeOperator::has_integer_constant(const Variant &p_type, const StringName &p_name) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_has_integer_constant, p_type, p_name, ret)) {
+		return ret;
+	}
+	return ret;
+}
+
+int64_t TypeOperator::get_integer_constant(const Variant &p_type, const StringName &p_name) const {
+	int64_t ret;
+	if (GDVIRTUAL_CALL(_get_integer_constant, p_type, p_name, ret)) {
+		return ret;
+	}
+	return ret;
+}
+
+bool TypeOperator::has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_has_enum, p_type, p_name, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
+}
+
+PackedStringArray TypeOperator::get_enum_list(const Variant &p_type, bool p_no_inheritance) const {
+	PackedStringArray ret;
+	if (GDVIRTUAL_CALL(_get_enum_list, p_type, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
+}
+
+PackedStringArray TypeOperator::get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance) const {
+	PackedStringArray ret;
+	if (GDVIRTUAL_CALL(_get_enum_constants, p_type, p_enum, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
+}
+
+StringName TypeOperator::get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
+	StringName ret;
+	if (GDVIRTUAL_CALL(_get_integer_constant_enum, p_type, p_name, p_no_inheritance, ret)) {
+		return ret;
+	}
+	return ret;
+}
+
+bool TypeOperator::is_type_enabled(const Variant &p_type) const {
+	bool ret;
+	if (GDVIRTUAL_CALL(_is_type_enabled, p_type, ret)) {
+		return ret;
+	}
+	return ret;
+}
+
+void TypeOperator::_bind_methods() {
+
+	ClassDB::bind_method(D_METHOD("mark_handled"), &TypeOperator::mark_handled);
+	ClassDB::bind_method(D_METHOD("is_handled"), &TypeOperator::is_handled);
+	ClassDB::bind_method(D_METHOD("is_eager"), &TypeOperator::is_eager);
+	ClassDB::bind_method(D_METHOD("get_result"), &TypeOperator::get_result);
+	ClassDB::bind_method(D_METHOD("set_result", "value"), &TypeOperator::set_result);
+	ClassDB::bind_method(D_METHOD("set_result", "value"), &TypeOperator::set_result);
+
+	ADD_PROPERTY(PropertyInfo(Variant::NIL, "result"), "set_result", "get_result");
+
+	GDVIRTUAL_BIND(_get_type_list, "no_named", "no_anonymous");
+	GDVIRTUAL_BIND(_get_inheriters_from_type, "type");
+	GDVIRTUAL_BIND(_get_parent_type, "type");
+	GDVIRTUAL_BIND(_type_exists, "type");
+	GDVIRTUAL_BIND(_is_parent_type, "type", "inherits");
+	GDVIRTUAL_BIND(_can_instantiate, "type");
+	GDVIRTUAL_BIND(_instantiate, "type");
+	GDVIRTUAL_BIND(_has_signal, "type", "signal");
+	GDVIRTUAL_BIND(_get_signal, "type", "signal");
+	GDVIRTUAL_BIND(_get_type_signal_list, "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_type_property_list, "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_property, "source", "property");
+	GDVIRTUAL_BIND(_set_property, "source", "property", "value");
+	GDVIRTUAL_BIND(_has_method, "type", "method", "no_inheritance");
+	GDVIRTUAL_BIND(_get_type_method_list, "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_type_integer_constant_list, "type", "no_inheritance");
+	GDVIRTUAL_BIND(_has_integer_constant, "type", "name");
+	GDVIRTUAL_BIND(_get_integer_constant, "type", "name");
+	GDVIRTUAL_BIND(_has_enum, "type", "name", "no_inheritance");
+	GDVIRTUAL_BIND(_get_enum_list, "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_enum_constants, "type", "enum", "no_inheritance");
+	GDVIRTUAL_BIND(_get_integer_constant_enum, "type", "name", "no_inheritance");
+	GDVIRTUAL_BIND(_is_type_enabled, "type");
+}
+
+/// TypeServer
+
+TypeServer *TypeServer::singleton = nullptr;
+TypeServer *(*TypeServer::create_func)() = nullptr;
+
+void TypeServer::_process(OpContext *r_context, Handler p_handler) const {
+	ERR_FAIL_COND(!r_context);
+	for (int i = _operators.size()-1; i >= 0; i--) {
 		TypeOperator *op = _operators[i];
-
-		int priority = op->has_priority(p_type, p_op_kind);
-		if (priority > max) {
-			max = priority;
-			idx = 0;
-			ops.fill(nullptr);
-			ops.write[idx++] = op;
-		} else if (priority == max) {
-			ops.write[idx++] = op;
+		p_handler(*op, r_context);
+		if (op->_handled) {
+			r_context->handled = op->_handled;
+			op->_handled = false;
+		}
+		if (r_context->eager && r_context->handled) {
+			break;
 		}
 	}
-	//switch (p_op_filter) {
-	//	case TYPE_OP_FILTER_SUPPORTS: {
-	//		for (TypeOperator *op : _operators) {
-	//			int priority = op->has_priority(p_type, p_op_kind);
-	//			if (priority > 0) {
-	//				ops.write[idx++] = op;
-	//			}
-	//		}
-	//	} break;
-	//	case TYPE_OP_FILTER_MAX_PRIORITY: {
-	//		int max = 0;
-	//		for (TypeOperator *op : _operators) {
-	//			int priority = op->has_priority(p_type, p_op_kind);
-	//			if (priority > max) {
-	//				max = priority;
-	//				idx = 0;
-	//				ops.fill(nullptr);
-	//				ops.write[idx++] = op;
-	//			} else if (priority == max) {
-	//				ops.write[idx++] = op;
-	//			}
-	//		}
-	//	} break;
-	//	default:
-	//		break;
-	//}
-	return ops;
 }
 
-TypeOperator *TypeServer::find_best_fit_operator(const Variant& p_type, TypeOpKind p_op_kind) const {
-	Vector<TypeOperator *> ops = filter_operators(p_type, p_op_kind, TYPE_OP_FILTER_MAX_PRIORITY);
-	return ops.is_empty() ? nullptr : ops[0];
+PackedStringArray TypeServer::get_type_list(bool p_no_named, bool p_no_anonymous, bool p_first) const {
+	TypeListOpContext context(p_no_named, p_no_anonymous, p_first, PackedStringArray());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeListOpContext *ctx = (TypeListOpContext *)context;
+		ctx->result.operator PackedStringArray().append_array(op.get_type_list(ctx->no_named, ctx->no_anonymous));
+	});
+	return context.result.operator PackedStringArray();
 }
 
-bool TypeServer::get_operator(const StringName &p_name, TypeOperator *r_op) const {
+PackedStringArray TypeServer::get_inheriters_from_type(const Variant &p_type, bool p_eager) const {
+	TypeOpContext context(p_type, p_eager, PackedStringArray());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeOpContext *ctx = (TypeOpContext *)context;
+		ctx->result.operator PackedStringArray().append_array(op.get_inheriters_from_type(ctx->type));
+	});
+	return context.result.operator PackedStringArray();
+}
+
+StringName TypeServer::get_parent_type(const Variant &p_type, bool p_eager) const {
+	TypeOpContext context(p_type, p_eager, StringName());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeOpContext *ctx = (TypeOpContext *)context;
+		ctx->result = op.get_parent_type(ctx->type);
+	});
+	return context.result.operator StringName();
+}
+
+bool TypeServer::type_exists(const Variant &p_type, bool p_eager) const {
+	TypeOpContext context(p_type, p_eager, false);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeOpContext *ctx = (TypeOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.type_exists(ctx->type);
+	});
+	return context.result.operator bool();
+}
+
+bool TypeServer::is_parent_type(const Variant &p_type, const Variant &p_inherits, bool p_eager) const {
+	TypeInheritsOpContext context(p_type, p_inherits, p_eager, false);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeInheritsOpContext *ctx = (TypeInheritsOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.is_parent_type(ctx->type, ctx->inherits);
+	});
+	return context.result.operator bool();
+}
+
+bool TypeServer::can_instantiate(const Variant &p_type, bool p_eager) const {
+	TypeOpContext context(p_type, p_eager, false);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeOpContext *ctx = (TypeOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.can_instantiate(ctx->type);
+	});
+	return context.result.operator bool();
+}
+
+Variant TypeServer::instantiate(const Variant &p_type, bool p_eager) const {
+	TypeOpContext context(p_type, p_eager, Variant());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeOpContext *ctx = (TypeOpContext *)context;
+		ctx->result = op.instantiate(ctx->type);
+	});
+	return context.result;
+}
+
+bool TypeServer::has_signal(const Variant &p_type, StringName p_signal, bool p_eager) const {
+	TypeMemberOpContext context(p_type, p_signal, p_eager, false);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberOpContext *ctx = (TypeMemberOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.has_signal(ctx->type, ctx->name);
+	});
+	return context.result.operator bool();
+}
+
+Dictionary TypeServer::get_signal(const Variant &p_type, StringName p_signal, bool p_eager) const {
+	TypeMemberOpContext context(p_type, p_signal, p_eager, Dictionary());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberOpContext *ctx = (TypeMemberOpContext *)context;
+		ctx->result.operator Dictionary().merge(op.get_signal(ctx->type, ctx->name), true);
+	});
+	return context.result.operator Dictionary();
+}
+
+TypedArray<Dictionary> TypeServer::get_type_signal_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
+	TypeQueryOpContext context(p_type, p_no_inheritance, p_eager, Array());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeQueryOpContext *ctx = (TypeQueryOpContext *)context;
+		ctx->result.operator Array().append_array(op.get_type_signal_list(ctx->type, ctx->no_inheritance));
+	});
+	return context.result.operator Array();
+}
+
+TypedArray<Dictionary> TypeServer::get_type_property_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
+	TypeQueryOpContext context(p_type, p_no_inheritance, p_eager, TypedArray<Dictionary>());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeQueryOpContext *ctx = (TypeQueryOpContext *)context;
+		ctx->result.operator Array().append_array(op.get_type_property_list(ctx->type, ctx->no_inheritance));
+	});
+	return context.result.operator Array();
+}
+
+Variant TypeServer::get_property(const Variant &p_source, const StringName &p_property, bool p_eager) const {
+	TypeMemberOpContext context(p_source, p_property, p_eager, Dictionary());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberOpContext *ctx = (TypeMemberOpContext *)context;
+		ctx->result = op.get_property(ctx->type, ctx->name);
+	});
+	return context.result;
+}
+
+Error TypeServer::set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value, bool p_eager) const {
+	TypeMemberValueOpContext context(p_source, p_property, p_value, p_eager, OK);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberValueOpContext *ctx = (TypeMemberValueOpContext *)context;
+		ctx->result = op.set_property(ctx->type, ctx->name, ctx->value);
+	});
+	return (Error)context.result.operator int();
+}
+
+bool TypeServer::has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance, bool p_eager) const {
+	TypeMemberOpContext context(p_type, p_method, p_eager, false);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberOpContext *ctx = (TypeMemberOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.has_signal(ctx->type, ctx->name);
+	});
+	return context.result.operator bool();
+}
+
+TypedArray<Dictionary> TypeServer::get_type_method_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
+	TypeQueryOpContext context(p_type, p_no_inheritance, p_eager, TypedArray<Dictionary>());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeQueryOpContext *ctx = (TypeQueryOpContext *)context;
+		ctx->result.operator Array().append_array(op.get_type_method_list(ctx->type, ctx->no_inheritance));
+	});
+	return context.result.operator Array();
+}
+
+PackedStringArray TypeServer::get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
+	TypeQueryOpContext context(p_type, p_no_inheritance, p_eager, PackedStringArray());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeQueryOpContext *ctx = (TypeQueryOpContext *)context;
+		ctx->result.operator PackedStringArray().append_array(op.get_type_integer_constant_list(ctx->type, ctx->no_inheritance));
+	});
+	return context.result.operator PackedStringArray();
+}
+
+bool TypeServer::has_integer_constant(const Variant &p_type, const StringName &p_name, bool p_eager) const {
+	TypeMemberOpContext context(p_type, p_name, p_eager, false);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberOpContext *ctx = (TypeMemberOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.has_integer_constant(ctx->type, ctx->name);
+	});
+	return context.result.operator bool();
+}
+
+int64_t TypeServer::get_integer_constant(const Variant &p_type, const StringName &p_name, bool p_eager) const {
+	TypeMemberOpContext context(p_type, p_name, p_eager, Dictionary());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberOpContext *ctx = (TypeMemberOpContext *)context;
+		ctx->result = op.get_integer_constant(ctx->type, ctx->name);
+	});
+	return context.result.operator signed int();
+}
+
+bool TypeServer::has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_eager) const {
+	TypeMemberQueryOpContext context(p_type, p_name, p_no_inheritance, p_eager, false);
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberQueryOpContext *ctx = (TypeMemberQueryOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.has_enum(ctx->type, ctx->name, ctx->no_inheritance);
+	});
+	return context.result.operator bool();
+}
+
+PackedStringArray TypeServer::get_enum_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
+	TypeQueryOpContext context(p_type, p_no_inheritance, p_eager, PackedStringArray());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeQueryOpContext *ctx = (TypeQueryOpContext *)context;
+		ctx->result.operator PackedStringArray().append_array(op.get_enum_list(ctx->type, ctx->no_inheritance));
+	});
+	return context.result.operator PackedStringArray();
+}
+
+PackedStringArray TypeServer::get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance, bool p_eager) const {
+	TypeMemberQueryOpContext context(p_type, p_enum, p_no_inheritance, p_eager, PackedStringArray());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberQueryOpContext *ctx = (TypeMemberQueryOpContext *)context;
+		ctx->result.operator PackedStringArray().append_array(op.get_enum_constants(ctx->type, ctx->name, ctx->no_inheritance));
+	});
+	return context.result.operator PackedStringArray();
+}
+
+StringName TypeServer::get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_eager) const {
+	TypeMemberQueryOpContext context(p_type, p_name, p_no_inheritance, p_eager, StringName());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeMemberQueryOpContext *ctx = (TypeMemberQueryOpContext *)context;
+		ctx->result = op.get_integer_constant_enum(ctx->type, ctx->name, ctx->no_inheritance);
+	});
+	return context.result.operator StringName();
+}
+
+bool TypeServer::is_type_enabled(const Variant &p_type, bool p_eager) const {
+	TypeOpContext context(p_type, p_eager, PackedStringArray());
+	_process(&context, [](TypeOperator &op, OpContext *context) {
+		TypeOpContext *ctx = (TypeOpContext *)context;
+		ctx->result = ctx->result.operator bool() || op.is_type_enabled(ctx->type);
+	});
+	return context.result.operator bool();
+}
+
+TypeOperator* TypeServer::get_operator(const StringName &p_name) const {
 	for (TypeOperator *op : _operators) {
 		if (op->get_operator_name() == p_name) {
-			r_op = op;
-			return true;
+			return op;
 		}
 	}
-	r_op = nullptr;
-	ERR_FAIL_V_MSG(false, vformat("No %s with name '%s' has been registered.", SNAME("TypeOperator"), p_name));
+	ERR_FAIL_V_MSG(nullptr, vformat("No %s with name '%s' has been registered.", SNAME("TypeOperator"), p_name));
 }
 
 void TypeServer::add_operator(TypeOperator * const p_operator) {
