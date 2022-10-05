@@ -40,22 +40,33 @@
 class TypeHandle;
 class TypeServer;
 
-class TypeOperator : public Object {
+struct TypeDbContext {
+	mutable RWLock lock;
+	mutable bool eager = false;
+	mutable bool handled = false;
+	mutable Variant result;
+
+	TypeDbContext(bool p_eager, Variant p_result) :
+			eager(p_eager), result(p_result) {}
+};
+
+class TypeProvider : public Object {
 
 	friend class TypeServer;
 
-	mutable bool _handled = false;
-	mutable bool _eager = false;
-	mutable Variant _result;
+	mutable const TypeDbContext *_context;
+
+	void _provide(bool p_executes) const;
 
 protected:
 	static void _bind_methods();
 
-	_FORCE_INLINE_ void mark_handled() const { _handled = true; }
-	_FORCE_INLINE_ bool is_handled() const { return _handled; }
-	_FORCE_INLINE_ bool is_eager() const { return _eager; }
-	_FORCE_INLINE_ Variant get_result() const { _handled = true; }
-	_FORCE_INLINE_ void set_result(Variant p_value) const { _result = p_value; }
+	_FORCE_INLINE_ void mark_handled() const { _context->handled = true; }
+	_FORCE_INLINE_ bool is_handled() const { return _context->handled; }
+	_FORCE_INLINE_ bool is_eager() const { return _context->eager; }
+	_FORCE_INLINE_ Variant get_result() const { return _context->result; }
+	_FORCE_INLINE_ void set_result(Variant p_value) const { _context->result = p_value; }
+	_FORCE_INLINE_ bool can_participate() const { return _context->handled && _context->eager; }
 
 	GDVIRTUAL2RC(PackedStringArray, _get_type_list, bool, bool);
 	GDVIRTUAL1RC(PackedStringArray, _get_inheriters_from_type, Variant);
@@ -83,8 +94,7 @@ protected:
 
 public:
 
-	virtual StringName get_operator_name() const { return StringName(); }
-	virtual void configure(bool p_eager, bool p_handled, Variant result);
+	virtual StringName get_provider_name() const { return StringName(); }
 
 	virtual PackedStringArray get_type_list(bool p_no_named = false, bool p_no_anonymous = true) const;
 	virtual PackedStringArray get_inheriters_from_type(const Variant &p_type) const;
@@ -110,75 +120,66 @@ public:
 	virtual StringName get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false) const;
 	virtual bool is_type_enabled(const Variant &p_type) const;
 
-	TypeOperator() {}
-	~TypeOperator() {}
+	TypeProvider() {}
+	~TypeProvider() {}
 };
 
 class TypeServer {
 
-	struct OpContext {
-		bool eager;
-		bool handled = false;
-		Variant result;
-
-		OpContext(bool p_eager, Variant p_result) :
-				eager(p_eager), result(p_result) {}
-	};
-
-	struct TypeListOpContext : OpContext {
+	struct TypeListTypeDbContext : TypeDbContext {
 		bool no_named;
 		bool no_anonymous;
 
-		TypeListOpContext(bool p_no_named, bool p_no_anonymous, bool p_eager, Variant r_result) :
-				OpContext(p_eager, r_result), no_named(p_no_named), no_anonymous(p_no_anonymous) {}
+		TypeListTypeDbContext(bool p_no_named, bool p_no_anonymous, bool p_eager, Variant r_result) :
+				TypeDbContext(p_eager, r_result), no_named(p_no_named), no_anonymous(p_no_anonymous) {}
 	};
 
-	struct TypeOpContext : OpContext {
+	struct TypeTypeDbContext : TypeDbContext {
 		Variant type;
 
-		TypeOpContext(Variant p_type, bool p_eager, Variant r_result) :
-				OpContext(p_eager, r_result), type(p_type) {}
+		TypeTypeDbContext(Variant p_type, bool p_eager, Variant r_result) :
+				TypeDbContext(p_eager, r_result), type(p_type) {}
 	};
 
-	struct TypeInheritsOpContext : TypeOpContext {
+	struct TypeInheritsTypeDbContext : TypeTypeDbContext {
 		Variant inherits;
 
-		TypeInheritsOpContext(Variant p_type, Variant p_inherits, bool p_eager, Variant r_result) :
-				TypeOpContext(p_type, p_eager, r_result), inherits(p_inherits) {}
+		TypeInheritsTypeDbContext(Variant p_type, Variant p_inherits, bool p_eager, Variant r_result) :
+				TypeTypeDbContext(p_type, p_eager, r_result), inherits(p_inherits) {}
 	};
 
-	struct TypeMemberOpContext : TypeOpContext {
+	struct TypeMemberTypeDbContext : TypeTypeDbContext {
 		StringName name;
 
-		TypeMemberOpContext(Variant p_type, StringName p_name, bool p_eager, Variant r_result) :
-				TypeOpContext(p_type, p_eager, r_result), name(p_name) {}
+		TypeMemberTypeDbContext(Variant p_type, StringName p_name, bool p_eager, Variant r_result) :
+				TypeTypeDbContext(p_type, p_eager, r_result), name(p_name) {}
 	};
 
-	struct TypeMemberValueOpContext : TypeMemberOpContext {
+	struct TypeMemberValueTypeDbContext : TypeMemberTypeDbContext {
 		Variant value;
 
-		TypeMemberValueOpContext(Variant p_type, StringName p_name, Variant p_value, bool p_eager, Variant r_result) :
-				TypeMemberOpContext(p_type, p_name, p_eager, r_result), value(p_value) {}
+		TypeMemberValueTypeDbContext(Variant p_type, StringName p_name, Variant p_value, bool p_eager, Variant r_result) :
+				TypeMemberTypeDbContext(p_type, p_name, p_eager, r_result), value(p_value) {}
 	};
 
-	struct TypeQueryOpContext : TypeOpContext {
+	struct TypeQueryTypeDbContext : TypeTypeDbContext {
 		bool no_inheritance;
 
-		TypeQueryOpContext(Variant p_type, bool p_no_inheritance, bool p_eager, Variant r_result) :
-				TypeOpContext(p_type, p_eager, r_result), no_inheritance(p_no_inheritance) {}
+		TypeQueryTypeDbContext(Variant p_type, bool p_no_inheritance, bool p_eager, Variant r_result) :
+				TypeTypeDbContext(p_type, p_eager, r_result), no_inheritance(p_no_inheritance) {}
 	};
 
-	struct TypeMemberQueryOpContext : TypeQueryOpContext {
+	struct TypeMemberQueryTypeDbContext : TypeQueryTypeDbContext {
 		StringName name;
 
-		TypeMemberQueryOpContext(Variant p_type, StringName p_name, bool p_no_inheritance, bool p_eager, Variant r_result) :
-				TypeQueryOpContext(p_type, p_no_inheritance, p_eager, r_result), name(p_name) {}
+		TypeMemberQueryTypeDbContext(Variant p_type, StringName p_name, bool p_no_inheritance, bool p_eager, Variant r_result) :
+				TypeQueryTypeDbContext(p_type, p_no_inheritance, p_eager, r_result), name(p_name) {}
 	};
 
-	typedef void (*Handler)(TypeOperator &p_op, OpContext *r_context);
-	void _process(OpContext *r_context, Handler p_handler) const;
+	typedef void (*Handler)(TypeProvider &p_op, TypeDbContext *r_context);
+	void _process(TypeDbContext *p_context, Handler p_handler) const;
 
-	Vector<TypeOperator *> _operators;
+	Vector<TypeProvider *> _providers;
 
 	static TypeServer *singleton;
 
@@ -190,6 +191,9 @@ protected:
 	static TypeServer *_create_builtin() {
 		return memnew(T);
 	}
+
+	static RWLock lock;
+	static RWLock loop_lock;
 	
 public:
 	static TypeServer* get_singleton() {
@@ -206,9 +210,9 @@ public:
 		return server;
 	};
 
-	TypeOperator *get_operator(const StringName &p_name) const;
-	void add_operator(TypeOperator * const p_operator);
-	void remove_operator(const TypeOperator *p_operator);
+	TypeProvider *get_provider(const StringName &p_name) const;
+	void add_provider(TypeProvider * const p_provider);
+	void remove_provider(const TypeProvider *p_provider);
 
 	virtual PackedStringArray get_type_list(bool p_no_named = false, bool p_no_anonymous = true, bool p_first = false) const;
 	virtual PackedStringArray get_inheriters_from_type(const Variant &p_type, bool p_first = false) const;
