@@ -56,17 +56,15 @@ class TypeProvider : public Object {
 
 	mutable const TypeDbContext *_context;
 
-	void _provide(bool p_executes) const;
-
 protected:
 	static void _bind_methods();
 
-	_FORCE_INLINE_ void mark_handled() const { _context->handled = true; }
-	_FORCE_INLINE_ bool is_handled() const { return _context->handled; }
-	_FORCE_INLINE_ bool is_eager() const { return _context->eager; }
-	_FORCE_INLINE_ Variant get_result() const { return _context->result; }
-	_FORCE_INLINE_ void set_result(Variant p_value) const { _context->result = p_value; }
-	_FORCE_INLINE_ bool can_participate() const { return _context->handled && _context->eager; }
+	static _FORCE_INLINE_ void _mark_handled(Dictionary p_query_state) { p_query_state["is_handled"] = true; }
+	static _FORCE_INLINE_ bool _is_handled(Dictionary p_query_state) { return p_query_state["is_handled"].operator bool(); }
+	static _FORCE_INLINE_ bool _is_eager(Dictionary p_query_state) { return p_query_state["is_eager"].operator bool(); }
+	static _FORCE_INLINE_ Variant _get_result(Dictionary p_query_state) { return p_query_state["result"]; }
+	static _FORCE_INLINE_ void _set_result(Dictionary p_query_state, Variant p_value) { p_query_state["result"] = p_value; }
+	static _FORCE_INLINE_ bool _can_participate(Dictionary p_query_state) { return !(_is_handled(p_query_state) && _is_eager(p_query_state)); }
 
 	GDVIRTUAL2RC(PackedStringArray, _get_type_list, bool, bool);
 	GDVIRTUAL1RC(PackedStringArray, _get_inheriters_from_type, Variant);
@@ -96,35 +94,42 @@ public:
 
 	virtual StringName get_provider_name() const { return StringName(); }
 
-	virtual PackedStringArray get_type_list(bool p_no_named = false, bool p_no_anonymous = true) const;
-	virtual PackedStringArray get_inheriters_from_type(const Variant &p_type) const;
-	virtual StringName get_parent_type(const Variant &p_type) const;
-	virtual bool type_exists(const Variant &p_type) const;
-	virtual bool is_parent_type(const Variant &p_type, const Variant &p_inherits) const;
-	virtual bool can_instantiate(const Variant &p_type) const;
-	virtual Variant instantiate(const Variant &p_type) const;
-	virtual bool has_signal(const Variant &p_type, StringName p_signal) const;
-	virtual Dictionary get_signal(const Variant &p_type, StringName p_signal) const;
-	virtual TypedArray<Dictionary> get_type_signal_list(const Variant &p_type, bool p_no_inheritance = false) const;
-	virtual TypedArray<Dictionary> get_type_property_list(const Variant &p_type, bool p_no_inheritance = false) const;
-	virtual Variant get_property(const Variant &p_source, const StringName &p_property) const;
-	virtual Error set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value) const;
-	virtual bool has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance = false) const;
-	virtual TypedArray<Dictionary> get_type_method_list(const Variant &p_type, bool p_no_inheritance = false) const;
-	virtual PackedStringArray get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance = false) const;
-	virtual bool has_integer_constant(const Variant &p_type, const StringName &p_name) const;
-	virtual int64_t get_integer_constant(const Variant &p_type, const StringName &p_name) const;
-	virtual bool has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false) const;
-	virtual PackedStringArray get_enum_list(const Variant &p_type, bool p_no_inheritance = false) const;
-	virtual PackedStringArray get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance = false) const;
-	virtual StringName get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false) const;
-	virtual bool is_type_enabled(const Variant &p_type) const;
+	virtual PackedStringArray get_type_list(Dictionary p_query_state, bool p_no_named = false, bool p_no_anonymous = true) const;
+	virtual PackedStringArray get_inheriters_from_type(Dictionary p_query_state, const Variant &p_type) const;
+	virtual StringName get_parent_type(Dictionary p_query_state, const Variant &p_type) const;
+	virtual bool type_exists(Dictionary p_query_state, const Variant &p_type) const;
+	virtual bool is_parent_type(Dictionary p_query_state, const Variant &p_type, const Variant &p_inherits) const;
+	virtual bool can_instantiate(Dictionary p_query_state, const Variant &p_type) const;
+	virtual Variant instantiate(Dictionary p_query_state, const Variant &p_type) const;
+	virtual bool has_signal(Dictionary p_query_state, const Variant &p_type, StringName p_signal) const;
+	virtual Dictionary get_signal(Dictionary p_query_state, const Variant &p_type, StringName p_signal) const;
+	virtual TypedArray<Dictionary> get_type_signal_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance = false) const;
+	virtual TypedArray<Dictionary> get_type_property_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance = false) const;
+	virtual Variant get_property(Dictionary p_query_state, const Variant &p_source, const StringName &p_property) const;
+	virtual Error set_property(Dictionary p_query_state, const Variant &p_source, const StringName &p_property, const Variant &p_value) const;
+	virtual bool has_method(Dictionary p_query_state, const Variant &p_type, StringName p_method, bool p_no_inheritance = false) const;
+	virtual TypedArray<Dictionary> get_type_method_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance = false) const;
+	virtual PackedStringArray get_type_integer_constant_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance = false) const;
+	virtual bool has_integer_constant(Dictionary p_query_state, const Variant &p_type, const StringName &p_name) const;
+	virtual int64_t get_integer_constant(Dictionary p_query_state, const Variant &p_type, const StringName &p_name) const;
+	virtual bool has_enum(Dictionary p_query_state, const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false) const;
+	virtual PackedStringArray get_enum_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance = false) const;
+	virtual PackedStringArray get_enum_constants(Dictionary p_query_state, const Variant &p_type, const StringName &p_enum, bool p_no_inheritance = false) const;
+	virtual StringName get_integer_constant_enum(Dictionary p_query_state, const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false) const;
+	virtual bool is_type_enabled(Dictionary p_query_state, const Variant &p_type) const;
 
 	TypeProvider() {}
 	~TypeProvider() {}
 };
 
 class TypeServer {
+
+	enum QStateFlags {
+		QSTATE_NONE = 0,
+		QSTATE_NO_NAMED = 1,
+		QSTATE_NO_ANONYMOUS = 2,
+		QSTATE_NO_INHERITANCE = 4,
+	};
 
 	struct TypeListTypeDbContext : TypeDbContext {
 		bool no_named;
@@ -176,12 +181,21 @@ class TypeServer {
 				TypeQueryTypeDbContext(p_type, p_no_inheritance, p_eager, r_result), name(p_name) {}
 	};
 
-	typedef void (*Handler)(TypeProvider &p_op, TypeDbContext *r_context);
-	void _process(TypeDbContext *p_context, Handler p_handler) const;
+	typedef void (*Handler)(Dictionary p_query_state, const QStateFlags p_flags, const StringName &p_name, Variant &p_var1, const Variant &p_var2);
+	template <class T, class... VarArgs>
+	T _process(bool p_eager, T (TypeServer::*handler)(Dictionary state, TypeProvider &p, VarArgs... args)) const;
 
 	Vector<TypeProvider *> _providers;
 
 	static TypeServer *singleton;
+
+	Dictionary _new_query_state(bool p_eager = false) const {
+		Dictionary d;
+		d["is_handled"] = false;
+		d["is_eager"] = p_eager;
+		d["result"] = Variant();
+		return d;
+	}
 
 protected:
 	static TypeServer *(*create_func)();
