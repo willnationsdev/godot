@@ -34,7 +34,7 @@
 
 PackedStringArray TypeProvider::get_type_list(Dictionary p_query_state, bool p_no_named = false, bool p_no_anonymous = true) const {
 	PackedStringArray ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_type_list, p_no_named, p_no_anonymous, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_type_list, p_query_state, p_no_named, p_no_anonymous, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator PackedStringArray();
@@ -42,7 +42,7 @@ PackedStringArray TypeProvider::get_type_list(Dictionary p_query_state, bool p_n
 
 PackedStringArray TypeProvider::get_inheriters_from_type(Dictionary p_query_state, const Variant &p_type) const {
 	PackedStringArray ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_inheriters_from_type, p_type, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_inheriters_from_type, p_query_state, p_type, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator PackedStringArray();
@@ -50,7 +50,7 @@ PackedStringArray TypeProvider::get_inheriters_from_type(Dictionary p_query_stat
 
 StringName TypeProvider::get_parent_type(Dictionary p_query_state, const Variant &p_type) const {
 	StringName ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_parent_type, p_type, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_parent_type, p_query_state, p_type, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator StringName();
@@ -58,7 +58,7 @@ StringName TypeProvider::get_parent_type(Dictionary p_query_state, const Variant
 
 bool TypeProvider::type_exists(Dictionary p_query_state, const Variant &p_type) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_type_exists, p_type, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_type_exists, p_query_state, p_type, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator bool();
@@ -66,7 +66,7 @@ bool TypeProvider::type_exists(Dictionary p_query_state, const Variant &p_type) 
 
 bool TypeProvider::is_parent_type(Dictionary p_query_state, const Variant &p_type, const Variant &p_inherits) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_is_parent_type, p_type, p_inherits, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_is_parent_type, p_query_state, p_type, p_inherits, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator bool();
@@ -74,7 +74,7 @@ bool TypeProvider::is_parent_type(Dictionary p_query_state, const Variant &p_typ
 
 bool TypeProvider::can_instantiate(Dictionary p_query_state, const Variant &p_type) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_can_instantiate, p_type, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_can_instantiate, p_query_state, p_type, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator bool();
@@ -82,7 +82,7 @@ bool TypeProvider::can_instantiate(Dictionary p_query_state, const Variant &p_ty
 
 Variant TypeProvider::instantiate(Dictionary p_query_state, const Variant &p_type) const {
 	Variant ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_instantiate, p_type, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_instantiate, p_query_state, p_type, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return ret;
@@ -90,7 +90,7 @@ Variant TypeProvider::instantiate(Dictionary p_query_state, const Variant &p_typ
 
 bool TypeProvider::has_signal(Dictionary p_query_state, const Variant &p_type, StringName p_signal) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_has_signal, p_type, p_signal, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_has_signal, p_query_state, p_type, p_signal, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return ret;
@@ -99,7 +99,7 @@ bool TypeProvider::has_signal(Dictionary p_query_state, const Variant &p_type, S
 
 Dictionary TypeProvider::get_signal(Dictionary p_query_state, const Variant &p_type, StringName p_signal) const {
 	Dictionary ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_signal, p_type, p_signal, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_signal, p_query_state, p_type, p_signal, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator Dictionary();
@@ -107,7 +107,7 @@ Dictionary TypeProvider::get_signal(Dictionary p_query_state, const Variant &p_t
 
 TypedArray<Dictionary> TypeProvider::get_type_signal_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
 	TypedArray<Dictionary> ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_type_signal_list, p_type, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_type_signal_list, p_query_state, p_type, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator Array();
@@ -115,7 +115,7 @@ TypedArray<Dictionary> TypeProvider::get_type_signal_list(Dictionary p_query_sta
 
 TypedArray<Dictionary> TypeProvider::get_type_property_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
 	TypedArray<Dictionary> ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_type_property_list, p_type, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_type_property_list, p_query_state, p_type, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator Array();
@@ -123,7 +123,7 @@ TypedArray<Dictionary> TypeProvider::get_type_property_list(Dictionary p_query_s
 
 Variant TypeProvider::get_property(Dictionary p_query_state, const Variant &p_source, const StringName &p_property) const {
 	Variant ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_property, p_source, p_property, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_property, p_query_state, p_source, p_property, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return ret;
@@ -131,7 +131,7 @@ Variant TypeProvider::get_property(Dictionary p_query_state, const Variant &p_so
 
 Error TypeProvider::set_property(Dictionary p_query_state, const Variant &p_source, const StringName &p_property, const Variant &p_value) const {
 	Error ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_set_property, p_source, p_property, p_value, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_set_property, p_query_state, p_source, p_property, p_value, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return (Error)_get_result(p_query_state).operator uint64_t();
@@ -139,7 +139,7 @@ Error TypeProvider::set_property(Dictionary p_query_state, const Variant &p_sour
 
 bool TypeProvider::has_method(Dictionary p_query_state, const Variant &p_type, StringName p_method, bool p_no_inheritance) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_has_method, p_type, p_method, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_has_method, p_query_state, p_type, p_method, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator bool();
@@ -147,7 +147,7 @@ bool TypeProvider::has_method(Dictionary p_query_state, const Variant &p_type, S
 
 TypedArray<Dictionary> TypeProvider::get_type_method_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
 	TypedArray<Dictionary> ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_type_method_list, p_type, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_type_method_list, p_query_state, p_type, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator Array();
@@ -155,7 +155,7 @@ TypedArray<Dictionary> TypeProvider::get_type_method_list(Dictionary p_query_sta
 
 PackedStringArray TypeProvider::get_type_integer_constant_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
 	PackedStringArray ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_type_integer_constant_list, p_type, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_type_integer_constant_list, p_query_state, p_type, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator PackedStringArray();
@@ -163,7 +163,7 @@ PackedStringArray TypeProvider::get_type_integer_constant_list(Dictionary p_quer
 
 bool TypeProvider::has_integer_constant(Dictionary p_query_state, const Variant &p_type, const StringName &p_name) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_has_integer_constant, p_type, p_name, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_has_integer_constant, p_query_state, p_type, p_name, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator bool();
@@ -171,7 +171,7 @@ bool TypeProvider::has_integer_constant(Dictionary p_query_state, const Variant 
 
 int64_t TypeProvider::get_integer_constant(Dictionary p_query_state, const Variant &p_type, const StringName &p_name) const {
 	int64_t ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_integer_constant, p_type, p_name, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_integer_constant, p_query_state, p_type, p_name, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator int64_t();
@@ -179,7 +179,7 @@ int64_t TypeProvider::get_integer_constant(Dictionary p_query_state, const Varia
 
 bool TypeProvider::has_enum(Dictionary p_query_state, const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_has_enum, p_type, p_name, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_has_enum, p_query_state, p_type, p_name, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator bool();
@@ -187,7 +187,7 @@ bool TypeProvider::has_enum(Dictionary p_query_state, const Variant &p_type, con
 
 PackedStringArray TypeProvider::get_enum_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
 	PackedStringArray ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_enum_list, p_type, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_enum_list, p_query_state, p_type, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator PackedStringArray();
@@ -195,7 +195,7 @@ PackedStringArray TypeProvider::get_enum_list(Dictionary p_query_state, const Va
 
 PackedStringArray TypeProvider::get_enum_constants(Dictionary p_query_state, const Variant &p_type, const StringName &p_enum, bool p_no_inheritance) const {
 	PackedStringArray ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_enum_constants, p_type, p_enum, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_enum_constants, p_query_state, p_type, p_enum, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator PackedStringArray();
@@ -203,7 +203,7 @@ PackedStringArray TypeProvider::get_enum_constants(Dictionary p_query_state, con
 
 StringName TypeProvider::get_integer_constant_enum(Dictionary p_query_state, const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
 	StringName ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_get_integer_constant_enum, p_type, p_name, p_no_inheritance, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_integer_constant_enum, p_query_state, p_type, p_name, p_no_inheritance, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator StringName();
@@ -211,37 +211,61 @@ StringName TypeProvider::get_integer_constant_enum(Dictionary p_query_state, con
 
 bool TypeProvider::is_type_enabled(Dictionary p_query_state, const Variant &p_type) const {
 	bool ret;
-	if (_can_participate(p_query_state) && GDVIRTUAL_CALL(_is_type_enabled, p_type, ret)) {
+	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_is_type_enabled, p_query_state, p_type, ret)) {
 		_set_result(p_query_state, ret);
 	}
 	return _get_result(p_query_state).operator bool();
 }
 
+template <>
+static bool TypeProvider::_aggregate<bool>(Dictionary p_query_state, bool p_value) {
+	return TypeProvider::_get_result(p_query_state) || p_value;
+}
+
+template <>
+static PackedStringArray TypeProvider::_aggregate<PackedStringArray>(Dictionary p_query_state, PackedStringArray p_value) {
+	PackedStringArray result = _get_result(p_query_state);
+	result.append_array(p_value);
+	return result;
+}
+
+template <>
+static TypedArray<Dictionary> TypeProvider::_aggregate<TypedArray<Dictionary>>(Dictionary p_query_state, TypedArray<Dictionary> p_value) {
+	TypedArray<Dictionary> result = _get_result(p_query_state);
+	result.append_array(p_value);
+	return result;
+}
+
+template <class T>
+static T TypeProvider::_overwrite<StringName>(Dictionary p_query_state, T p_value) {
+	return _is_handled(p_query_state) ? _get_result(p_query_state) : p_value;
+}
+
 void TypeProvider::_bind_methods() {
 
-	GDVIRTUAL_BIND(_get_type_list, "no_named", "no_anonymous");
-	GDVIRTUAL_BIND(_get_inheriters_from_type, "type");
-	GDVIRTUAL_BIND(_get_parent_type, "type");
-	GDVIRTUAL_BIND(_type_exists, "type");
-	GDVIRTUAL_BIND(_is_parent_type, "type", "inherits");
-	GDVIRTUAL_BIND(_can_instantiate, "type");
-	GDVIRTUAL_BIND(_instantiate, "type");
-	GDVIRTUAL_BIND(_has_signal, "type", "signal");
-	GDVIRTUAL_BIND(_get_signal, "type", "signal");
-	GDVIRTUAL_BIND(_get_type_signal_list, "type", "no_inheritance");
-	GDVIRTUAL_BIND(_get_type_property_list, "type", "no_inheritance");
-	GDVIRTUAL_BIND(_get_property, "source", "property");
-	GDVIRTUAL_BIND(_set_property, "source", "property", "value");
-	GDVIRTUAL_BIND(_has_method, "type", "method", "no_inheritance");
-	GDVIRTUAL_BIND(_get_type_method_list, "type", "no_inheritance");
-	GDVIRTUAL_BIND(_get_type_integer_constant_list, "type", "no_inheritance");
-	GDVIRTUAL_BIND(_has_integer_constant, "type", "name");
-	GDVIRTUAL_BIND(_get_integer_constant, "type", "name");
-	GDVIRTUAL_BIND(_has_enum, "type", "name", "no_inheritance");
-	GDVIRTUAL_BIND(_get_enum_list, "type", "no_inheritance");
-	GDVIRTUAL_BIND(_get_enum_constants, "type", "enum", "no_inheritance");
-	GDVIRTUAL_BIND(_get_integer_constant_enum, "type", "name", "no_inheritance");
-	GDVIRTUAL_BIND(_is_type_enabled, "type");
+	GDVIRTUAL_BIND(_get_type_list, "query_state", "no_named", "no_anonymous");
+	GDVIRTUAL_BIND(_get_inheriters_from_type, "query_state", "type");
+	GDVIRTUAL_BIND(_get_parent_type, "query_state", "type");
+	GDVIRTUAL_BIND(_type_exists, "query_state", "type");
+	GDVIRTUAL_BIND(_is_parent_type, "query_state", "type", "inherits");
+	GDVIRTUAL_BIND(_can_instantiate, "query_state", "type");
+	GDVIRTUAL_BIND(_instantiate, "query_state", "type");
+	GDVIRTUAL_BIND(_has_signal, "query_state", "type", "signal");
+	GDVIRTUAL_BIND(_get_signal, "query_state", "type", "signal");
+	GDVIRTUAL_BIND(_get_type_signal_list, "query_state", "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_type_property_list, "query_state", "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_property, "query_state", "source", "property");
+	GDVIRTUAL_BIND(_set_property, "query_state", "source", "property", "value");
+	GDVIRTUAL_BIND(_has_method, "query_state", "type", "method", "no_inheritance");
+	GDVIRTUAL_BIND(_get_type_method_list, "query_state", "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_type_integer_constant_list, "query_state", "type", "no_inheritance");
+	GDVIRTUAL_BIND(_has_integer_constant, "query_state", "type", "name");
+	GDVIRTUAL_BIND(_get_integer_constant, "query_state", "type", "name");
+	GDVIRTUAL_BIND(_has_enum, "query_state", "type", "name", "no_inheritance");
+	GDVIRTUAL_BIND(_get_enum_list, "query_state", "type", "no_inheritance");
+	GDVIRTUAL_BIND(_get_enum_constants, "query_state", "type", "enum", "no_inheritance");
+	GDVIRTUAL_BIND(_get_integer_constant_enum, "query_state", "type", "name", "no_inheritance");
+	GDVIRTUAL_BIND(_is_type_enabled, "query_state", "type");
 }
 
 /// TypeServer
@@ -249,247 +273,155 @@ void TypeProvider::_bind_methods() {
 TypeServer *TypeServer::singleton = nullptr;
 TypeServer *(*TypeServer::create_func)() = nullptr;
 
-#define TP_ITER(m_eager, m_cast, m_content)                    \
-	RWLockRead rw(lock);                                       \
-	Dictionary state = _new_query_state((m_eager));            \
-	for (int i = _providers.size()-1; i >= 0; i--) {           \
-		TypeProvider &p = *_providers[i];                      \
-		TypeProvider::_set_result(state, m_content);           \
-		if (TypeProvider::_can_participate(state)) {           \
-			break;                                             \
-		}                                                      \
-	}                                                          \
-	return TypeProvider::_get_result(state).operator m_cast();
+template <class T>
+Dictionary TypeServer::_process(Variant *p_args, bool p_is_eager, T (*p_handler)(Dictionary state, TypeProvider *provider, Variant *args)) const {
+	RWLockRead rw(lock);
+	Dictionary state = _new_query_state((p_is_eager));
+	for (int i = _providers.size()-1; i >= 0; i--) {
+		TypeProvider *p = _providers[i];
+		TypeProvider::_set_result(state, p_handler(state, p, p_args));
+		if (!TypeProvider::_is_query_done(state)) {
+			break;
+		}
+	}
+	return state;
+}
 
-template <class T, class... VarArgs>
-T TypeServer::_process(bool p_eager, T (TypeServer::*handler)(Dictionary state, TypeProvider &p, VarArgs... args)) const {
-	RWLockRead rw(lock);                                       
-	Dictionary state = _new_query_state(p_eager);            
-	for (int i = _providers.size()-1; i >= 0; i--) {           
-		TypeProvider &p = *_providers[i];                      
-		TypeProvider::_set_result(state, handler(state, p, args...));
-		if (TypeProvider::_can_participate(state)) {           
-			break;                                             
-		}                                                      
-	}                                                          
-	return TypeProvider::_get_result(state).operator T();
+template <class T, class ...VarArgs>
+Variant TypeServer::_query(bool p_is_eager, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, VarArgs... args) const, VarArgs... p_args) const {
+	Variant args[] = { ...p_args };
+	Dictionary state = _process<T>(args, p_is_eager, [](Dictionary state, TypeProvider *p, VarArgs... args) {
+		return p->(p_handler)(state, args...);
+	});
+	return TypeProvider::_get_result(state);
+}
+
+template <class T, class V1, class ...VarArgs>
+Variant TypeServer::_query(bool p_is_eager, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, const V1 &v1, VarArgs... args) const, const V1 &p_v1, VarArgs... p_args) const {
+	Variant args[] = { v1, ...p_args };
+	Dictionary state = _process<T>(args, p_is_eager, [](Dictionary state, TypeProvider *p, const V1& p_v1, VarArgs... args) {
+		return p->(p_handler)(state, v1, args...);
+	});
+	return TypeProvider::_get_result(state);
+}
+
+template <class T, class V1, class V2, class ...VarArgs>
+Variant TypeServer::_query(bool p_is_eager, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, const V1 &v1, const V2 &v2, VarArgs... args) const, const V1 &p_v1, const V2 &p_v2, VarArgs... p_args) const {
+	Variant args[] = { v1, v2, ...p_args };
+	Dictionary state = _process<T>(args, p_is_eager, [](Dictionary state, TypeProvider *p, const V1 &p_v1, const V2 &p_v2, VarArgs... args) {
+		return p->(p_handler)(state, v1, v2, args...);
+	});
+	return TypeProvider::_get_result(state);
+}
+
+template <class T, class V1, class V2, class V3, class ...VarArgs>
+Variant TypeServer::_query(bool p_is_eager, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, const V1 &v1, const V2 &v2, const V3 &v3, VarArgs... args) const, const V1 &p_v1, const V2 &p_v2, const V3 &p_v3, VarArgs... p_args) const {
+	Variant args[] = { v1, v2, v3, ...p_args };
+	Dictionary state = _process<T>(args, p_is_eager, [](Dictionary state, TypeProvider *p, const V1 &p_v1, const V2 &p_v2, const V3 &p_v3, VarArgs... args) {
+		return p->(p_handler)(state, v1, v2, v3, args...);
+	});
+	return TypeProvider::_get_result(state);
 }
 
 PackedStringArray TypeServer::get_type_list(bool p_no_named, bool p_no_anonymous, bool p_eager) const {
-	//TP_ITER(p_eager, PackedStringArray, p.get_type_list(state, p_no_named, p_no_anonymous));
-
-	return _process<PackedStringArray, bool, bool, bool>(p_eager, [](Dictionary state, TypeProvider &p, bool no_named, bool no_anon, bool eager) {
-		return p.get_type_list(state, no_named, no_anon);
+	Variant args[] = { p_no_named, p_no_anonymous };
+	Dictionary state = _process<PackedStringArray>(args, p_eager, [](Dictionary state, TypeProvider *p, Variant *args) {
+		return p->get_type_list(state, args[0].operator bool(), args[1].operator bool());
 	});
-
-	// inline implementation
-	RWLockRead rw(lock);                                       
-	Dictionary state = _new_query_state((p_eager));            
-	for (int i = _providers.size()-1; i >= 0; i--) {           
-		TypeProvider &p = *_providers[i];                      
-		TypeProvider::_set_result(state, p.get_type_list(state, p_no_named, p_no_anonymous));
-		if (TypeProvider::_can_participate(state)) {           
-			break;                                             
-		}                                                      
-	}                                                          
-	return TypeProvider::_get_result(state).operator PackedStringArray();
+	return _as_result<PackedStringArray>(state);
 }
 
 PackedStringArray TypeServer::get_inheriters_from_type(const Variant &p_type, bool p_eager) const {
-	TP_ITER(p_eager, PackedStringArray, p.get_inheriters_from_type(state, p_type));
+	return _query(p_eager, &TypeProvider::get_inheriters_from_type);
 }
 
 StringName TypeServer::get_parent_type(const Variant &p_type, bool p_eager) const {
-	TypeTypeDbContext context(p_type, p_eager, StringName());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeTypeDbContext *ctx = (TypeTypeDbContext *)context;
-		ctx->result = p.get_parent_type(ctx->type);
-	});
-	return context.result.operator StringName();
+	return _query(p_eager, &TypeProvider::get_parent_type);
 }
 
 bool TypeServer::type_exists(const Variant &p_type, bool p_eager) const {
-	TypeTypeDbContext context(p_type, p_eager, false);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeTypeDbContext *ctx = (TypeTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.type_exists(ctx->type);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::type_exists);
 }
 
 bool TypeServer::is_parent_type(const Variant &p_type, const Variant &p_inherits, bool p_eager) const {
-	TypeInheritsTypeDbContext context(p_type, p_inherits, p_eager, false);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeInheritsTypeDbContext *ctx = (TypeInheritsTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.is_parent_type(ctx->type, ctx->inherits);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::is_parent_type, p_inherits);
 }
 
 bool TypeServer::can_instantiate(const Variant &p_type, bool p_eager) const {
-	TypeTypeDbContext context(p_type, p_eager, false);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeTypeDbContext *ctx = (TypeTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.can_instantiate(ctx->type);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::can_instantiate);
 }
 
 Variant TypeServer::instantiate(const Variant &p_type, bool p_eager) const {
-	TypeTypeDbContext context(p_type, p_eager, Variant());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeTypeDbContext *ctx = (TypeTypeDbContext *)context;
-		ctx->result = p.instantiate(ctx->type);
-	});
-	return context.result;
+	return _query(p_eager, &TypeProvider::instantiate);
 }
 
 bool TypeServer::has_signal(const Variant &p_type, StringName p_signal, bool p_eager) const {
-	TypeMemberTypeDbContext context(p_type, p_signal, p_eager, false);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberTypeDbContext *ctx = (TypeMemberTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.has_signal(ctx->type, ctx->name);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::has_signal, p_signal);
 }
 
 Dictionary TypeServer::get_signal(const Variant &p_type, StringName p_signal, bool p_eager) const {
-	TypeMemberTypeDbContext context(p_type, p_signal, p_eager, Dictionary());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberTypeDbContext *ctx = (TypeMemberTypeDbContext *)context;
-		ctx->result.operator Dictionary().merge(p.get_signal(ctx->type, ctx->name), true);
-	});
-	return context.result.operator Dictionary();
+	return _query(p_eager, &TypeProvider::get_signal, p_signal);
 }
 
 TypedArray<Dictionary> TypeServer::get_type_signal_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	TypeQueryTypeDbContext context(p_type, p_no_inheritance, p_eager, TypedArray<Dictionary>());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeQueryTypeDbContext *ctx = (TypeQueryTypeDbContext *)context;
-		ctx->result.operator Array().append_array(p.get_type_signal_list(ctx->type, ctx->no_inheritance));
-	});
-	return context.result.operator Array();
+	return _query(p_eager, &TypeProvider::get_type_signal_list, p_no_inheritance);
 }
 
 TypedArray<Dictionary> TypeServer::get_type_property_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	TypeQueryTypeDbContext context(p_type, p_no_inheritance, p_eager, TypedArray<Dictionary>());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeQueryTypeDbContext *ctx = (TypeQueryTypeDbContext *)context;
-		ctx->result.operator Array().append_array(p.get_type_property_list(ctx->type, ctx->no_inheritance));
-	});
-	return context.result.operator Array();
+	return _query(p_eager, &TypeProvider::get_type_property_list, p_no_inheritance);
 }
 
 Variant TypeServer::get_property(const Variant &p_source, const StringName &p_property, bool p_eager) const {
-	TypeMemberTypeDbContext context(p_source, p_property, p_eager, Variant());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberTypeDbContext *ctx = (TypeMemberTypeDbContext *)context;
-		ctx->result = p.get_property(ctx->type, ctx->name);
-	});
-	return context.result;
+	return _query(p_eager, &TypeProvider::get_property, p_property);
 }
 
 Error TypeServer::set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value, bool p_eager) const {
-	TypeMemberValueTypeDbContext context(p_source, p_property, p_value, p_eager, OK);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberValueTypeDbContext *ctx = (TypeMemberValueTypeDbContext *)context;
-		ctx->result = p.set_property(ctx->type, ctx->name, ctx->value);
-	});
-	return (Error)context.result.operator int();
+	int result = _query(p_eager, &TypeProvider::set_property, p_property, p_value);
+	return (Error)result;
 }
 
 bool TypeServer::has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance, bool p_eager) const {
-	TypeMemberQueryTypeDbContext context(p_type, p_method, p_no_inheritance, p_eager, false);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberQueryTypeDbContext *ctx = (TypeMemberQueryTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.has_method(ctx->type, ctx->name, ctx->no_inheritance);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::has_method, p_method, p_no_inheritance);
 }
 
 TypedArray<Dictionary> TypeServer::get_type_method_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	TypeQueryTypeDbContext context(p_type, p_no_inheritance, p_eager, TypedArray<Dictionary>());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeQueryTypeDbContext *ctx = (TypeQueryTypeDbContext *)context;
-		ctx->result.operator Array().append_array(p.get_type_method_list(ctx->type, ctx->no_inheritance));
-	});
-	return context.result.operator Array();
+	return _query(p_eager, &TypeProvider::get_type_method_list, p_no_inheritance);
 }
 
 PackedStringArray TypeServer::get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	TypeQueryTypeDbContext context(p_type, p_no_inheritance, p_eager, PackedStringArray());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeQueryTypeDbContext *ctx = (TypeQueryTypeDbContext *)context;
-		ctx->result.operator PackedStringArray().append_array(p.get_type_integer_constant_list(ctx->type, ctx->no_inheritance));
-	});
-	return context.result.operator PackedStringArray();
+	return _query(p_eager, &TypeProvider::get_type_integer_constant_list, p_no_inheritance);
 }
 
 bool TypeServer::has_integer_constant(const Variant &p_type, const StringName &p_name, bool p_eager) const {
-	TypeMemberTypeDbContext context(p_type, p_name, p_eager, false);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberTypeDbContext *ctx = (TypeMemberTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.has_integer_constant(ctx->type, ctx->name);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::has_integer_constant, p_name);
 }
 
 int64_t TypeServer::get_integer_constant(const Variant &p_type, const StringName &p_name, bool p_eager) const {
-	TypeMemberTypeDbContext context(p_type, p_name, p_eager, 0);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberTypeDbContext *ctx = (TypeMemberTypeDbContext *)context;
-		ctx->result = p.get_integer_constant(ctx->type, ctx->name);
-	});
-	return context.result.operator int64_t();
+	return _query(p_eager, &TypeProvider::get_integer_constant, p_name);
 }
 
 bool TypeServer::has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_eager) const {
-	TypeMemberQueryTypeDbContext context(p_type, p_name, p_no_inheritance, p_eager, false);
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberQueryTypeDbContext *ctx = (TypeMemberQueryTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.has_enum(ctx->type, ctx->name, ctx->no_inheritance);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::has_enum, p_name, p_no_inheritance);
 }
 
 PackedStringArray TypeServer::get_enum_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	TypeQueryTypeDbContext context(p_type, p_no_inheritance, p_eager, PackedStringArray());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeQueryTypeDbContext *ctx = (TypeQueryTypeDbContext *)context;
-		ctx->result.operator PackedStringArray().append_array(p.get_enum_list(ctx->type, ctx->no_inheritance));
-	});
-	return context.result.operator PackedStringArray();
+	return _query(p_eager, &TypeProvider::get_enum_list, p_no_inheritance);
 }
 
 PackedStringArray TypeServer::get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance, bool p_eager) const {
-	TypeMemberQueryTypeDbContext context(p_type, p_enum, p_no_inheritance, p_eager, PackedStringArray());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberQueryTypeDbContext *ctx = (TypeMemberQueryTypeDbContext *)context;
-		ctx->result.operator PackedStringArray().append_array(p.get_enum_constants(ctx->type, ctx->name, ctx->no_inheritance));
-	});
-	return context.result.operator PackedStringArray();
+	return _query(p_eager, &TypeProvider::get_enum_constants, p_enum, p_no_inheritance);
 }
 
 StringName TypeServer::get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_eager) const {
-	TypeMemberQueryTypeDbContext context(p_type, p_name, p_no_inheritance, p_eager, StringName());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeMemberQueryTypeDbContext *ctx = (TypeMemberQueryTypeDbContext *)context;
-		ctx->result = p.get_integer_constant_enum(ctx->type, ctx->name, ctx->no_inheritance);
-	});
-	return context.result.operator StringName();
+	return _query(p_eager, &TypeProvider::get_integer_constant_enum, p_name, p_no_inheritance);
 }
 
 bool TypeServer::is_type_enabled(const Variant &p_type, bool p_eager) const {
-	TypeTypeDbContext context(p_type, p_eager, PackedStringArray());
-	_process(&context, [](TypeProvider &p, TypeDbContext *context) {
-		TypeTypeDbContext *ctx = (TypeTypeDbContext *)context;
-		ctx->result = ctx->result.operator bool() || p.is_type_enabled(ctx->type);
-	});
-	return context.result.operator bool();
+	return _query(p_eager, &TypeProvider::is_type_enabled);
 }
 
 TypeProvider* TypeServer::get_provider(const StringName &p_name) const {
-	TYPE_RLOCK
+	RWLockRead rw(lock);
 	for (TypeProvider *op : _providers) {
 		if (op->get_provider_name() == p_name) {
 			return op;
@@ -499,7 +431,7 @@ TypeProvider* TypeServer::get_provider(const StringName &p_name) const {
 }
 
 void TypeServer::add_provider(TypeProvider * const p_provider) {
-	TYPE_WLOCK
+	RWLockWrite rw(lock);
 	ERR_FAIL_COND_MSG(!p_provider, vformat("Cannot add a null %s", SNAME("TypeProvider")));
 	for (const TypeProvider *op : _providers) {
 		ERR_FAIL_COND_MSG(op == p_provider, vformat("The given %s with name '%s' has already been registered.", SNAME("TypeProvider"), p_provider->get_provider_name()));
@@ -508,7 +440,7 @@ void TypeServer::add_provider(TypeProvider * const p_provider) {
 }
 
 void TypeServer::remove_provider(const TypeProvider *p_provider) {
-	TYPE_WLOCK
+	RWLockWrite rw(lock);
 	ERR_FAIL_COND_MSG(!p_provider, vformat("Cannot remove a null %s", SNAME("TypeProvider")));
 	for (int i = 0; i < _providers.size(); i++) {
 		if (_providers[i] == p_provider) {
@@ -517,7 +449,4 @@ void TypeServer::remove_provider(const TypeProvider *p_provider) {
 	}
 	ERR_FAIL_MSG(vformat("The given %s with name '%s' is not present and could not be removed.", SNAME("TypeProvider"), p_provider->get_provider_name()));
 }
-
-#undef TYPE_RLOCK
-#undef TYPE_WLOCK
 
