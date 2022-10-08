@@ -46,7 +46,7 @@ class ClassDBTypeProvider : public TypeProvider {
 	}
 
 public:
-	virtual StringName get_provider_name() const override { return SNAME("ClassDBTypeProvider"); }
+	virtual StringName get_provider_name() const override { return SNAME("ClassDB"); }
 
 	virtual PackedStringArray get_type_list(Dictionary p_state, bool p_no_named = false, bool p_no_anonymous = true) const override;
 	virtual PackedStringArray get_inheriters_from_type(Dictionary p_query_state, const Variant &p_type) const override;

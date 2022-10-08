@@ -30,24 +30,115 @@
 
 #include "script_server_type_provider.h"
 
-#define EXIT_CHECK(m_type) EXIT_CHECK_COND(m_type, false)
-#define EXIT_CHECK_COND(m_type, m_check) \
-	if (!can_participate() || (m_check)) {  \
-		return get_result().operator m_type(); \
+PackedStringArray ScriptServerTypeProvider::get_type_list(Dictionary p_query_state, bool p_no_named, bool p_no_anonymous) const {
+	if (p_no_named) {
+		return _get_result(p_query_state);
 	}
-
-PackedStringArray ScriptServerTypeProvider::get_type_list(bool p_no_named, bool p_no_anonymous) const {
-	EXIT_CHECK_COND(PackedStringArray, p_no_named);
-	PackedStringArray result = get_result();
-
 	List<StringName> classes;
 	ScriptServer::get_global_class_list(&classes);
-	for (const StringName &name : classes) {
-		result.append(name);
+	PackedStringArray ret;
+	ret.resize(classes.size());
+	int idx = 0;
+	for (const StringName &E : classes) {
+		ret.set(idx++, E);
 	}
-
-	return result;
+	return _aggregate(p_query_state, ret);
 }
 
-#undef EXIT_CHECK
-#undef EXIT_CHECK_COND
+PackedStringArray ScriptServerTypeProvider::get_inheriters_from_type(Dictionary p_query_state, const Variant &p_type) const {
+	const StringName &name = _extract_name(p_type);
+	if (name == StringName()) {
+		return _get_result(p_query_state);
+	}
+	List<StringName> classes;
+	ScriptServer::get_global_class_list(&classes);
+	for (const StringName &E : classes) {
+		
+	}
+	return _aggregate(p_query_state, get_db()->get_inheriters_from_class(p_type));
+}
+
+StringName ScriptServerTypeProvider::get_parent_type(Dictionary p_query_state, const Variant &p_type) const {
+	return _overwrite(p_query_state, get_db()->get_parent_class(p_type));
+}
+
+bool ScriptServerTypeProvider::type_exists(Dictionary p_query_state, const Variant &p_type) const {
+	return _aggregate(p_query_state, get_db()->class_exists(p_type));
+}
+
+bool ScriptServerTypeProvider::is_parent_type(Dictionary p_query_state, const Variant &p_type, const Variant &p_inherits) const {
+	return _aggregate(p_query_state, get_db()->is_parent_class(p_type, p_inherits));
+}
+
+bool ScriptServerTypeProvider::can_instantiate(Dictionary p_query_state, const Variant &p_type) const {
+	return _aggregate(p_query_state, get_db()->can_instantiate(p_type));
+}
+
+Variant ScriptServerTypeProvider::instantiate(Dictionary p_query_state, const Variant &p_type) const {
+	return _overwrite(p_query_state, get_db()->instantiate(p_type));
+}
+
+bool ScriptServerTypeProvider::has_signal(Dictionary p_query_state, const Variant &p_type, StringName p_signal) const {
+	return _aggregate(p_query_state, get_db()->has_signal(p_type, p_signal));
+}
+
+Dictionary ScriptServerTypeProvider::get_signal(Dictionary p_query_state, const Variant &p_type, StringName p_signal) const {
+	return _overwrite(p_query_state, get_db()->get_signal(p_type, p_signal));
+}
+
+TypedArray<Dictionary> ScriptServerTypeProvider::get_type_signal_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->get_signal_list(p_type, p_no_inheritance));
+}
+
+TypedArray<Dictionary> ScriptServerTypeProvider::get_type_property_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->get_property_list(p_type, p_no_inheritance));
+}
+
+Variant ScriptServerTypeProvider::get_property(Dictionary p_query_state, const Variant &p_source, const StringName &p_property) const {
+	return _overwrite(p_query_state, get_db()->get_property(p_source, p_property));
+}
+
+Error ScriptServerTypeProvider::set_property(Dictionary p_query_state, const Variant &p_source, const StringName &p_property, const Variant &p_value) const {
+	return _overwrite(p_query_state, get_db()->set_property(p_source, p_property, p_value));
+}
+
+bool ScriptServerTypeProvider::has_method(Dictionary p_query_state, const Variant &p_type, StringName p_method, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->has_method(p_type, p_method, p_no_inheritance));
+}
+
+TypedArray<Dictionary> ScriptServerTypeProvider::get_type_method_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->get_method_list(p_type, p_no_inheritance));
+}
+
+PackedStringArray ScriptServerTypeProvider::get_type_integer_constant_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->get_integer_constant_list(p_type, p_no_inheritance));
+}
+
+bool ScriptServerTypeProvider::has_integer_constant(Dictionary p_query_state, const Variant &p_type, const StringName &p_name) const {
+	return _aggregate(p_query_state, get_db()->has_integer_constant(p_type, p_name));
+}
+
+int64_t ScriptServerTypeProvider::get_integer_constant(Dictionary p_query_state, const Variant &p_type, const StringName &p_name) const {
+	return _overwrite(p_query_state, get_db()->get_integer_constant(p_type, p_name));
+}
+
+bool ScriptServerTypeProvider::has_enum(Dictionary p_query_state, const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->has_integer_constant(p_type, p_name));
+}
+
+PackedStringArray ScriptServerTypeProvider::get_enum_list(Dictionary p_query_state, const Variant &p_type, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->get_enum_list(p_type, p_no_inheritance));
+}
+
+PackedStringArray ScriptServerTypeProvider::get_enum_constants(Dictionary p_query_state, const Variant &p_type, const StringName &p_enum, bool p_no_inheritance) const {
+	return _aggregate(p_query_state, get_db()->get_enum_constants(p_type, p_enum, p_no_inheritance));
+}
+
+StringName ScriptServerTypeProvider::get_integer_constant_enum(Dictionary p_query_state, const Variant &p_type, const StringName &p_name, bool p_no_inheritance) const {
+	return _overwrite(p_query_state, get_db()->get_integer_constant_enum(p_type, p_name, p_no_inheritance));
+}
+
+bool ScriptServerTypeProvider::is_type_enabled(Dictionary p_query_state, const Variant &p_type) const {
+	return _aggregate(p_query_state, get_db()->is_class_enabled(p_type));
+}
+

@@ -32,6 +32,57 @@
 
 #include "core/core_bind.h"
 
+TypedArray<StringName> TypeProvider::extract_names(Variant p_type) const {
+	TypedArray<StringName> ret;
+
+	GDVIRTUAL_CALL(_extract_names, p_type, ret);
+
+	StringName (*name_from_file)(const String &) = [](const String &path) {
+		List<StringName> classes;
+		ScriptServer::get_global_class_list(&classes);
+		for (const StringName &E : classes) {
+			if (path == ScriptServer::get_global_class_path(E)) {
+				return E;
+			}
+		}
+		return StringName();
+	};
+
+	StringName name;
+	switch (p_type.get_type()) {
+		case Variant::STRING: {
+			String id = p_type;
+			if (id.is_valid_identifier()) {
+				name = id;
+			} else if (FileAccess::exists(id)) {
+				name = name_from_file(id);
+			}
+		} break;
+		case Variant::STRING_NAME: {
+			name = p_type.operator StringName();
+		} break;
+		case Variant::OBJECT: {
+			Object *obj = p_type;
+			if (obj) {
+				Ref<Script> scr = obj->is_class("Script") ? obj : obj->get_script();
+				if (scr.is_valid()) {
+					const String &path = scr->get_path();
+					name = name_from_file(path);
+				}
+			}
+		} break;
+		default:
+			break;
+	}
+
+	ret.append(name);
+	return ret;
+}
+
+PackedStringArray TypeProvider::extract_paths(Variant p_type) const {
+
+}
+
 PackedStringArray TypeProvider::get_type_list(Dictionary p_query_state, bool p_no_named = false, bool p_no_anonymous = true) const {
 	PackedStringArray ret;
 	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_type_list, p_query_state, p_no_named, p_no_anonymous, ret)) {
@@ -323,101 +374,101 @@ Variant TypeServer::_query(bool p_is_eager, T(TypeProvider::* p_handler)(Diction
 	return TypeProvider::_get_result(state);
 }
 
-PackedStringArray TypeServer::get_type_list(bool p_no_named, bool p_no_anonymous, bool p_eager) const {
+PackedStringArray TypeServer::get_type_list(bool p_no_named, bool p_no_anonymous, bool p_is_eager) const {
 	Variant args[] = { p_no_named, p_no_anonymous };
-	Dictionary state = _process<PackedStringArray>(args, p_eager, [](Dictionary state, TypeProvider *p, Variant *args) {
+	Dictionary state = _process<PackedStringArray>(args, p_is_eager, [](Dictionary state, TypeProvider *p, Variant *args) {
 		return p->get_type_list(state, args[0].operator bool(), args[1].operator bool());
 	});
 	return _as_result<PackedStringArray>(state);
 }
 
-PackedStringArray TypeServer::get_inheriters_from_type(const Variant &p_type, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_inheriters_from_type);
+PackedStringArray TypeServer::get_inheriters_from_type(const Variant &p_type, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_inheriters_from_type);
 }
 
-StringName TypeServer::get_parent_type(const Variant &p_type, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_parent_type);
+StringName TypeServer::get_parent_type(const Variant &p_type, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_parent_type);
 }
 
-bool TypeServer::type_exists(const Variant &p_type, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::type_exists);
+bool TypeServer::type_exists(const Variant &p_type, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::type_exists);
 }
 
-bool TypeServer::is_parent_type(const Variant &p_type, const Variant &p_inherits, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::is_parent_type, p_inherits);
+bool TypeServer::is_parent_type(const Variant &p_type, const Variant &p_inherits, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::is_parent_type, p_inherits);
 }
 
-bool TypeServer::can_instantiate(const Variant &p_type, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::can_instantiate);
+bool TypeServer::can_instantiate(const Variant &p_type, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::can_instantiate);
 }
 
-Variant TypeServer::instantiate(const Variant &p_type, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::instantiate);
+Variant TypeServer::instantiate(const Variant &p_type, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::instantiate);
 }
 
-bool TypeServer::has_signal(const Variant &p_type, StringName p_signal, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::has_signal, p_signal);
+bool TypeServer::has_signal(const Variant &p_type, StringName p_signal, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::has_signal, p_signal);
 }
 
-Dictionary TypeServer::get_signal(const Variant &p_type, StringName p_signal, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_signal, p_signal);
+Dictionary TypeServer::get_signal(const Variant &p_type, StringName p_signal, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_signal, p_signal);
 }
 
-TypedArray<Dictionary> TypeServer::get_type_signal_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_type_signal_list, p_no_inheritance);
+TypedArray<Dictionary> TypeServer::get_type_signal_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_type_signal_list, p_no_inheritance);
 }
 
-TypedArray<Dictionary> TypeServer::get_type_property_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_type_property_list, p_no_inheritance);
+TypedArray<Dictionary> TypeServer::get_type_property_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_type_property_list, p_no_inheritance);
 }
 
-Variant TypeServer::get_property(const Variant &p_source, const StringName &p_property, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_property, p_property);
+Variant TypeServer::get_property(const Variant &p_source, const StringName &p_property, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_property, p_property);
 }
 
-Error TypeServer::set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value, bool p_eager) const {
-	int result = _query(p_eager, &TypeProvider::set_property, p_property, p_value);
+Error TypeServer::set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value, bool p_is_eager) const {
+	int result = _query(p_is_eager, &TypeProvider::set_property, p_property, p_value);
 	return (Error)result;
 }
 
-bool TypeServer::has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::has_method, p_method, p_no_inheritance);
+bool TypeServer::has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::has_method, p_method, p_no_inheritance);
 }
 
-TypedArray<Dictionary> TypeServer::get_type_method_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_type_method_list, p_no_inheritance);
+TypedArray<Dictionary> TypeServer::get_type_method_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_type_method_list, p_no_inheritance);
 }
 
-PackedStringArray TypeServer::get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_type_integer_constant_list, p_no_inheritance);
+PackedStringArray TypeServer::get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_type_integer_constant_list, p_no_inheritance);
 }
 
-bool TypeServer::has_integer_constant(const Variant &p_type, const StringName &p_name, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::has_integer_constant, p_name);
+bool TypeServer::has_integer_constant(const Variant &p_type, const StringName &p_name, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::has_integer_constant, p_name);
 }
 
-int64_t TypeServer::get_integer_constant(const Variant &p_type, const StringName &p_name, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_integer_constant, p_name);
+int64_t TypeServer::get_integer_constant(const Variant &p_type, const StringName &p_name, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_integer_constant, p_name);
 }
 
-bool TypeServer::has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::has_enum, p_name, p_no_inheritance);
+bool TypeServer::has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::has_enum, p_name, p_no_inheritance);
 }
 
-PackedStringArray TypeServer::get_enum_list(const Variant &p_type, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_enum_list, p_no_inheritance);
+PackedStringArray TypeServer::get_enum_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_enum_list, p_no_inheritance);
 }
 
-PackedStringArray TypeServer::get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_enum_constants, p_enum, p_no_inheritance);
+PackedStringArray TypeServer::get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_enum_constants, p_enum, p_no_inheritance);
 }
 
-StringName TypeServer::get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::get_integer_constant_enum, p_name, p_no_inheritance);
+StringName TypeServer::get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::get_integer_constant_enum, p_name, p_no_inheritance);
 }
 
-bool TypeServer::is_type_enabled(const Variant &p_type, bool p_eager) const {
-	return _query(p_eager, &TypeProvider::is_type_enabled);
+bool TypeServer::is_type_enabled(const Variant &p_type, bool p_is_eager) const {
+	return _query(p_is_eager, &TypeProvider::is_type_enabled);
 }
 
 TypeProvider* TypeServer::get_provider(const StringName &p_name) const {

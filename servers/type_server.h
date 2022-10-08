@@ -62,6 +62,8 @@ protected:
 	template <class T>
 	static T _overwrite(Dictionary p_query_state, T p_value);
 
+	GDVIRTUAL1RC(TypedArray<StringName>, _extract_names, Variant);
+	GDVIRTUAL1RC(PackedStringArray, _extract_paths, Variant);
 	GDVIRTUAL3RC(PackedStringArray, _get_type_list, Dictionary, bool, bool);
 	GDVIRTUAL2RC(PackedStringArray, _get_inheriters_from_type, Dictionary, Variant);
 	GDVIRTUAL2RC(StringName, _get_parent_type, Dictionary, Variant);
@@ -89,6 +91,11 @@ protected:
 public:
 
 	virtual StringName get_provider_name() const { return StringName(); }
+
+	// Setting up separately for now as required aggregate methods for all providers.
+	// Possibly we just use `TypedArray<StringName>` and `TypedArray<String>` for state input parameter instead?
+	virtual TypedArray<StringName> extract_names(Variant p_type) const;
+	virtual PackedStringArray extract_paths(Variant p_type) const;
 
 	virtual PackedStringArray get_type_list(Dictionary p_query_state, bool p_no_named = false, bool p_no_anonymous = true) const;
 	virtual PackedStringArray get_inheriters_from_type(Dictionary p_query_state, const Variant &p_type) const;
@@ -177,29 +184,29 @@ public:
 	void add_provider(TypeProvider * const p_provider);
 	void remove_provider(const TypeProvider *p_provider);
 
-	virtual PackedStringArray get_type_list(bool p_no_named = false, bool p_no_anonymous = true, bool p_first = false) const;
-	virtual PackedStringArray get_inheriters_from_type(const Variant &p_type, bool p_first = false) const;
-	virtual StringName get_parent_type(const Variant &p_type, bool p_first = true) const;
-	virtual bool type_exists(const Variant &p_type, bool p_first = false) const;
-	virtual bool is_parent_type(const Variant &p_type, const Variant &p_inherits, bool p_first = true) const;
-	virtual bool can_instantiate(const Variant &p_type, bool p_first = false) const;
-	virtual Variant instantiate(const Variant &p_type, bool p_first = true) const;
-	virtual bool has_signal(const Variant &p_type, StringName p_signal, bool p_first = false) const;
-	virtual Dictionary get_signal(const Variant &p_type, StringName p_signal, bool p_first = true) const;
-	virtual TypedArray<Dictionary> get_type_signal_list(const Variant &p_type, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual TypedArray<Dictionary> get_type_property_list(const Variant &p_type, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual Variant get_property(const Variant &p_source, const StringName &p_property, bool p_first = true) const;
-	virtual Error set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value, bool p_first = true) const;
-	virtual bool has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual TypedArray<Dictionary> get_type_method_list(const Variant &p_type, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual PackedStringArray get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual bool has_integer_constant(const Variant &p_type, const StringName &p_name, bool p_first = false) const;
-	virtual int64_t get_integer_constant(const Variant &p_type, const StringName &p_name, bool p_first = true) const;
-	virtual bool has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual PackedStringArray get_enum_list(const Variant &p_type, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual PackedStringArray get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance = false, bool p_first = false) const;
-	virtual StringName get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false, bool p_first = true) const;
-	virtual bool is_type_enabled(const Variant &p_type, bool p_first = false) const;
+	virtual PackedStringArray get_type_list(bool p_no_named = false, bool p_no_anonymous = true, bool p_is_eager = false) const;
+	virtual PackedStringArray get_inheriters_from_type(const Variant &p_type, bool p_is_eager = false) const;
+	virtual StringName get_parent_type(const Variant &p_type, bool p_is_eager = true) const;
+	virtual bool type_exists(const Variant &p_type, bool p_is_eager = false) const;
+	virtual bool is_parent_type(const Variant &p_type, const Variant &p_inherits, bool p_is_eager = true) const;
+	virtual bool can_instantiate(const Variant &p_type, bool p_is_eager = false) const;
+	virtual Variant instantiate(const Variant &p_type, bool p_is_eager = true) const;
+	virtual bool has_signal(const Variant &p_type, StringName p_signal, bool p_is_eager = false) const;
+	virtual Dictionary get_signal(const Variant &p_type, StringName p_signal, bool p_is_eager = true) const;
+	virtual TypedArray<Dictionary> get_type_signal_list(const Variant &p_type, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual TypedArray<Dictionary> get_type_property_list(const Variant &p_type, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual Variant get_property(const Variant &p_source, const StringName &p_property, bool p_is_eager = true) const;
+	virtual Error set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value, bool p_is_eager = true) const;
+	virtual bool has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual TypedArray<Dictionary> get_type_method_list(const Variant &p_type, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual PackedStringArray get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual bool has_integer_constant(const Variant &p_type, const StringName &p_name, bool p_is_eager = false) const;
+	virtual int64_t get_integer_constant(const Variant &p_type, const StringName &p_name, bool p_is_eager = true) const;
+	virtual bool has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual PackedStringArray get_enum_list(const Variant &p_type, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual PackedStringArray get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance = false, bool p_is_eager = false) const;
+	virtual StringName get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance = false, bool p_is_eager = true) const;
+	virtual bool is_type_enabled(const Variant &p_type, bool p_is_eager = false) const;
 
 	TypeServer() {}
 	~TypeServer() {}
