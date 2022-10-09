@@ -323,21 +323,55 @@ void TypeProvider::_bind_methods() {
 TypeServer *TypeServer::singleton = nullptr;
 TypeServer *(*TypeServer::create_func)() = nullptr;
 
-template <class TResult, class TState>
-TState TypeServer::_process(TState p_state, Variant *p_args, bool p_is_eager, PackedStringArray p_filters, TResult (*p_handler)(TState state, TypeProvider *provider, Variant *args)) const {
+Variant TypeServer::_process(Variant p_state, const Variant **p_args, int p_argcount, bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, const Callable &p_callable) const {
 	RWLockRead rw(lock);
-	TState state = _new_query_state(p_is_eager);
-	for (int i = _providers.size()-1; i >= 0; i--) {
-		TypeProvider *p = _providers[i];
-		if (!p_filters.is_empty() && p_filters.find(p->get_provider_name()) == -1) {
-			continue;
+	Callable::CallError error;
+	if (p_aggregate) {
+		for (int i = _providers.size()-1; i >= 0; i--) {
+			TypeProvider *p = _providers[i];
+			if (!p_filters.is_empty() && p_filters.find(p->get_provider_name()) == -1) {
+				continue;
+			}
+			Variant ret;
+			p_callable.callp(p_args, p_argcount, ret, error);
+			switch (ret.get_type()) {
+				case Variant::BOOL: {
+					bool result = TypeProvider::_get_result(p_state);
+					TypeProvider::_set_result(p_state, result || ret.operator bool());
+				} break;
+				case Variant::ARRAY: {
+					Array result = TypeProvider::_get_result(p_state);
+					result.append_array(ret);
+					TypeProvider::_set_result(p_state, result);
+				} break;
+				case Variant::PACKED_STRING_ARRAY: {
+					PackedStringArray result = TypeProvider::_get_result(p_state);
+					result.append_array(ret);
+					TypeProvider::_set_result(p_state, result);
+				} break;
+				default: {
+				} break;
+			}
+			if (!TypeProvider::_is_query_done(p_state)) {
+				break;
+			}
 		}
-		TypeProvider::_set_result(state, p_handler(state, p, p_args));
-		if (!TypeProvider::_is_query_done(state)) {
-			break;
+	} else {
+		for (int i = _providers.size()-1; i >= 0; i--) {
+			TypeProvider *p = _providers[i];
+			if (!p_filters.is_empty() && p_filters.find(p->get_provider_name()) == -1) {
+				continue;
+			}
+			Callable::CallError error;
+			Variant ret;
+			p_callable.callp(p_args, p_argcount, ret, error);
+			TypeProvider::_set_result(p_state, ret);
+			if (!TypeProvider::_is_query_done(p_state)) {
+				break;
+			}
 		}
 	}
-	return state;
+	return p_state;
 }
 
 template <class T, class ...VarArgs>

@@ -139,12 +139,11 @@ class TypeServer {
 		return d;
 	}
 
-	//template <class T>
-	//Dictionary _process(Variant *p_args, bool p_is_eager, PackedStringArray p_filters, T (*p_handler)(Dictionary state, TypeProvider *provider, Variant *args)) const;
-	template <class TResult, class TState>
-	TState _process(TState p_state, Variant *p_args, bool p_is_eager, PackedStringArray p_filters, TResult (*p_handler)(TState state, TypeProvider *provider, Variant *args)) const;
+	Variant _process(Variant p_state, const Variant **p_args, int p_argcount, bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, const Callable &p_callable) const;
 	template <class T>
 	static _FORCE_INLINE_ T _as_result(Dictionary p_state) { return TypeProvider::_get_result(p_state).operator T(); }
+	template <class T>
+	static _FORCE_INLINE_ T _as_result(Array p_state) { return p_state.is_empty() ? p_state[0].operator T() : T(); }
 
 	template <class T, class ...VarArgs>
 	Variant _query(bool p_is_eager, PackedStringArray p_filters, T (TypeProvider::*p_handler)(Dictionary state, const Variant &type, VarArgs... args) const, VarArgs... p_args) const;
