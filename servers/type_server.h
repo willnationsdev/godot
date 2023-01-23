@@ -139,20 +139,14 @@ class TypeServer {
 		return d;
 	}
 
-	Variant _process(Variant p_state, const Variant **p_args, int p_argcount, bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, const Callable &p_callable) const;
+	Variant _process(Variant p_state, const Variant **p_args, int p_argcount, bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, Callable (*p_callable_factory)(TypeProvider *)) const;
 	template <class T>
 	static _FORCE_INLINE_ T _as_result(Dictionary p_state) { return TypeProvider::_get_result(p_state).operator T(); }
 	template <class T>
 	static _FORCE_INLINE_ T _as_result(Array p_state) { return p_state.is_empty() ? p_state[0].operator T() : T(); }
 
-	template <class T, class ...VarArgs>
-	Variant _query(bool p_is_eager, PackedStringArray p_filters, T (TypeProvider::*p_handler)(Dictionary state, const Variant &type, VarArgs... args) const, VarArgs... p_args) const;
-	template <class T, class V1, class ...VarArgs>
-	Variant _query(bool p_is_eager, PackedStringArray p_filters, T (TypeProvider::*p_handler)(Dictionary state, const Variant &type, const V1 &v1, VarArgs... args) const, const V1 &p_v1, VarArgs... p_args) const;
-	template <class T, class V1, class V2, class ...VarArgs>
-	Variant _query(bool p_is_eager, PackedStringArray p_filters, T (TypeProvider::*p_handler)(Dictionary state, const Variant &type, const V1 &v1, const V2 &v2, VarArgs... args) const, const V1 &p_v1, const V2 &p_v2, VarArgs... p_args) const;
-	template <class T, class V1, class V2, class V3, class ...VarArgs>
-	Variant _query(bool p_is_eager, PackedStringArray p_filters, T (TypeProvider::*p_handler)(Dictionary state, const Variant &type, const V1 &v1, const V2 &v2, const V3 &v3, VarArgs... args) const, const V1 &p_v1, const V2 &p_v2, const V3 &p_v3, VarArgs... p_args) const;
+	template <class ...VarArgs>
+	Variant _query(bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, Callable (*p_callable_factory)(TypeProvider *), int p_argc, VarArgs... p_args) const;
 
 protected:
 	static TypeServer *(*create_func)();

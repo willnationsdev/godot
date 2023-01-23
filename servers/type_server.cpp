@@ -35,7 +35,6 @@
 TypedArray<StringName> TypeProvider::extract_names(Variant p_type) const {
 	TypedArray<StringName> ret;
 	GDVIRTUAL_CALL(_extract_names, p_type, ret);
-	return ret;
 
 	StringName (*name_from_file)(const String &) = [](const String &path) {
 		List<StringName> classes;
@@ -74,6 +73,10 @@ TypedArray<StringName> TypeProvider::extract_names(Variant p_type) const {
 		default:
 			break;
 	}
+	if (name != StringName()) {
+		ret.push_back(name);
+	}
+	return ret;
 }
 
 TypedArray<String> TypeProvider::extract_paths(Variant p_type) const {
@@ -82,7 +85,7 @@ TypedArray<String> TypeProvider::extract_paths(Variant p_type) const {
 	return ret;
 }
 
-PackedStringArray TypeProvider::get_type_list(Dictionary p_query_state, bool p_no_named = false, bool p_no_anonymous = true) const {
+PackedStringArray TypeProvider::get_type_list(Dictionary p_query_state, bool p_no_named, bool p_no_anonymous) const {
 	PackedStringArray ret;
 	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_get_type_list, p_query_state, p_no_named, p_no_anonymous, ret)) {
 		_set_result(p_query_state, ret);
@@ -143,7 +146,6 @@ bool TypeProvider::has_signal(Dictionary p_query_state, const Variant &p_type, S
 	if (_is_query_done(p_query_state) && GDVIRTUAL_CALL(_has_signal, p_query_state, p_type, p_signal, ret)) {
 		_set_result(p_query_state, ret);
 	}
-	return ret;
 	return _get_result(p_query_state).operator bool();
 }
 
@@ -286,8 +288,8 @@ static TypedArray<Dictionary> TypeProvider::_aggregate<TypedArray<Dictionary>>(D
 	return result;
 }
 
-template <class T>
-static T TypeProvider::_overwrite<StringName>(Dictionary p_query_state, T p_value) {
+template <>
+static StringName TypeProvider::_overwrite<StringName>(Dictionary p_query_state, StringName p_value) {
 	return _is_handled(p_query_state) ? _get_result(p_query_state) : p_value;
 }
 
@@ -323,7 +325,7 @@ void TypeProvider::_bind_methods() {
 TypeServer *TypeServer::singleton = nullptr;
 TypeServer *(*TypeServer::create_func)() = nullptr;
 
-Variant TypeServer::_process(Variant p_state, const Variant **p_args, int p_argcount, bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, const Callable &p_callable) const {
+Variant TypeServer::_process(Variant p_state, const Variant **p_args, int p_argcount, bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, Callable(* p_callable_factory)(TypeProvider *)) const {
 	RWLockRead rw(lock);
 	Callable::CallError error;
 	if (p_aggregate) {
@@ -332,8 +334,9 @@ Variant TypeServer::_process(Variant p_state, const Variant **p_args, int p_argc
 			if (!p_filters.is_empty() && p_filters.find(p->get_provider_name()) == -1) {
 				continue;
 			}
+			Callable c = p_callable_factory(p);
 			Variant ret;
-			p_callable.callp(p_args, p_argcount, ret, error);
+			c.callp(p_args, p_argcount, ret, error);
 			switch (ret.get_type()) {
 				case Variant::BOOL: {
 					bool result = TypeProvider::_get_result(p_state);
@@ -362,9 +365,9 @@ Variant TypeServer::_process(Variant p_state, const Variant **p_args, int p_argc
 			if (!p_filters.is_empty() && p_filters.find(p->get_provider_name()) == -1) {
 				continue;
 			}
-			Callable::CallError error;
+			Callable c = p_callable_factory(p);
 			Variant ret;
-			p_callable.callp(p_args, p_argcount, ret, error);
+			c.callp(p_args, p_argcount, ret, error);
 			TypeProvider::_set_result(p_state, ret);
 			if (!TypeProvider::_is_query_done(p_state)) {
 				break;
@@ -374,156 +377,114 @@ Variant TypeServer::_process(Variant p_state, const Variant **p_args, int p_argc
 	return p_state;
 }
 
-template <class T, class ...VarArgs>
-Variant TypeServer::_query(bool p_is_eager, PackedStringArray p_filters, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, VarArgs... args) const, VarArgs... p_args) const {
-	Variant args[] = { ...p_args };
-	Dictionary state = _process<T, Dictionary>(args, p_is_eager, p_filters, [](Dictionary state, TypeProvider *p, VarArgs... args) {
-		return p->(p_handler)(state, args...);
-	});
-	return TypeProvider::_get_result(state);
-}
-
-template <class T, class V1, class ...VarArgs>
-Variant TypeServer::_query(bool p_is_eager, PackedStringArray p_filters, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, const V1 &v1, VarArgs... args) const, const V1 &p_v1, VarArgs... p_args) const {
-	Variant args[] = { v1, ...p_args };
-	Dictionary state = _process<T, Dictionary>(args, p_is_eager, p_filters, [](Dictionary state, TypeProvider *p, const V1& p_v1, VarArgs... args) {
-		return p->(p_handler)(state, v1, args...);
-	});
-	return TypeProvider::_get_result(state);
-}
-
-template <class T, class V1, class V2, class ...VarArgs>
-Variant TypeServer::_query(bool p_is_eager, PackedStringArray p_filters, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, const V1 &v1, const V2 &v2, VarArgs... args) const, const V1 &p_v1, const V2 &p_v2, VarArgs... p_args) const {
-	Variant args[] = { v1, v2, ...p_args };
-	Dictionary state = _process<T, Dictionary>(args, p_is_eager, p_filters, [](Dictionary state, TypeProvider *p, const V1 &p_v1, const V2 &p_v2, VarArgs... args) {
-		return p->(p_handler)(state, v1, v2, args...);
-	});
-	return TypeProvider::_get_result(state);
-}
-
-template <class T, class V1, class V2, class V3, class ...VarArgs>
-Variant TypeServer::_query(bool p_is_eager, PackedStringArray p_filters, T(TypeProvider::* p_handler)(Dictionary state, const Variant &type, const V1 &v1, const V2 &v2, const V3 &v3, VarArgs... args) const, const V1 &p_v1, const V2 &p_v2, const V3 &p_v3, VarArgs... p_args) const {
-	Variant args[] = { v1, v2, v3, ...p_args };
-	Dictionary state = _process<T, Dictionary>(args, p_is_eager, p_filters, [](Dictionary state, TypeProvider *p, const V1 &p_v1, const V2 &p_v2, const V3 &p_v3, VarArgs... args) {
-		return p->(p_handler)(state, v1, v2, v3, args...);
-	});
+template <class ...VarArgs>
+Variant TypeServer::_query(bool p_is_eager, bool p_aggregate, PackedStringArray p_filters, Callable (*p_handler)(TypeProvider *p), int p_argc, VarArgs... p_args) const {
+	Variant args[] = { p_args... };
+	const Variant *argsp = args;
+	Dictionary state;
+	state = _process(state, &argsp, p_argc, p_is_eager, p_aggregate, p_filters, p_handler);
 	return TypeProvider::_get_result(state);
 }
 
 TypedArray<StringName> TypeServer::extract_names(Variant p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	Variant args[] = { p_type };
-	TypedArray<StringName> state;
-	state = _process<TypedArray<StringName>, TypedArray<StringName>>(state, args, p_is_eager, p_filters, [](TypedArray<StringName> names, TypeProvider *p, Variant *args) {
-		return p->extract_names(args[0]);
-	});
-	return state;
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::extract_names); }, 1, p_type).operator Array();
 }
 
 TypedArray<String> TypeServer::extract_paths(Variant p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	Variant args[] = { p_type };
-	TypedArray<String> state;
-	state = _process<TypedArray<String>, TypedArray<String>>(state, args, p_is_eager, p_filters, [](TypedArray<String> paths, TypeProvider *p, Variant *args) {
-		return p->extract_paths(args[0]);
-	});
-	return state;
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::extract_paths); }, 1, p_type).operator Array();
 }
 
 PackedStringArray TypeServer::get_type_list(bool p_no_named, bool p_no_anonymous, bool p_is_eager, PackedStringArray p_filters) const {
-	Variant args[] = { p_no_named, p_no_anonymous };
-	Dictionary state;
-	state = _process<PackedStringArray, Dictionary>(state, args, p_is_eager, p_filters, [](Dictionary state, TypeProvider *p, Variant *args) {
-		return p->get_type_list(state, args[0].operator bool(), args[1].operator bool());
-	});
-	return _as_result<PackedStringArray>(state);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::extract_paths); }, 2, p_no_named, p_no_anonymous).operator PackedStringArray();
 }
 
 PackedStringArray TypeServer::get_inheriters_from_type(const Variant &p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_inheriters_from_type);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_inheriters_from_type); }, 1, p_type).operator PackedStringArray();
 }
 
 StringName TypeServer::get_parent_type(const Variant &p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_parent_type);
+	return _query(p_is_eager, false, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_parent_type); }, 1, p_type).operator StringName();
 }
 
 bool TypeServer::type_exists(const Variant &p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::type_exists);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::type_exists); }, 1, p_type).operator bool();
 }
 
 bool TypeServer::is_parent_type(const Variant &p_type, const Variant &p_inherits, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::is_parent_type, p_inherits);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::is_parent_type); }, 2, p_type, p_inherits).operator bool();
 }
 
 bool TypeServer::can_instantiate(const Variant &p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::can_instantiate);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::can_instantiate); }, 1, p_type).operator bool();
 }
 
 Variant TypeServer::instantiate(const Variant &p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::instantiate);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::instantiate); }, 1, p_type);
 }
 
 bool TypeServer::has_signal(const Variant &p_type, StringName p_signal, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::has_signal, p_signal);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::has_signal); }, 2, p_type, p_signal).operator bool();
 }
 
 Dictionary TypeServer::get_signal(const Variant &p_type, StringName p_signal, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_signal, p_signal);
+	return _query(p_is_eager, false, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_signal); }, 2, p_type, p_signal);
 }
 
 TypedArray<Dictionary> TypeServer::get_type_signal_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_type_signal_list, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_type_signal_list); }, 2, p_type, p_no_inheritance).operator Array();
 }
 
 TypedArray<Dictionary> TypeServer::get_type_property_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_type_property_list, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_type_property_list); }, 2, p_type, p_no_inheritance).operator Array();
 }
 
 Variant TypeServer::get_property(const Variant &p_source, const StringName &p_property, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_property, p_property);
+	return _query(p_is_eager, false, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_property); }, 2, p_source, p_property);
 }
 
 Error TypeServer::set_property(const Variant &p_source, const StringName &p_property, const Variant &p_value, bool p_is_eager, PackedStringArray p_filters) const {
-	int result = _query(p_is_eager, p_filters, &TypeProvider::set_property, p_property, p_value);
+	int result = _query(p_is_eager, false, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::set_property); }, 3, p_source, p_property, p_value).operator int();
 	return (Error)result;
 }
 
 bool TypeServer::has_method(const Variant &p_type, StringName p_method, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::has_method, p_method, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::has_method); }, 2, p_type, p_method).operator bool();
 }
 
 TypedArray<Dictionary> TypeServer::get_type_method_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_type_method_list, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_type_method_list); }, 2, p_type, p_no_inheritance).operator Array();
 }
 
 PackedStringArray TypeServer::get_type_integer_constant_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_type_integer_constant_list, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_type_integer_constant_list); }, 2, p_type, p_no_inheritance).operator PackedStringArray();
 }
 
 bool TypeServer::has_integer_constant(const Variant &p_type, const StringName &p_name, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::has_integer_constant, p_name);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::has_integer_constant); }, 2, p_type, p_name).operator bool();
 }
 
 int64_t TypeServer::get_integer_constant(const Variant &p_type, const StringName &p_name, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_integer_constant, p_name);
+	return _query(p_is_eager, false, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_integer_constant); }, 2, p_type, p_name).operator int64_t();
 }
 
 bool TypeServer::has_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::has_enum, p_name, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::has_enum); }, 2, p_type, p_name).operator bool();
 }
 
 PackedStringArray TypeServer::get_enum_list(const Variant &p_type, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_enum_list, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_enum_list); }, 2, p_type, p_no_inheritance).operator PackedStringArray();
 }
 
 PackedStringArray TypeServer::get_enum_constants(const Variant &p_type, const StringName &p_enum, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_enum_constants, p_enum, p_no_inheritance);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_enum_constants); }, 2, p_type, p_no_inheritance).operator PackedStringArray();
 }
 
 StringName TypeServer::get_integer_constant_enum(const Variant &p_type, const StringName &p_name, bool p_no_inheritance, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::get_integer_constant_enum, p_name, p_no_inheritance);
+	return _query(p_is_eager, false, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::get_integer_constant_enum); }, 3, p_type, p_name, p_no_inheritance).operator StringName();
 }
 
 bool TypeServer::is_type_enabled(const Variant &p_type, bool p_is_eager, PackedStringArray p_filters) const {
-	return _query(p_is_eager, p_filters, &TypeProvider::is_type_enabled);
+	return _query(p_is_eager, true, p_filters, [](TypeProvider *p) { return callable_mp(p, &TypeProvider::is_type_enabled); }, 1, p_type).operator bool();
 }
 
 TypeProvider* TypeServer::get_provider(const StringName &p_name) const {
