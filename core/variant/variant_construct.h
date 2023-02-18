@@ -41,6 +41,7 @@
 #include "core/os/os.h"
 #include "core/templates/local_vector.h"
 #include "core/templates/oa_hash_map.h"
+#include "core/variant/struct_db.h"
 
 template <class T>
 struct PtrConstruct {};
@@ -76,6 +77,7 @@ MAKE_PTRCONSTRUCT(Color);
 MAKE_PTRCONSTRUCT(StringName);
 MAKE_PTRCONSTRUCT(NodePath);
 MAKE_PTRCONSTRUCT(RID);
+MAKE_PTRCONSTRUCT(Struct);
 
 template <>
 struct PtrConstruct<Object *> {

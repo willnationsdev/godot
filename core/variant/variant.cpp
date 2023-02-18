@@ -37,6 +37,8 @@
 #include "core/io/resource.h"
 #include "core/math/math_funcs.h"
 #include "core/string/print_string.h"
+#include "core/variant/struct_db.h"
+#include "core/variant/struct.h"
 #include "core/variant/variant_parser.h"
 
 PagedAllocator<Variant::Pools::BucketSmall, true> Variant::Pools::_bucket_small;
@@ -119,6 +121,9 @@ String Variant::get_type_name(Variant::Type p_type) {
 		}
 		case OBJECT: {
 			return "Object";
+		}
+		case STRUCT: {
+			return "Struct";
 		}
 		case CALLABLE: {
 			return "Callable";
@@ -371,6 +376,14 @@ bool Variant::can_convert(Variant::Type p_type_from, Variant::Type p_type_to) {
 			valid_types = valid;
 		} break;
 		case OBJECT: {
+			static const Type valid[] = {
+				NIL
+			};
+
+			valid_types = valid;
+		} break;
+		// TODO: Account for user-defined implicit conversions if possible.
+		case STRUCT: {
 			static const Type valid[] = {
 				NIL
 			};
@@ -711,6 +724,13 @@ bool Variant::can_convert_strict(Variant::Type p_type_from, Variant::Type p_type
 
 			valid_types = valid;
 		} break;
+		case STRUCT: {
+			static const Type valid[] = {
+				NIL
+			};
+
+			valid_types = valid;
+		} break;
 		case STRING_NAME: {
 			static const Type valid[] = {
 				STRING,
@@ -932,6 +952,20 @@ bool Variant::is_zero() const {
 		}
 		case OBJECT: {
 			return _get_obj().obj == nullptr;
+		}
+		case STRUCT: {
+			Struct *s = _data._struct;
+			uint8_t *p = s->get_data();
+			uint8_t b = s->get_bucket();
+			if (b == 0) {
+				for (uint8_t *i = p; i - p < Struct::bucket_minimal; i++) {
+					if (*i) {
+						return false;
+					}
+				}
+				return true;
+			}
+			// repeat for other buckets. Surely there's a simpler way?
 		}
 		case CALLABLE: {
 			return reinterpret_cast<const Callable *>(_data._mem)->is_null();

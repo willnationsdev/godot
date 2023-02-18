@@ -75,10 +75,13 @@ typedef Vector<Vector2> PackedVector2Array;
 typedef Vector<Vector3> PackedVector3Array;
 typedef Vector<Color> PackedColorArray;
 
+typedef uint16_t StructID;
+class Struct;
+
 class Variant {
 public:
 	// If this changes the table in variant_op must be updated
-	enum Type {
+	enum Type: uint16_t {
 		NIL,
 
 		// atomic types
@@ -110,6 +113,7 @@ public:
 		NODE_PATH,
 		RID,
 		OBJECT,
+		STRUCT,
 		CALLABLE,
 		SIGNAL,
 		DICTIONARY,
@@ -165,6 +169,7 @@ private:
 	// it only allocates extra memory for aabb/matrix.
 
 	Type type = NIL;
+	StructID struct_type_id;
 
 	struct ObjData {
 		ObjectID id;
@@ -240,6 +245,7 @@ private:
 		Transform2D *_transform2d;
 		::AABB *_aabb;
 		Basis *_basis;
+		Struct *_struct;
 		Transform3D *_transform3d;
 		Projection *_projection;
 		PackedArrayRefBase *packed_array;
@@ -281,6 +287,7 @@ private:
 			true, //NODE_PATH,
 			false, //RID,
 			true, //OBJECT,
+			true, //STRUCT,
 			true, //CALLABLE,
 			true, //SIGNAL,
 			true, //DICTIONARY,
@@ -393,6 +400,7 @@ public:
 	operator ::RID() const;
 
 	operator Object *() const;
+	operator Struct() const;
 
 	operator Callable() const;
 	operator Signal() const;
@@ -464,6 +472,7 @@ public:
 	Variant(const NodePath &p_node_path);
 	Variant(const ::RID &p_rid);
 	Variant(const Object *p_object);
+	Variant(const Struct &p_object);
 	Variant(const Callable &p_callable);
 	Variant(const Signal &p_signal);
 	Variant(const Dictionary &p_dictionary);
