@@ -40,6 +40,11 @@ class VariantInternal {
 
 public:
 	// Set type.
+	_FORCE_INLINE_ static void initialize(Variant* v, Variant::Type p_type, StructBucket p_bucket) {
+		v->bucket = p_bucket;
+		initialize(v, p_type);
+	}
+
 	_FORCE_INLINE_ static void initialize(Variant *v, Variant::Type p_type) {
 		v->clear();
 		v->type = p_type;
@@ -114,6 +119,9 @@ public:
 			case Variant::OBJECT:
 				init_object(v);
 				break;
+			case Variant::STRUCT:
+				init_struct(v);
+				break;
 			default:
 				break;
 		}
@@ -182,6 +190,8 @@ public:
 	_FORCE_INLINE_ static const Dictionary *get_dictionary(const Variant *v) { return reinterpret_cast<const Dictionary *>(v->_data._mem); }
 	_FORCE_INLINE_ static Array *get_array(Variant *v) { return reinterpret_cast<Array *>(v->_data._mem); }
 	_FORCE_INLINE_ static const Array *get_array(const Variant *v) { return reinterpret_cast<const Array *>(v->_data._mem); }
+	_FORCE_INLINE_ static Struct *get_struct(Variant *v) { return v->_data._struct; }
+	_FORCE_INLINE_ static const Struct *get_struct(const Variant *v) { return v->_data._struct; }
 
 	// Typed arrays.
 	_FORCE_INLINE_ static PackedByteArray *get_byte_array(Variant *v) { return &static_cast<Variant::PackedArrayRef<uint8_t> *>(v->_data.packed_array)->array; }
@@ -314,6 +324,34 @@ public:
 		object_assign_null(v);
 		v->type = Variant::OBJECT;
 	}
+	_FORCE_INLINE_ static void init_struct(Variant *v, StructBucket p_bucket) {
+		v->bucket = p_bucket;
+		init_struct(v);
+	}
+	_FORCE_INLINE_ static void init_struct(Variant *v) {
+		switch (v->bucket) {
+			case STRUCT_MINIMAL:
+				_post_initialize(new (v->_data._struct) StructMinimal);
+				memnew_placement(v->_data._struct, StructMinimal);
+				break;
+			case STRUCT_SMALL:
+				v->_data._struct = (StructSmall *)Variant::Pools::_bucket_small.alloc();
+				memnew_placement(v->_data._struct, StructSmall);
+				break;
+			case STRUCT_MEDIUM:
+				v->_data._struct = (StructMedium *)Variant::Pools::_bucket_medium.alloc();
+				memnew_placement(v->_data._struct, StructMedium);
+				break;
+			case STRUCT_LARGE:
+				v->_data._struct = (StructLarge *)Variant::Pools::_bucket_large.alloc();
+				memnew_placement(v->_data._struct, StructLarge);
+				break;
+			default:
+				memnew_placement(v->_data._struct, StructMinimal);
+				break;
+		}
+		v->type = Variant::STRUCT;
+	}
 
 	_FORCE_INLINE_ static void clear(Variant *v) {
 		v->clear();
@@ -323,6 +361,16 @@ public:
 
 	_FORCE_INLINE_ static void object_assign(Variant *v, const Variant *o) {
 		object_assign(v, o->_get_obj().obj);
+	}
+
+	_FORCE_INLINE_ static void struct_assign(Variant *v, const Struct &s) {
+		// TODO: Implement logic for resolving issues when assigning incorrect structs to one another, etc.
+		const StructTypeInfo *t = v->_data._struct->get_type();
+		const StructTypeInfo *t2 = s.get_type();
+		if ((t && t == t2) || (!t && t2)) {
+			int c = t2->get_capacity();
+			memcpy(v->_data._struct->get_data(), s.get_data_const(), c);
+		}
 	}
 
 	_FORCE_INLINE_ static void object_assign_null(Variant *v) {
@@ -415,6 +463,8 @@ public:
 				return get_color_array(v);
 			case Variant::OBJECT:
 				return v->_get_obj().obj;
+			case Variant::STRUCT:
+				return get_struct(v);
 			case Variant::VARIANT_MAX:
 				ERR_FAIL_V(nullptr);
 		}
@@ -499,6 +549,8 @@ public:
 				return get_color_array(v);
 			case Variant::OBJECT:
 				return v->_get_obj().obj;
+			case Variant::STRUCT:
+				return get_struct(v);
 			case Variant::VARIANT_MAX:
 				ERR_FAIL_V(nullptr);
 		}
@@ -793,6 +845,30 @@ struct VariantGetInternalPtr<PackedColorArray> {
 	static const PackedColorArray *get_ptr(const Variant *v) { return VariantInternal::get_color_array(v); }
 };
 
+template <>
+struct VariantGetInternalPtr<StructMinimal> {
+	static StructMinimal *get_ptr(Variant *v) { return (StructMinimal *)VariantInternal::get_struct(v); }
+	static const StructMinimal *get_ptr(const Variant *v) { return (StructMinimal *)VariantInternal::get_struct(v); }
+};
+
+template <>
+struct VariantGetInternalPtr<StructSmall> {
+	static StructSmall *get_ptr(Variant *v) { return (StructSmall *)VariantInternal::get_struct(v); }
+	static const StructSmall *get_ptr(const Variant *v) { return (StructSmall *)VariantInternal::get_struct(v); }
+};
+
+template <>
+struct VariantGetInternalPtr<StructMedium> {
+	static StructMedium *get_ptr(Variant *v) { return (StructMedium *)VariantInternal::get_struct(v); }
+	static const StructMedium *get_ptr(const Variant *v) { return (StructMedium *)VariantInternal::get_struct(v); }
+};
+
+template <>
+struct VariantGetInternalPtr<StructLarge> {
+	static StructLarge *get_ptr(Variant *v) { return (StructLarge *)VariantInternal::get_struct(v); }
+	static const StructLarge *get_ptr(const Variant *v) { return (StructLarge *)VariantInternal::get_struct(v); }
+};
+
 template <class T>
 struct VariantInternalAccessor {
 };
@@ -1060,6 +1136,12 @@ struct VariantInternalAccessor<Object *> {
 };
 
 template <>
+struct VariantInternalAccessor<Struct> {
+	static _FORCE_INLINE_ const Struct &get(const Variant *v) { return *VariantInternal::get_struct(v); }
+	static _FORCE_INLINE_ void set(Variant *v, const Struct &p_value) { VariantInternal::struct_assign(v, p_value); }
+};
+
+template <>
 struct VariantInternalAccessor<Variant> {
 	static _FORCE_INLINE_ Variant &get(Variant *v) { return *v; }
 	static _FORCE_INLINE_ const Variant &get(const Variant *v) { return *v; }
@@ -1297,6 +1379,26 @@ struct VariantInitializer<Object *> {
 	static _FORCE_INLINE_ void init(Variant *v) { VariantInternal::init_object(v); }
 };
 
+template <>
+struct VariantInitializer<StructMinimal> {
+	static _FORCE_INLINE_ void init(Variant *v) { VariantInternal::init_struct(v, StructBucket::STRUCT_MINIMAL); }
+};
+
+template <>
+struct VariantInitializer<StructSmall> {
+	static _FORCE_INLINE_ void init(Variant *v) { VariantInternal::init_struct(v, StructBucket::STRUCT_SMALL); }
+};
+
+template <>
+struct VariantInitializer<StructMedium> {
+	static _FORCE_INLINE_ void init(Variant *v) { VariantInternal::init_struct(v, StructBucket::STRUCT_MEDIUM); }
+};
+
+template <>
+struct VariantInitializer<StructLarge> {
+	static _FORCE_INLINE_ void init(Variant *v) { VariantInternal::init_struct(v, StructBucket::STRUCT_LARGE); }
+};
+
 template <class T>
 struct VariantZeroAssigner {
 };
@@ -1484,6 +1586,26 @@ struct VariantZeroAssigner<PackedVector3Array> {
 template <>
 struct VariantZeroAssigner<PackedColorArray> {
 	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_color_array(v) = PackedColorArray(); }
+};
+
+template <>
+struct VariantZeroAssigner<StructMinimal> {
+	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructMinimal(); }
+};
+
+template <>
+struct VariantZeroAssigner<StructSmall> {
+	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructSmall(); }
+};
+
+template <>
+struct VariantZeroAssigner<StructMedium> {
+	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructMedium(); }
+};
+
+template <>
+struct VariantZeroAssigner<StructLarge> {
+	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructLarge(); }
 };
 
 template <class T>

@@ -59,8 +59,14 @@
 #include "core/variant/array.h"
 #include "core/variant/callable.h"
 #include "core/variant/dictionary.h"
+#include "core/variant/struct.h"
 
 class Object;
+class Struct;
+class StructMinimal;
+class StructSmall;
+class StructMedium;
+class StructLarge;
 
 struct PropertyInfo;
 struct MethodInfo;
@@ -75,13 +81,10 @@ typedef Vector<Vector2> PackedVector2Array;
 typedef Vector<Vector3> PackedVector3Array;
 typedef Vector<Color> PackedColorArray;
 
-typedef uint16_t StructID;
-class Struct;
-
 class Variant {
 public:
 	// If this changes the table in variant_op must be updated
-	enum Type: uint16_t {
+	enum Type {
 		NIL,
 
 		// atomic types
@@ -144,17 +147,20 @@ private:
 			BucketSmall() {}
 			~BucketSmall() {}
 			Transform2D _transform2d;
+			StructSmall _struct;
 			::AABB _aabb;
 		};
 		union BucketMedium {
 			BucketMedium() {}
 			~BucketMedium() {}
 			Basis _basis;
+			StructMedium _struct;
 			Transform3D _transform3d;
 		};
 		union BucketLarge {
 			BucketLarge() {}
 			~BucketLarge() {}
+			StructLarge _struct;
 			Projection _projection;
 		};
 
@@ -166,10 +172,11 @@ private:
 	friend struct _VariantCall;
 	friend class VariantInternal;
 	// Variant takes 20 bytes when real_t is float, and 36 if double
-	// it only allocates extra memory for aabb/matrix.
+	// it only allocates extra memory for aabb/matrix/structs.
 
-	Type type = NIL;
-	StructID struct_type_id;
+	// TODO: Confirm safety of things accessing `Type` (a 32-bit value) as a 30-bit value padded with extra zeroes AND *not* including the bucket size at all. Easier way to auto-handle?
+	Type type: 30;
+	StructBucket bucket : 2;
 
 	struct ObjData {
 		ObjectID id;

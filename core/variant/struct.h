@@ -31,35 +31,80 @@
 #ifndef STRUCT_H
 #define STRUCT_H
 
+#include "core/templates/hash_map.h"
+#include "core/templates/hash_set.h"
 #include "core/math/aabb.h"
 #include "core/math/projection.h"
 #include "core/math/transform_3d.h"
 #include "core/object/object_id.h"
+#include "core/variant/callable.h"
 
-class Object;
-typedef StructID;
+typedef uint16_t struct_type_t;
+typedef uint8_t struct_property_t;
 
-struct StructValueInfo {
-	StructID type_id : 14;
-	uint8_t bucket : 2;
+class Struct;
+class Variant;
+struct StructPropertyInfo;
+
+#define STRUCT_MAX_PROPERTY_COUNT 6
+
+enum StructBucket : uint8_t {
+	STRUCT_MINIMAL,
+	STRUCT_SMALL,
+	STRUCT_MEDIUM,
+	STRUCT_LARGE
+};
+
+struct StructPreamble {
+	struct_type_t type_id : 14; // 16_383 possible types engine-wide
+	StructBucket bucket : 2; // 4 bucket states
+	struct_property_t property_ids[STRUCT_MAX_PROPERTY_COUNT]; // must include order of serialized properties to better recover from struct definition changes during deserialization.
+
+	_FORCE_INLINE_ bool operator==(const StructPreamble& p_other) const {
+		return type_id == p_other.type_id;
+	}
+	_FORCE_INLINE_ bool operator!=(const StructPreamble& p_other) const {
+		return !(operator==(p_other));
+	}
+};
+
+struct StructTypeInfo {
+	struct_type_t id;
+	StringName name;
+	StructBucket bucket;
+	StringName script_class;
+	Callable constructor;
+	Callable destructor;
+	HashMap<struct_property_t, StructPropertyInfo> properties;
+	HashMap<int, Callable> operators;
+	HashMap<StringName, Callable> methods;
+	HashSet<Struct *> instances; // todo
+
+	int get_length() const;
+	int get_data_length() const;
+	int get_capacity() const;
+	Variant get_script() const;
+	void assign(Struct *p_self, const Struct *p_value);
 };
 
 class Struct {
-	StructValueInfo _value_info;
-
-public:
-	_FORCE_INLINE_ StructID get_type_id() { return _value_info.type_id; }
-	_FORCE_INLINE_ uint8_t get_bucket() { return _value_info.bucket; }
-
-	bool operator==(const Struct &p_struct) const;
-	virtual uint8_t *get_data() = 0;
-
-	struct MinimalSize {
+private:
+	// Duplicate of ObjData used by Variant for sizing.
+	class MinimalStructSize {
 		ObjectID a;
 		Object *b;
 	};
 
-	static const int bucket_minimal = sizeof(MinimalSize) > (sizeof(real_t) * 4) ? sizeof(MinimalSize) : (sizeof(real_t) * 4);
+public:
+	StructPreamble preamble;
+
+	bool operator==(const Struct &p_struct) const;
+
+	_FORCE_INLINE_ uint8_t *get_data();
+	_FORCE_INLINE_ const uint8_t *get_data_const() const;
+	_FORCE_INLINE_ const StructTypeInfo *get_type() const;
+
+	static const int bucket_minimal = sizeof(MinimalStructSize) > (sizeof(real_t) * 4) ? sizeof(MinimalStructSize) : (sizeof(real_t) * 4);
 	static const int bucket_small = sizeof(AABB);
 	static const int bucket_medium = sizeof(Transform3D);
 	static const int bucket_large = sizeof(Projection);
@@ -69,28 +114,28 @@ class StructMinimal : public Struct {
 	uint8_t data[bucket_minimal]{ 0 };
 
 public:
-	virtual uint8_t *get_data() override { return data; }
+	static _FORCE_INLINE_ uint8_t *get_data(StructMinimal p_value) { return p_value.data; }
 };
 
 class StructSmall : public Struct {
 	uint8_t data[bucket_small]{ 0 };
 
 public:
-	virtual uint8_t *get_data() override { return data; }
+	static _FORCE_INLINE_ uint8_t *get_data(StructSmall p_value) { return p_value.data; }
 };
 
 class StructMedium : public Struct {
 	uint8_t data[bucket_medium]{ 0 };
 
 public:
-	virtual uint8_t *get_data() override { return data; }
+	static _FORCE_INLINE_ uint8_t *get_data(StructMedium p_value) { return p_value.data; }
 };
 
 class StructLarge : public Struct {
 	uint8_t data[bucket_large]{ 0 };
 
 public:
-	virtual uint8_t *get_data() override { return data; }
+	static _FORCE_INLINE_ uint8_t *get_data(StructLarge p_value) { return p_value.data; }
 };
 
 #endif // STRUCT_H

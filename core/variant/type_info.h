@@ -171,6 +171,12 @@ MAKE_TYPE_INFO(PackedVector2Array, Variant::PACKED_VECTOR2_ARRAY)
 MAKE_TYPE_INFO(PackedVector3Array, Variant::PACKED_VECTOR3_ARRAY)
 MAKE_TYPE_INFO(PackedColorArray, Variant::PACKED_COLOR_ARRAY)
 
+MAKE_TYPE_INFO(Struct, Variant::STRUCT)
+MAKE_TYPE_INFO(StructMinimal, Variant::STRUCT)
+MAKE_TYPE_INFO(StructSmall, Variant::STRUCT)
+MAKE_TYPE_INFO(StructMedium, Variant::STRUCT)
+MAKE_TYPE_INFO(StructLarge, Variant::STRUCT)
+
 MAKE_TYPE_INFO(IPAddress, Variant::STRING)
 
 //objectID

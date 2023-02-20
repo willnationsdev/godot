@@ -1177,6 +1177,15 @@ Error encode_variant(const Variant &p_variant, uint8_t *r_buffer, int &r_len, bo
 	}
 	r_len += 4;
 
+	return encode_variant_value(p_variant, buf, r_len, p_full_objects, p_depth, flags);
+}
+
+Error encode_variant_value(const Variant &p_variant, uint8_t *r_buffer, int &r_len, bool p_full_objects, int p_depth, uint32_t p_flags) {
+	ERR_FAIL_COND_V_MSG(p_depth > Variant::MAX_RECURSION_DEPTH, ERR_OUT_OF_MEMORY, "Potential infinite recursion detected. Bailing.");
+
+	uint8_t *buf = r_buffer;
+	uint32_t flags = p_flags;
+
 	switch (p_variant.get_type()) {
 		case Variant::NIL: {
 			//nothing to do
