@@ -50,57 +50,88 @@ enum StructPropertyLength : uint8_t {
 };
 
 struct StructPropertyInfo : public PropertyInfo {
-	struct_property_t id;
+	StructPropertyId id;
 	StructPropertyLength bytes;
+	StructTypeId struct_type_id; // only used when compared variant types are both STRUCT.
 	Variant default_value;
 	bool embed;
 };
+
+struct StructInstanceInfo {
+	Struct *const ref;
+	StructTypeInfo *const type;
+	mutable StructPreamble *preamble;
+	mutable uint8_t *data;
+	_FORCE_INLINE_ bool is_valid() { return ref && type && preamble && data; }
+
+	StructInstanceInfo(Struct* p_ref = nullptr, StructTypeInfo* p_type = nullptr, StructPreamble* p_preamble = nullptr, uint8_t* p_data = nullptr) :
+		ref(p_ref), type(p_type), preamble(p_preamble), data(p_data) {}
+};
+
+class StructParser;
 
 class StructDB {
 private:
 	friend Struct;
 
-protected:
-	static uint8_t *get_data(Struct &p_struct);
-	static const uint8_t *get_data_const(const Struct &p_struct);
-	template <class TParser>
-	static void init_struct(Struct *p_struct);
-	template <class TParser>
-	static void clear_struct(Struct *p_struct);
-	template <class TParser>
-	static void set_struct_property(Struct *p_struct, struct_property_t p_id, Variant p_value, Error &r_error);
-	template <class TParser>
-	static Variant get_struct_property(Struct *p_struct, struct_property_t p_id);
+	static StructParser *struct_parser;
 
+	static RWLock _lock;
+	static HashMap<StructTypeId, StructTypeInfo> _types;
+	static HashMap<StringName, StructTypeId> _name_map;
+	static RandomPCG _rand;
+
+protected:
 	static const char _fallback_property_keys[];
 
 public:
+	static uint8_t *get_data(Struct &p_struct);
+	static const uint8_t *get_data_const(const Struct &p_struct);
+	static void init_struct(Struct *p_struct);
+	static void clear_struct(Struct *p_struct);
+	static void assign_struct(Struct *p_struct, Struct *p_other, Error &r_error);
+	static void set_struct_property(Struct *p_struct, StructPropertyId p_id, Variant p_value, Error &r_error);
+	static Variant get_struct_property(Struct *p_struct, StructPropertyId p_id);
+
 	static void get_struct_type_names(Vector<StringName> &r_names);
+	static _FORCE_INLINE_ const StringName &get_struct_type_name(StructTypeId p_id);
+	static _FORCE_INLINE_ StructTypeId get_struct_type_id(const StringName &p_name);
 	static void add_struct_type(const StructTypeInfo &p_info);
-	static void remove_struct_type(struct_type_t p_id);
+	static void remove_struct_type(StructTypeId p_id);
 	static void remove_struct_type(const StringName &p_name);
+	static StructBucket get_struct_type_bucket(StructTypeId p_id);
+
+	static _FORCE_INLINE_ void set_struct_parser(StructParser *p_parser);
+	static _FORCE_INLINE_ StructParser *get_struct_parser();
+
+	static void initialize();
+	static void finalize();
 
 private:
-	static RWLock _lock;
-	static HashMap<struct_type_t, StructTypeInfo> _types;
-	static HashMap<StringName, struct_type_t> _name_map;
-	static RandomPCG _rand;
-
-	static _FORCE_INLINE_ StructTypeInfo *_get_struct_type_ptr(struct_type_t p_id);
-	static _FORCE_INLINE_ StructTypeInfo *_get_struct_type_ptr(const StringName &p_name);
 	static _FORCE_INLINE_ void _remove_struct_type(const StructTypeInfo *p_info, const char *p_lookup, String p_identifier);
-	static struct_type_t _next_id();
+	static StructTypeId _next_id();
 	static StructBucket _evaluate_bucket_size(const StructTypeInfo &p_info);
-	static struct_property_t _evaluate_property_key(const StructTypeInfo &p_info, const StructPropertyInfo &p_property);
-	static bool _validate_struct(Struct *p_struct, StructTypeInfo *r_type, uint8_t *r_data);
+	static StructPropertyId _evaluate_property_key(const StructTypeInfo &p_info, const StructPropertyInfo &p_property);
+	static StructInstanceInfo &&_get_validated_struct_info(Struct *p_struct);
 };
 
-class StructDefaultParser {
+class StructParser {
 public:
-	void init(const StructTypeInfo &p_info, const StructPreamble &p_preamble, uint8_t *p_data);
-	void clear(const StructTypeInfo &p_info, const StructPreamble &p_preamble, uint8_t *p_data);
-	void set_property(const StructTypeInfo &p_info, const StructPreamble &p_preamble, uint8_t *p_data, struct_property_t p_id, Variant p_value, Error &r_error);
-	Variant get_property(const StructTypeInfo &p_info, const StructPreamble &p_preamble, uint8_t *p_data, struct_property_t p_id);
+	virtual void init(StructInstanceInfo &p_info) {}
+	virtual void clear(StructInstanceInfo &p_info) {}
+	virtual void assign(StructInstanceInfo &p_info, StructInstanceInfo &p_other, Error &r_error) {}
+	virtual int try_cast(StructInstanceInfo &p_info, StructInstanceInfo &p_other, Error &r_error) { return true; }
+	virtual void set_property(StructInstanceInfo &p_instance, StructPropertyId p_id, Variant p_value, Error &r_error) {}
+	virtual Variant get_property(const StructInstanceInfo &p_instance, StructPropertyId p_id) { return Variant(); }
+};
+
+class DefaultStructParser : public StructParser {
+	virtual void init(StructInstanceInfo &p_info) override;
+	virtual void clear(StructInstanceInfo &p_info) override;
+	virtual void assign(StructInstanceInfo &p_info, StructInstanceInfo &p_other, Error &r_error) override;
+	virtual int try_cast(StructInstanceInfo &p_info, StructInstanceInfo &p_other, Error &r_error) override;
+	virtual void set_property(StructInstanceInfo &p_instance, StructPropertyId p_id, Variant p_value, Error &r_error) override;
+	virtual Variant get_property(const StructInstanceInfo &p_instance, StructPropertyId p_id) override;
 };
 
 #endif // STRUCT_DB_H

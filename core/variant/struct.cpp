@@ -34,7 +34,7 @@
 
 int StructTypeInfo::get_length() const {
 	int len = 0;
-	for (KeyValue<struct_property_t, StructPropertyInfo> pair : properties) {
+	for (KeyValue<StructPropertyId, StructPropertyInfo> pair : properties) {
 		len += pair.value.bytes;
 	}
 	return len;

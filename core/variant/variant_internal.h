@@ -32,6 +32,7 @@
 #define VARIANT_INTERNAL_H
 
 #include "variant.h"
+#include "core/variant/struct_db.h"
 
 // For use when you want to access the internal pointer of a Variant directly.
 // Use with caution. You need to be sure that the type is correct.
@@ -40,12 +41,7 @@ class VariantInternal {
 
 public:
 	// Set type.
-	_FORCE_INLINE_ static void initialize(Variant* v, Variant::Type p_type, StructBucket p_bucket) {
-		v->bucket = p_bucket;
-		initialize(v, p_type);
-	}
-
-	_FORCE_INLINE_ static void initialize(Variant *v, Variant::Type p_type) {
+	_FORCE_INLINE_ static void initialize(Variant *v, Variant::Type p_type, StructTypeId p_struct_type_id = 0) {
 		v->clear();
 		v->type = p_type;
 
@@ -120,7 +116,7 @@ public:
 				init_object(v);
 				break;
 			case Variant::STRUCT:
-				init_struct(v);
+				init_struct(v, p_struct_type_id);
 				break;
 			default:
 				break;
@@ -324,26 +320,24 @@ public:
 		object_assign_null(v);
 		v->type = Variant::OBJECT;
 	}
-	_FORCE_INLINE_ static void init_struct(Variant *v, StructBucket p_bucket) {
-		v->bucket = p_bucket;
-		init_struct(v);
-	}
-	_FORCE_INLINE_ static void init_struct(Variant *v) {
-		switch (v->bucket) {
+
+	_FORCE_INLINE_ static void init_struct(Variant *v, StructTypeId p_type) {
+		StructBucket bucket = StructDB::get_struct_type_bucket(p_type);
+		switch (bucket) {
 			case STRUCT_MINIMAL:
-				_post_initialize(new (v->_data._struct) StructMinimal);
+				//_post_initialize(new (v->_data._struct) StructMinimal);
 				memnew_placement(v->_data._struct, StructMinimal);
 				break;
 			case STRUCT_SMALL:
-				v->_data._struct = (StructSmall *)Variant::Pools::_bucket_small.alloc();
+				v->_data._struct = reinterpret_cast<StructSmall *>(Variant::Pools::_bucket_small.alloc());
 				memnew_placement(v->_data._struct, StructSmall);
 				break;
 			case STRUCT_MEDIUM:
-				v->_data._struct = (StructMedium *)Variant::Pools::_bucket_medium.alloc();
+				v->_data._struct = reinterpret_cast<StructMedium *>(Variant::Pools::_bucket_medium.alloc());
 				memnew_placement(v->_data._struct, StructMedium);
 				break;
 			case STRUCT_LARGE:
-				v->_data._struct = (StructLarge *)Variant::Pools::_bucket_large.alloc();
+				v->_data._struct = reinterpret_cast<StructLarge *>(Variant::Pools::_bucket_large.alloc());
 				memnew_placement(v->_data._struct, StructLarge);
 				break;
 			default:
@@ -363,13 +357,13 @@ public:
 		object_assign(v, o->_get_obj().obj);
 	}
 
-	_FORCE_INLINE_ static void struct_assign(Variant *v, const Struct &s) {
+	_FORCE_INLINE_ static void struct_assign(Struct &s1, const Struct &s2) {
 		// TODO: Implement logic for resolving issues when assigning incorrect structs to one another, etc.
-		const StructTypeInfo *t = v->_data._struct->get_type();
-		const StructTypeInfo *t2 = s.get_type();
+		const StructTypeInfo *t = s1.get_type();
+		const StructTypeInfo *t2 = s2.get_type();
 		if ((t && t == t2) || (!t && t2)) {
 			int c = t2->get_capacity();
-			memcpy(v->_data._struct->get_data(), s.get_data_const(), c);
+			memcpy(s1.get_data(), s2.get_data_const(), c);
 		}
 	}
 
@@ -1138,7 +1132,7 @@ struct VariantInternalAccessor<Object *> {
 template <>
 struct VariantInternalAccessor<Struct> {
 	static _FORCE_INLINE_ const Struct &get(const Variant *v) { return *VariantInternal::get_struct(v); }
-	static _FORCE_INLINE_ void set(Variant *v, const Struct &p_value) { VariantInternal::struct_assign(v, p_value); }
+	static _FORCE_INLINE_ void set(Variant *v, const Struct &p_value) { VariantInternal::struct_assign(*VariantInternal::get_struct(v), p_value); }
 };
 
 template <>

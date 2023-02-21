@@ -37,6 +37,7 @@
 struct ContainerTypeValidate {
 	Variant::Type type = Variant::NIL;
 	StringName class_name;
+	StructTypeId struct_type_id;
 	Ref<Script> script;
 	const char *where = "container";
 

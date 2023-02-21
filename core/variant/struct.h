@@ -39,8 +39,8 @@
 #include "core/object/object_id.h"
 #include "core/variant/callable.h"
 
-typedef uint16_t struct_type_t;
-typedef uint8_t struct_property_t;
+typedef uint16_t StructTypeId;
+typedef uint8_t StructPropertyId;
 
 class Struct;
 class Variant;
@@ -56,9 +56,9 @@ enum StructBucket : uint8_t {
 };
 
 struct StructPreamble {
-	struct_type_t type_id : 14; // 16_383 possible types engine-wide
+	StructTypeId type_id : 14; // 16_383 possible types engine-wide
 	StructBucket bucket : 2; // 4 bucket states
-	struct_property_t property_ids[STRUCT_MAX_PROPERTY_COUNT]; // must include order of serialized properties to better recover from struct definition changes during deserialization.
+	StructPropertyId property_ids[STRUCT_MAX_PROPERTY_COUNT]; // must include order of serialized properties to better recover from struct definition changes during deserialization.
 
 	_FORCE_INLINE_ bool operator==(const StructPreamble& p_other) const {
 		return type_id == p_other.type_id;
@@ -69,13 +69,14 @@ struct StructPreamble {
 };
 
 struct StructTypeInfo {
-	struct_type_t id;
+	StructTypeId id;
 	StringName name;
 	StructBucket bucket;
 	StringName script_class;
 	Callable constructor;
 	Callable destructor;
-	HashMap<struct_property_t, StructPropertyInfo> properties;
+	HashMap<StructPropertyId, StructPropertyInfo> properties;
+	HashMap<StringName, StructPropertyInfo *> property_name_map;
 	HashMap<int, Callable> operators;
 	HashMap<StringName, Callable> methods;
 	HashSet<Struct *> instances; // todo
@@ -111,28 +112,28 @@ public:
 };
 
 class StructMinimal : public Struct {
-	uint8_t data[bucket_minimal]{ 0 };
+	uint8_t data[(bucket_minimal - sizeof(StructPreamble)) / sizeof(uint8_t)]{ 0 };
 
 public:
 	static _FORCE_INLINE_ uint8_t *get_data(StructMinimal p_value) { return p_value.data; }
 };
 
 class StructSmall : public Struct {
-	uint8_t data[bucket_small]{ 0 };
+	uint8_t data[(bucket_small - sizeof(StructPreamble)) / sizeof(uint8_t)]{ 0 };
 
 public:
 	static _FORCE_INLINE_ uint8_t *get_data(StructSmall p_value) { return p_value.data; }
 };
 
 class StructMedium : public Struct {
-	uint8_t data[bucket_medium]{ 0 };
+	uint8_t data[(bucket_medium - sizeof(StructPreamble)) / sizeof(uint8_t)]{ 0 };
 
 public:
 	static _FORCE_INLINE_ uint8_t *get_data(StructMedium p_value) { return p_value.data; }
 };
 
 class StructLarge : public Struct {
-	uint8_t data[bucket_large]{ 0 };
+	uint8_t data[(bucket_large - sizeof(StructPreamble)) / sizeof(uint8_t)]{ 0 };
 
 public:
 	static _FORCE_INLINE_ uint8_t *get_data(StructLarge p_value) { return p_value.data; }

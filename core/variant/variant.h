@@ -174,9 +174,7 @@ private:
 	// Variant takes 20 bytes when real_t is float, and 36 if double
 	// it only allocates extra memory for aabb/matrix/structs.
 
-	// TODO: Confirm safety of things accessing `Type` (a 32-bit value) as a 30-bit value padded with extra zeroes AND *not* including the bucket size at all. Easier way to auto-handle?
-	Type type: 30;
-	StructBucket bucket : 2;
+	Type type;
 
 	struct ObjData {
 		ObjectID id;
