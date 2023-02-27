@@ -32,20 +32,19 @@
 #include "core/variant/struct_db.h"
 #include "core/io/resource_loader.h"
 
-int StructTypeInfo::get_length() const {
-	int len = 0;
-	for (KeyValue<StructPropertyId, StructPropertyInfo> pair : properties) {
-		len += pair.value.bytes;
+bool Struct::operator==(const Struct& p_struct) const {
+	if (!(p_struct.preamble == preamble)) {
+		return false;
 	}
-	return len;
+	uint8_t size;
 }
 
-int StructTypeInfo::get_data_length() const {
-	return sizeof(StructPreamble) + get_length();
+void Struct::assign(const Struct* p_other, Error& r_error) {
+	StructDB::struct_assign(this, p_other, r_error);
 }
 
-int StructTypeInfo::get_capacity() const {
-	switch (bucket) {
+int Struct::get_capacity(StructBucket p_bucket) {
+	switch (p_bucket) {
 		case STRUCT_MINIMAL:
 			return Struct::bucket_minimal;
 		case STRUCT_SMALL:
@@ -55,33 +54,49 @@ int StructTypeInfo::get_capacity() const {
 		case STRUCT_LARGE:
 			return Struct::bucket_large;
 		default:
-			ERR_FAIL_V_MSG(0, vformat("Struct type '%s' has invalid bucket size '%d'.", name, bucket));
+			return 0;
 	}
 }
 
-Variant StructTypeInfo::get_script() const {
-	if (script_class == StringName()) {
-		return Variant();
+void Struct::_get_property_list(List<StructPropertyInfo *> *r_list) const {
+	ERR_FAIL_COND(!r_list);
+	StructTypeId id = get_type_id();
+	const StructDB::StructTypeInfo *t = StructDB::get_struct_type(id);
+	ERR_FAIL_COND_MSG(!t, vformat("Unknown type with id '%d'.)", id));
+	for (int i = 0; i < Struct::max_property_count; i++) {
+		StructPropertyId id = preamble.property_ids[i++];
+		if (!id) {
+			continue;
+		}
+		const StructPropertyInfo *p = t->property_id_map.getptr(id);
+		if (p) {
+			StructPropertyInfo spi(*p);
+			r_list->push_back(&spi);
+		}
 	}
-	String path = ScriptServer::get_global_class_path(script_class);
-	if (path.is_empty()) {
-		return Variant();
-	}
-	return ResourceLoader::load(path, SNAME("Script"));
 }
 
-void StructTypeInfo::assign(Struct *p_self, const Struct *p_value) {
-	//Callable *assign = methods.getptr(SNAME("_op_assign"));
-	//if (assign) {
-	//	assign->callp(p_self, )
-	//}
+void Struct::get_property_list(List<PropertyInfo> *r_list) const {
+	ERR_FAIL_COND(!r_list);
+	List<StructPropertyInfo *> list;
+	_get_property_list(&list);
+	for (const StructPropertyInfo *p : list) {
+		r_list->push_back(*p);
+	}
 }
 
-bool Struct::operator==(const Struct& p_struct) const {
-	if (!(p_struct.preamble == preamble)) {
-		return false;
+void Struct::get_property_list(List<StructPropertyInfo> *r_list) const {
+	ERR_FAIL_COND(!r_list);
+	List<StructPropertyInfo *> list;
+	_get_property_list(&list);
+	for (const StructPropertyInfo *p : list) {
+		r_list->push_back(*p);
 	}
-	uint8_t size;
+}
+
+int Struct::get_capacity() const {
+	const StructDB::StructTypeInfo *t = StructDB::get_struct_type(get_type_id());
+	return t ? t->get_capacity() : 0;
 }
 
 uint8_t *Struct::get_data() {
@@ -92,6 +107,62 @@ const uint8_t *Struct::get_data_const() const {
 	return StructDB::get_data_const(*this);
 }
 
-const StructTypeInfo *Struct::get_type() const {
-	return StructDB::_types.getptr(preamble.type_id);
+StringName Struct::get_type_name() const {
+	const StructDB::StructTypeInfo *struct_type = StructDB::get_struct_type(preamble.type_id);
+	ERR_FAIL_COND_V(!struct_type, StringName());
+	return struct_type->name;
 }
+
+bool Struct::has_method(const StringName &p_name) const {
+	return StructDB::struct_has_method(this, p_name);
+}
+
+Variant Struct::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
+	r_error.error = Callable::CallError::CALL_OK;
+	const StructDB::StructTypeInfo *struct_type = StructDB::get_struct_type(preamble.type_id);
+	ERR_FAIL_COND_V_MSG(!struct_type, Variant(), vformat("Unknown struct_type for struct during method call '%s'.", p_method));
+
+	Variant ret;
+
+	Ref<Script> script = struct_type->script;
+
+	if (script.is_valid()) {
+		ret = script->callp(p_method, p_args, p_argcount, r_error);
+		//force jumptable
+		switch (r_error.error) {
+			case Callable::CallError::CALL_OK:
+				return ret;
+			case Callable::CallError::CALL_ERROR_INVALID_METHOD:
+				break;
+			case Callable::CallError::CALL_ERROR_INVALID_ARGUMENT:
+			case Callable::CallError::CALL_ERROR_TOO_MANY_ARGUMENTS:
+			case Callable::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS:
+			case Callable::CallError::CALL_ERROR_METHOD_NOT_CONST:
+				return ret;
+			case Callable::CallError::CALL_ERROR_INSTANCE_IS_NULL: {
+			}
+		}
+	} else {
+
+	}
+
+	//extension does not need this, because all methods are registered in MethodBind
+
+	// TODO: Surely this must eventually become a way of accessing the PropertySetGet in StructDB, no?
+
+	MethodBind *const *method = struct_type->method_map.getptr(p_method);
+
+	if (method) {
+		// There is a compiler error here b/c Struct is not an Object.
+		// Perhaps we need to have a StructApi singleton extending Object
+		// that implements the logic for basic struct operations, that way
+		// members of structs can be accessed dynamically in the Godot API?
+
+		//ret = (*method)->call(this, p_args, p_argcount, r_error);
+	} else {
+		r_error.error = Callable::CallError::CALL_ERROR_INVALID_METHOD;
+	}
+
+	return ret;
+}
+

@@ -1159,6 +1159,12 @@ void Variant::callp(const StringName &p_method, const Variant **p_args, int p_ar
 
 #endif
 		r_ret = _get_obj().obj->callp(p_method, p_args, p_argcount, r_error);
+	} else if (type == Variant::STRUCT) {
+		//call struct
+		if (!_data._struct) {
+			r_error.error = Callable::CallError::CALL_ERROR_INSTANCE_IS_NULL;
+			return;
+		}
 
 	} else {
 		r_error.error = Callable::CallError::CALL_OK;

@@ -77,12 +77,18 @@ MAKE_PTRCONSTRUCT(Color);
 MAKE_PTRCONSTRUCT(StringName);
 MAKE_PTRCONSTRUCT(NodePath);
 MAKE_PTRCONSTRUCT(RID);
-MAKE_PTRCONSTRUCT(Struct);
 
 template <>
 struct PtrConstruct<Object *> {
 	_FORCE_INLINE_ static void construct(Object *p_value, void *p_ptr) {
 		*((Object **)p_ptr) = p_value;
+	}
+};
+
+template <>
+struct PtrConstruct<Struct *> {
+	_FORCE_INLINE_ static void construct(Struct *p_value, void *p_ptr) {
+		*((Struct **)p_ptr) = p_value;
 	}
 };
 
@@ -209,6 +215,78 @@ public:
 	}
 	static void ptr_construct(void *base, const void **p_args) {
 		PtrConstruct<Object *>::construct(nullptr, base);
+	}
+
+	static int get_argument_count() {
+		return 1;
+	}
+
+	static Variant::Type get_argument_type(int p_arg) {
+		return Variant::NIL;
+	}
+
+	static Variant::Type get_base_type() {
+		return Variant::OBJECT;
+	}
+};
+
+class VariantConstructorStruct {
+public:
+	static void construct(Variant &r_ret, const Variant **p_args, Callable::CallError &r_error) {
+		VariantInternal::clear(&r_ret);
+		if (p_args[0]->get_type() == Variant::NIL) {
+			VariantInternal::object_assign_null(&r_ret);
+			r_error.error = Callable::CallError::CALL_OK;
+		} else if (p_args[0]->get_type() == Variant::OBJECT) {
+			VariantInternal::object_assign(&r_ret, p_args[0]);
+			r_error.error = Callable::CallError::CALL_OK;
+		} else {
+			r_error.error = Callable::CallError::CALL_ERROR_INVALID_ARGUMENT;
+			r_error.argument = 0;
+			r_error.expected = Variant::OBJECT;
+		}
+	}
+
+	static inline void validated_construct(Variant *r_ret, const Variant **p_args) {
+		VariantInternal::clear(r_ret);
+		VariantInternal::object_assign(r_ret, p_args[0]);
+	}
+	static void ptr_construct(void *base, const void **p_args) {
+		PtrConstruct<Struct *>::construct(PtrToArg<Struct *>::convert(p_args[0]), base);
+	}
+
+	static int get_argument_count() {
+		return 1;
+	}
+
+	static Variant::Type get_argument_type(int p_arg) {
+		return Variant::OBJECT;
+	}
+
+	static Variant::Type get_base_type() {
+		return Variant::OBJECT;
+	}
+};
+
+class VariantConstructorNilStruct {
+public:
+	static void construct(Variant &r_ret, const Variant **p_args, Callable::CallError &r_error) {
+		if (p_args[0]->get_type() != Variant::NIL) {
+			r_error.error = Callable::CallError::CALL_ERROR_INVALID_ARGUMENT;
+			r_error.argument = 0;
+			r_error.expected = Variant::NIL;
+		}
+
+		VariantInternal::clear(&r_ret);
+		VariantInternal::object_assign_null(&r_ret);
+	}
+
+	static inline void validated_construct(Variant *r_ret, const Variant **p_args) {
+		VariantInternal::clear(r_ret);
+		VariantInternal::object_assign_null(r_ret);
+	}
+	static void ptr_construct(void *base, const void **p_args) {
+		PtrConstruct<Struct *>::construct(nullptr, base);
 	}
 
 	static int get_argument_count() {
@@ -691,6 +769,33 @@ public:
 	}
 	static void ptr_construct(void *base, const void **p_args) {
 		PtrConstruct<Object *>::construct(nullptr, base);
+	}
+
+	static int get_argument_count() {
+		return 0;
+	}
+
+	static Variant::Type get_argument_type(int p_arg) {
+		return Variant::NIL;
+	}
+
+	static Variant::Type get_base_type() {
+		return Variant::OBJECT;
+	}
+};
+
+class VariantConstructNoArgsStruct {
+public:
+	static void construct(Variant &r_ret, const Variant **p_args, Callable::CallError &r_error) {
+		r_ret = (Struct *)nullptr; // Must construct a TYPE_OBJECT containing nullptr.
+		r_error.error = Callable::CallError::CALL_OK;
+	}
+
+	static inline void validated_construct(Variant *r_ret, const Variant **p_args) {
+		*r_ret = (Struct *)nullptr; // Must construct a TYPE_OBJECT containing nullptr.
+	}
+	static void ptr_construct(void *base, const void **p_args) {
+		PtrConstruct<Struct *>::construct(nullptr, base);
 	}
 
 	static int get_argument_count() {

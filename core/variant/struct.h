@@ -42,11 +42,10 @@
 typedef uint16_t StructTypeId;
 typedef uint8_t StructPropertyId;
 
-class Struct;
+class StructDB;
 class Variant;
+struct PropertyInfo;
 struct StructPropertyInfo;
-
-#define STRUCT_MAX_PROPERTY_COUNT 6
 
 enum StructBucket : uint8_t {
 	STRUCT_MINIMAL,
@@ -55,37 +54,17 @@ enum StructBucket : uint8_t {
 	STRUCT_LARGE
 };
 
-struct StructPreamble {
-	StructTypeId type_id : 14; // 16_383 possible types engine-wide
-	StructBucket bucket : 2; // 4 bucket states
-	StructPropertyId property_ids[STRUCT_MAX_PROPERTY_COUNT]; // must include order of serialized properties to better recover from struct definition changes during deserialization.
-
-	_FORCE_INLINE_ bool operator==(const StructPreamble& p_other) const {
-		return type_id == p_other.type_id;
-	}
-	_FORCE_INLINE_ bool operator!=(const StructPreamble& p_other) const {
-		return !(operator==(p_other));
-	}
-};
-
-struct StructTypeInfo {
-	StructTypeId id;
-	StringName name;
-	StructBucket bucket;
-	StringName script_class;
-	Callable constructor;
-	Callable destructor;
-	HashMap<StructPropertyId, StructPropertyInfo> properties;
-	HashMap<StringName, StructPropertyInfo *> property_name_map;
-	HashMap<int, Callable> operators;
-	HashMap<StringName, Callable> methods;
-	HashSet<Struct *> instances; // todo
-
-	int get_length() const;
-	int get_data_length() const;
-	int get_capacity() const;
-	Variant get_script() const;
-	void assign(Struct *p_self, const Struct *p_value);
+enum StructPropertyLength : uint8_t {
+	STRUCT_PROP_LEN_NONE = 0,
+	STRUCT_PROP_LEN_1 = 1,
+	STRUCT_PROP_LEN_2 = 2,
+	STRUCT_PROP_LEN_4 = 4,
+	STRUCT_PROP_LEN_8 = 8,
+	STRUCT_PROP_LEN_16 = 16,
+	STRUCT_PROP_LEN_32 = 32,
+	STRUCT_PROP_LEN_64 = 64,
+	STRUCT_PROP_LEN_REAL = sizeof(real_t),
+	STRUCT_PROP_LEN_PTR = sizeof(Object*),
 };
 
 class Struct {
@@ -96,19 +75,55 @@ private:
 		Object *b;
 	};
 
+	friend StructDB;
+
 public:
-	StructPreamble preamble;
-
-	bool operator==(const Struct &p_struct) const;
-
-	_FORCE_INLINE_ uint8_t *get_data();
-	_FORCE_INLINE_ const uint8_t *get_data_const() const;
-	_FORCE_INLINE_ const StructTypeInfo *get_type() const;
-
 	static const int bucket_minimal = sizeof(MinimalStructSize) > (sizeof(real_t) * 4) ? sizeof(MinimalStructSize) : (sizeof(real_t) * 4);
 	static const int bucket_small = sizeof(AABB);
 	static const int bucket_medium = sizeof(Transform3D);
 	static const int bucket_large = sizeof(Projection);
+	static const int max_property_count = 6;
+
+protected:
+	struct StructPreamble {
+		StructTypeId type_id : 14; // 16_383 possible types engine-wide
+		StructBucket bucket : 2; // 4 bucket states
+		StructPropertyId property_ids[max_property_count]{ 0, 0, 0, 0, 0, 0 }; // must include order of serialized properties to better recover from struct definition changes during deserialization.
+
+		StructPreamble() :
+				type_id(0), bucket(STRUCT_MINIMAL) {}
+
+		_FORCE_INLINE_ bool operator==(const StructPreamble& p_other) const {
+			return type_id == p_other.type_id;
+		}
+		_FORCE_INLINE_ bool operator!=(const StructPreamble& p_other) const {
+			return !(operator==(p_other));
+		}
+	};
+
+	StructPreamble preamble;
+
+	_FORCE_INLINE_ void _get_property_list(List<StructPropertyInfo *> *r_list) const;
+
+public:
+	bool operator==(const Struct &p_struct) const;
+
+	void assign(const Struct *p_other, Error &r_error);
+
+	static _FORCE_INLINE_ int get_capacity(StructBucket p_bucket);
+	_FORCE_INLINE_ int get_capacity() const;
+	_FORCE_INLINE_ uint8_t *get_data();
+	_FORCE_INLINE_ const uint8_t *get_data_const() const;
+
+	_FORCE_INLINE_ StructTypeId get_type_id() const { return preamble.type_id; }
+	_FORCE_INLINE_ StringName get_type_name() const;
+	_FORCE_INLINE_ StructBucket get_bucket() const { return preamble.bucket; }
+
+	_FORCE_INLINE_ void get_property_list(List<PropertyInfo> *r_list) const;
+	_FORCE_INLINE_ void get_property_list(List<StructPropertyInfo> *r_list) const;
+	_FORCE_INLINE_ bool has_method(const StringName &p_name) const;
+
+	Variant callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error);
 };
 
 class StructMinimal : public Struct {

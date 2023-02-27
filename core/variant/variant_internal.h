@@ -322,7 +322,7 @@ public:
 	}
 
 	_FORCE_INLINE_ static void init_struct(Variant *v, StructTypeId p_type) {
-		StructBucket bucket = StructDB::get_struct_type_bucket(p_type);
+		StructBucket bucket = v->_data._struct->get_bucket();
 		switch (bucket) {
 			case STRUCT_MINIMAL:
 				//_post_initialize(new (v->_data._struct) StructMinimal);
@@ -357,16 +357,6 @@ public:
 		object_assign(v, o->_get_obj().obj);
 	}
 
-	_FORCE_INLINE_ static void struct_assign(Struct &s1, const Struct &s2) {
-		// TODO: Implement logic for resolving issues when assigning incorrect structs to one another, etc.
-		const StructTypeInfo *t = s1.get_type();
-		const StructTypeInfo *t2 = s2.get_type();
-		if ((t && t == t2) || (!t && t2)) {
-			int c = t2->get_capacity();
-			memcpy(s1.get_data(), s2.get_data_const(), c);
-		}
-	}
-
 	_FORCE_INLINE_ static void object_assign_null(Variant *v) {
 		v->_get_obj().obj = nullptr;
 		v->_get_obj().id = ObjectID();
@@ -377,6 +367,16 @@ public:
 		if (o) {
 			v->_get_obj().id = o->get_instance_id();
 		}
+	}
+
+	_FORCE_INLINE_ static void struct_assign(Variant *v, const Struct *s) {
+		Error err;
+		v->_data._struct->assign(s, err);
+		ERR_FAIL_COND_MSG(err == OK, vformat("Assignment from between structs failed with error '%s'.", error_names[err]));
+	}
+
+	_FORCE_INLINE_ static void struct_assign_null(Variant *v) {
+		init_struct(v, STRUCT_MINIMAL);
 	}
 
 	_FORCE_INLINE_ static void *get_opaque_pointer(Variant *v) {
@@ -1132,7 +1132,7 @@ struct VariantInternalAccessor<Object *> {
 template <>
 struct VariantInternalAccessor<Struct> {
 	static _FORCE_INLINE_ const Struct &get(const Variant *v) { return *VariantInternal::get_struct(v); }
-	static _FORCE_INLINE_ void set(Variant *v, const Struct &p_value) { VariantInternal::struct_assign(*VariantInternal::get_struct(v), p_value); }
+	static _FORCE_INLINE_ void set(Variant *v, const Struct &p_value) { VariantInternal::struct_assign(v, &p_value); }
 };
 
 template <>

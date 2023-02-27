@@ -32,6 +32,62 @@
 #include "core/variant/struct.h"
 #include "core/io/marshalls.h"
 
+void StructDB::StructTypeInfo::_add_constant(StructTypeId p_type, StringName p_constant_name, int64_t p_constant_value) {
+	constant_data.value[p_constant_name] = p_constant_value;
+#ifdef DEBUG_ENABLED
+	constant_data.value_ordered.push_back(p_constant_name);
+#endif
+}
+
+void StructDB::StructTypeInfo::_add_variant_constant(StructTypeId p_type, StringName p_constant_name, const Variant &p_constant_value) {
+	constant_data.variant_value[p_constant_name] = p_constant_value;
+#ifdef DEBUG_ENABLED
+	constant_data.variant_value_ordered.push_back(p_constant_name);
+#endif
+}
+
+void StructDB::StructTypeInfo::_add_enum_constant(StructTypeId p_type, StringName p_enum_type_name, StringName p_enumeration_name, int p_enum_value) {
+	enum_data.value[p_enum_type_name][p_enumeration_name] = p_enum_value;
+}
+
+int StructDB::StructTypeInfo::get_length() const {
+	int len = 0;
+	for (StructPropertyInfo prop : property_list) {
+		len += prop.bytes;
+	}
+	return len;
+}
+
+int StructDB::StructTypeInfo::get_variant_length() const {
+	return sizeof(Struct::StructPreamble) + get_length();
+}
+
+int StructDB::StructTypeInfo::get_capacity() const {
+	int capacity = Struct::get_capacity(bucket);
+	ERR_FAIL_COND_V_MSG(!capacity, capacity, vformat("Struct type '%s' has invalid bucket size '%d'.", name, bucket));
+}
+
+const StructPropertyInfo &StructDB::StructTypeInfo::get_property_info(StructPropertyId p_id) const {
+	const StructPropertyInfo *p = property_id_map.getptr(p_id);
+	return p ? *p : StructPropertyInfo();
+}
+
+const StructPropertyInfo &StructDB::StructTypeInfo::get_property_info(const StringName& p_name) const {
+	const StructPropertyInfo *p = property_name_map.getptr(p_name);
+	return p ? *p : StructPropertyInfo();
+}
+
+void StructDB::StructTypeInfo::assign(Struct *p_self, const Struct *p_value) {
+	//Callable *assign = methods.getptr(SNAME("_op_assign"));
+	//if (assign) {
+	//	assign->callp(p_self, )
+	//}
+}
+
+bool StructDB::StructTypeInfo::has_method(const StringName &p_name) const {
+	return method_map.has(p_name);
+}
+
 uint8_t *StructDB::get_data(Struct &p_struct) {
 	switch (p_struct.preamble.bucket) {
 		case STRUCT_MINIMAL:
@@ -67,18 +123,21 @@ void StructDB::init_struct(Struct* p_struct) {
 	if (instance.is_valid()) {
 		return;
 	}
-	get_struct_parser()->init(instance);
-}
 
-void StructDB::clear_struct(Struct* p_struct) {
-	StructInstanceInfo instance = _get_validated_struct_info(p_struct);
-	if (instance.is_valid()) {
-		return;
+	int cap = instance.type->get_capacity();
+	uint8_t *ptr = instance.data;
+	uint8_t *end = ptr + cap;
+	List<StructPropertyInfo> props;
+	p_struct->get_property_list(&props);
+	for (StructPropertyInfo &pi : props) {
+		ERR_FAIL_COND_MSG(ptr > end, "Cannot complete struct initialization: values require more memory than capacity. Some data loss may occur.");
+		*ptr = pi.id;
+		*ptr = pi.default_value;
+		ptr += pi.bytes;
 	}
-	get_struct_parser()->clear(instance);
 }
 
-void StructDB::assign_struct(Struct* p_struct, Struct* p_other, Error &r_error) {
+void StructDB::struct_assign(Struct* p_struct, const Struct* p_other, Error &r_error) {
 	StructInstanceInfo instance1 = _get_validated_struct_info(p_struct);
 	if (instance1.is_valid()) {
 		return;
@@ -87,28 +146,37 @@ void StructDB::assign_struct(Struct* p_struct, Struct* p_other, Error &r_error) 
 	if (instance2.is_valid()) {
 		return;
 	}
-	get_struct_parser()->assign(instance1, instance2, r_error);
+	//get_struct_parser()->assign(instance1, instance2, r_error);
 }
 
-void StructDB::set_struct_property(Struct* p_struct, StructPropertyId p_id, Variant p_value, Error &r_error) {
+void StructDB::struct_set_property(Struct* p_struct, StructPropertyId p_id, Variant p_value, Error &r_error) {
 	StructInstanceInfo instance = _get_validated_struct_info(p_struct);
 	if (instance.is_valid()) {
 		return;
 	}
-	get_struct_parser()->set_property(instance, p_id, p_value, r_error);
+	//get_struct_parser()->set_property(instance, p_id, p_value, r_error);
 }
 
-Variant StructDB::get_struct_property(Struct* p_struct, StructPropertyId p_id) {
+Variant StructDB::struct_get_property(Struct* p_struct, StructPropertyId p_id) {
 	StructInstanceInfo instance = _get_validated_struct_info(p_struct);
 	if (instance.is_valid()) {
 		return Variant();
 	}
-	return get_struct_parser()->get_property(instance, p_id);
+	//return get_struct_parser()->get_property(instance, p_id);
 }
 
-StructInstanceInfo &&StructDB::_get_validated_struct_info(Struct *p_struct) {
+bool StructDB::struct_has_method(const Struct *p_struct, const StringName &p_name) {
+	RWLockRead _r(_lock);
+
+	ERR_FAIL_COND_V_MSG(!p_struct, false, vformat("Struct null while checking for method '%s'.", p_name));
+	const StructTypeInfo *type = StructDB::get_struct_type(p_struct->get_type_id());
+	ERR_FAIL_COND_V_MSG(!type, false, vformat("Type with id '%d' null while checking for method '%s'.", p_struct->preamble.type_id, p_name));
+	return type->has_method(p_name);
+}
+
+StructDB::StructInstanceInfo &&StructDB::_get_validated_struct_info(Struct *p_struct) {
 	ERR_FAIL_COND_V_MSG(!p_struct, StructInstanceInfo(p_struct), "Struct validation failed: null struct.");
-	StructPreamble *sp = &p_struct->preamble;
+	Struct::StructPreamble *sp = &p_struct->preamble;
 	StructTypeId id = p_struct->preamble.type_id;
 	StructTypeInfo *type = _types.getptr(id);
 	ERR_FAIL_COND_V_MSG(!type, StructInstanceInfo(p_struct, type, sp), vformat("Struct validation failed: unknown type id '%d'.", id));
@@ -122,7 +190,7 @@ void StructDB::get_struct_type_names(Vector<StringName> &r_names) {
 
 	r_names.resize(_types.size());
 	int i = 0;
-	for (KeyValue<StructTypeId, StructTypeInfo> pair : _types) {
+	for (KeyValue<StructTypeId, StructTypeInfo> &pair : _types) {
 		r_names.write[i++] = pair.value.name;
 	}
 }
@@ -136,15 +204,14 @@ const StringName& StructDB::get_struct_type_name(StructTypeId p_id) {
 
 StructTypeId StructDB::get_struct_type_id(const StringName& p_name) {
 	RWLockRead _r(_lock);
-	StructTypeId *id = _name_map.getptr(p_name);
+	StructTypeId *id = _types_by_name.getptr(p_name);
 	return id ? *id : 0;
 }
 
 void StructDB::add_struct_type(const StructTypeInfo &p_info) {
 	RWLockWrite _w(_lock);
-
-	ERR_FAIL_COND_MSG(_name_map.has(p_info.name), vformat("Cannot add duplicate struct type with name '%s'.", p_info.name));
-	_name_map[p_info.name] = _types.size();
+	ERR_FAIL_COND_MSG(_types_by_name.has(p_info.name), vformat("Cannot add duplicate struct type with name '%s'.", p_info.name));
+	_types_by_name[p_info.name] = _types.size();
 	StructTypeId id = _next_id();
 	_types.insert(id, p_info);
 }
@@ -159,7 +226,7 @@ void StructDB::remove_struct_type(StructTypeId p_id) {
 void StructDB::remove_struct_type(const StringName &p_name) {
 	RWLockWrite _w(_lock);
 
-	StructTypeId *id = _name_map.getptr(p_name);
+	StructTypeId *id = _types_by_name.getptr(p_name);
 	if (!id) {
 		return;
 	}
@@ -173,35 +240,20 @@ StructBucket StructDB::get_struct_type_bucket(StructTypeId p_id) {
 	return t ? t->bucket : STRUCT_MINIMAL;
 }
 
-void StructDB::set_struct_parser(StructParser *p_parser) {
-	if (struct_parser && struct_parser != p_parser) {
-		delete struct_parser;
-	}
-	struct_parser = p_parser;
-}
-
-StructParser *StructDB::get_struct_parser() {
-	if (!struct_parser) {
-		set_struct_parser(new DefaultStructParser());
-	}
-	return struct_parser;
-}
-
-
 void StructDB::initialize() {
-	struct_parser = new DefaultStructParser();
 }
 
 void StructDB::finalize() {
-	if (struct_parser) {
-		delete struct_parser;
-	}
 }
 
 void StructDB::_remove_struct_type(const StructTypeInfo *p_info, const char *p_lookup, String p_identifier) {
 	ERR_FAIL_COND_MSG(!p_info, vformat("Cannot remove struct type with %s '%s' because it does not exist.", p_lookup, p_identifier));
-	_name_map.erase(p_info->name);
+	_types_by_name.erase(p_info->name);
 	_types.erase(p_info->id);
+}
+
+const StructDB::StructTypeInfo* StructDB::get_struct_type(StructTypeId p_id) {
+	return _types.getptr(p_id);
 }
 
 StructTypeId StructDB::_next_id() {
@@ -215,9 +267,9 @@ StructTypeId StructDB::_next_id() {
 }
 
 StructBucket StructDB::_evaluate_bucket_size(const StructTypeInfo& info) {
-	int bytes = sizeof(StructPreamble);
-	for (KeyValue<StructPropertyId, StructPropertyInfo> pair : info.properties) {
-		bytes += pair.value.bytes;
+	int bytes = sizeof(Struct::StructPreamble);
+	for (const StructPropertyInfo &prop : info.property_list) {
+		bytes += prop.bytes;
 	}
 	if (bytes <= sizeof(int64_t)) {
 		return STRUCT_MINIMAL;
@@ -231,28 +283,25 @@ StructBucket StructDB::_evaluate_bucket_size(const StructTypeInfo& info) {
 	return STRUCT_MINIMAL;
 }
 
-const char StructDB::_fallback_property_keys[] = {
-	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
-};
-
 StructPropertyId StructDB::_evaluate_property_key(const StructTypeInfo& p_type, const StructPropertyInfo& p_property) {
 	ERR_FAIL_COND_V_MSG(p_property.name.is_empty(), 0, "Cannot evaluate key for struct property with an empty name.");
 	// TODO: identify how to account for 16-bit unicode characters for RTL languages, etc. TextServer not accessible in core. Alternative?
 	for (int i = 0; i < p_property.name.length(); i++) {
 		char c = p_property.name.get(i);
-		if (!p_type.properties.has(c)) {
+		if (!p_type.property_id_map.has(c)) {
 			return c;
 		}
 	}
 	// TODO: Devise a more inclusive fallback algorithm.
-	for (char c : _fallback_property_keys) {
-		if (!p_type.properties.has(c)) {
+	for (StructPropertyId c = 'a'; c <= 'z'; c++) {
+		if (!p_type.property_id_map.has(c)) {
 			return c;
 		}
 	}
 	return 0;
 }
 
+/*
 void DefaultStructParser::init(StructInstanceInfo &p_info) {
 	int cap = p_info.type->get_capacity();
 	uint8_t *ptr = p_info.data;
@@ -380,5 +429,5 @@ void DefaultStructParser::set_property(StructInstanceInfo &p_instance, StructPro
 
 Variant DefaultStructParser::get_property(const StructInstanceInfo &p_instance, StructPropertyId p_id) {
 
-}
+}*/
 
