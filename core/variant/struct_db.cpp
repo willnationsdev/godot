@@ -28,9 +28,10 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#include "core/io/marshalls.h"
+#include "core/object/script_language.h"
 #include "core/variant/struct_db.h"
 #include "core/variant/struct.h"
-#include "core/io/marshalls.h"
 
 void StructDB::StructTypeInfo::_add_constant(StructTypeId p_type, StringName p_constant_name, int64_t p_constant_value) {
 	constant_data.value[p_constant_name] = p_constant_value;
@@ -63,8 +64,7 @@ int StructDB::StructTypeInfo::get_variant_length() const {
 }
 
 int StructDB::StructTypeInfo::get_capacity() const {
-	int capacity = Struct::get_capacity(bucket);
-	ERR_FAIL_COND_V_MSG(!capacity, capacity, vformat("Struct type '%s' has invalid bucket size '%d'.", name, bucket));
+	return Struct::get_capacity(bucket);
 }
 
 const StructPropertyInfo &StructDB::StructTypeInfo::get_property_info(StructPropertyId p_id) const {
@@ -138,18 +138,81 @@ void StructDB::init_struct(Struct* p_struct) {
 }
 
 void StructDB::struct_assign(Struct* p_struct, const Struct* p_other, Error &r_error) {
-	StructInstanceInfo instance1 = _get_validated_struct_info(p_struct);
-	if (instance1.is_valid()) {
+	RWLockRead _r(_lock);
+
+	StructInstanceInfo self = _get_validated_struct_info(p_struct);
+	if (self.is_valid()) {
 		return;
 	}
-	StructInstanceInfo instance2 = _get_validated_struct_info(p_struct);
-	if (instance2.is_valid()) {
+	StructInstanceInfo other = _get_validated_struct_info(p_struct);
+	if (other.is_valid()) {
 		return;
 	}
-	//get_struct_parser()->assign(instance1, instance2, r_error);
+	if (self.ref == other.ref) {
+		r_error = OK;
+		return;
+	}
+	StructTypeInfo &type = *self.type;
+	StructTypeInfo &other_type = *other.type;
+	ERR_FAIL_COND_MSG(!type.id, "Destination struct missing type during assignment.");
+	ERR_FAIL_COND_MSG(!other_type.id, "Source struct missing type during assignment.");
+	if (type.id == other_type.id) {
+		int cap = type.get_capacity();
+		memcpy(self.data, other.data, cap);
+		return;
+	}
+
+	r_error = try_cast(self, other);
+	if (r_error != OK) {
+		return;
+	}
+	r_error = try_cast(other, self);
+	if (r_error != OK) {
+		return;
+	}
+
+	for (StructPropertyInfo &info : type.property_list) {
+		StructPropertyInfo *prop_other = other_type.property_name_map.getptr(info.name);
+		if (!prop_other) {
+			continue;
+		}
+		StructPropertyInfo &po = *prop_other;
+		if (info.name != po.name || info.type != po.type || (info.type == Variant::STRUCT && info.struct_type_id != po.struct_type_id)) {
+			continue;
+		}
+		Variant value = struct_get_property(p_other, po.id);
+		struct_set_property(p_info, info.id, value, r_error);
+		if (r_error != OK) {
+			return;
+		}
+	}
+}
+
+Error StructDB::try_cast(StructInstanceInfo &p_info, StructInstanceInfo &p_other) {
+	Error err;
+	const char *prefix = "_op_cast_";
+	MethodBind **cast_ptr = p_info.type->method_map.getptr(prefix + p_other.type->name);
+	Ref<Script> scr = p_info.type->script;
+	if (cast_ptr && scr.is_valid()) {
+		Variant selfv(*p_info.ref);
+		Variant otherv(*p_other.ref);
+		const Variant *args[2]{ &selfv, &otherv };
+		Variant ret;
+		VariantInternal::initialize(&ret, Variant::STRUCT, p_other.type->id);
+		Callable::CallError ce;
+		ret = (*cast_ptr)->call(*scr, args, 2, ce);
+		if (ce.error != Callable::CallError::CALL_OK) {
+			return ERR_BUG;
+		}
+		StructDB::struct_assign(p_info.ref, &ret.operator Struct(), err);
+		return err;
+	}
+	return ERR_DOES_NOT_EXIST;
 }
 
 void StructDB::struct_set_property(Struct* p_struct, StructPropertyId p_id, Variant p_value, Error &r_error) {
+	RWLockRead _r(_lock);
+
 	StructInstanceInfo instance = _get_validated_struct_info(p_struct);
 	if (instance.is_valid()) {
 		return;
@@ -157,8 +220,57 @@ void StructDB::struct_set_property(Struct* p_struct, StructPropertyId p_id, Vari
 	//get_struct_parser()->set_property(instance, p_id, p_value, r_error);
 }
 
-Variant StructDB::struct_get_property(Struct* p_struct, StructPropertyId p_id) {
+Variant StructDB::struct_get_property(Struct* p_struct, StructPropertyId p_id, Error &r_error) {
+	RWLockRead _r(_lock);
+
+	ERR_FAIL_COND_V(!p_struct, Variant());
 	StructInstanceInfo instance = _get_validated_struct_info(p_struct);
+	if (instance.is_valid()) {
+		return Variant();
+	}
+
+	const uint8_t *ptr = p_struct->get_data_const();
+	StructTypeInfo &type = *get_struct_type(p_struct->get_type_id());
+	int cap = type.get_capacity() - sizeof(Struct::StructPreamble);
+	const uint8_t *end = ptr + cap;
+
+	int idx = 0;
+
+	const StructPropertyInfo *info = type.property_id_map.getptr(p_id);
+	if (!info) {
+		r_error = ERR_DOES_NOT_EXIST;
+		return;
+	}
+	for (StructPropertyId pid : p_struct->preamble.property_ids) {
+		if (info->id == pid) {
+			break;
+		}
+		ptr += type.property_id_map[pid].bytes;
+	}
+
+	int len;
+	// TODO: This is not reliable. For example: Callable does nothing and strings are deep copied.
+	// Need some way of directly copying the references and/or values stored in Variant, but without
+	// having to also copy the type information since we are already storing that in the StructPropertyInfo.
+	// We also need to be able to copy it into a buffer which we artificially truncate/compress to just the
+	// bytes configured to be allotted for that property.
+	Error err = encode_variant_value(p_value, nullptr, len, false);
+	if (err != OK) {
+		r_error = err;
+		return;
+	}
+	if (ptr + len > end) {
+		r_error = ERR_OUT_OF_MEMORY;
+		ERR_FAIL_MSG(vformat("Cannot set struct property '%s': would write %d byte(s) beyond capacity of %d byte(s).", type.name, ptr + len - end, cap));
+	}
+
+	r_error = encode_variant_value(p_value, ptr, len, false);
+}
+
+Variant StructDB::struct_get_property_const(const Struct* p_struct, StructPropertyId p_id) {
+	RWLockRead _r(_lock);
+
+	const StructInstanceInfo instance = _get_validated_struct_info(p_struct);
 	if (instance.is_valid()) {
 		return Variant();
 	}
@@ -178,7 +290,7 @@ StructDB::StructInstanceInfo &&StructDB::_get_validated_struct_info(Struct *p_st
 	ERR_FAIL_COND_V_MSG(!p_struct, StructInstanceInfo(p_struct), "Struct validation failed: null struct.");
 	Struct::StructPreamble *sp = &p_struct->preamble;
 	StructTypeId id = p_struct->preamble.type_id;
-	StructTypeInfo *type = _types.getptr(id);
+	StructTypeInfo *type = get_struct_type(id);
 	ERR_FAIL_COND_V_MSG(!type, StructInstanceInfo(p_struct, type, sp), vformat("Struct validation failed: unknown type id '%d'.", id));
 	uint8_t *data = get_data(*p_struct);
 	ERR_FAIL_COND_V_MSG(!data, StructInstanceInfo(p_struct, type, sp), "Struct validation failed: null data.");
@@ -217,21 +329,24 @@ void StructDB::add_struct_type(const StructTypeInfo &p_info) {
 }
 
 void StructDB::remove_struct_type(StructTypeId p_id) {
-	RWLockWrite _w(_lock);
-
-	StructTypeInfo *info = _types.getptr(p_id);
+	StructTypeInfo *info = get_struct_type(p_id);
 	_remove_struct_type(info, "id", uitos(p_id));
 }
 
 void StructDB::remove_struct_type(const StringName &p_name) {
-	RWLockWrite _w(_lock);
-
-	StructTypeId *id = _types_by_name.getptr(p_name);
+	StructTypeId id = get_struct_type_id(p_name);
 	if (!id) {
 		return;
 	}
-	StructTypeInfo *info = _types.getptr(*id);
+	StructTypeInfo *info = get_struct_type(id);
 	_remove_struct_type(info, "name", p_name);
+}
+
+void StructDB::_remove_struct_type(const StructTypeInfo *p_info, const char *p_lookup, String p_identifier) {
+	RWLockWrite _w(_lock);
+	ERR_FAIL_COND_MSG(!p_info, vformat("Cannot remove struct type with %s '%s' because it does not exist.", p_lookup, p_identifier));
+	_types_by_name.erase(p_info->name);
+	_types.erase(p_info->id);
 }
 
 StructBucket StructDB::get_struct_type_bucket(StructTypeId p_id) {
@@ -246,13 +361,13 @@ void StructDB::initialize() {
 void StructDB::finalize() {
 }
 
-void StructDB::_remove_struct_type(const StructTypeInfo *p_info, const char *p_lookup, String p_identifier) {
-	ERR_FAIL_COND_MSG(!p_info, vformat("Cannot remove struct type with %s '%s' because it does not exist.", p_lookup, p_identifier));
-	_types_by_name.erase(p_info->name);
-	_types.erase(p_info->id);
+StructDB::StructTypeInfo* StructDB::get_struct_type(StructTypeId p_id) {
+	RWLockRead _r(_lock);
+	return _types.getptr(p_id);
 }
 
-const StructDB::StructTypeInfo* StructDB::get_struct_type(StructTypeId p_id) {
+const StructDB::StructTypeInfo* StructDB::get_struct_type_const(const StructTypeId p_id) {
+	RWLockRead _r(_lock);
 	return _types.getptr(p_id);
 }
 

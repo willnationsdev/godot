@@ -43,6 +43,38 @@ void Struct::assign(const Struct* p_other, Error& r_error) {
 	StructDB::struct_assign(this, p_other, r_error);
 }
 
+template <class T>
+T Struct::get_value(int p_offset, bool *r_valid) const {
+	const uint8_t *ptr = StructDB::get_data_const(*this);
+	const StructDB::StructTypeInfo *t = StructDB::get_struct_type(get_type_id());
+	if (!t) {
+		if (r_valid) {
+			*r_valid = false;
+		}
+		return T();
+	}
+
+	int cap = t->get_capacity();
+	const uint8_t *end = ptr + cap;
+	int i = 0;
+
+	for (; i < max_property_count && ptr < end && i < p_offset; i++) {
+		ptr += t->property_id_map[preamble.property_ids[i]].bytes;
+	}
+	if (i == p_offset) {
+		if (r_valid) {
+			*r_valid = true;
+		}
+		// TODO: This isn't enough. Needs to respect the property's "bytes" configuration, not the amount of memory associated with T.
+		// How to do that? I need to have a stack-allocated instance of T and then use memcpy with configured bytes amount? Possibly...
+		return reinterpret_cast<T>(&ptr);
+	}
+	if (r_valid) {
+		*r_valid = false;
+	}
+	return T();
+}
+
 int Struct::get_capacity(StructBucket p_bucket) {
 	switch (p_bucket) {
 		case STRUCT_MINIMAL:
@@ -58,7 +90,27 @@ int Struct::get_capacity(StructBucket p_bucket) {
 	}
 }
 
-void Struct::_get_property_list(List<StructPropertyInfo *> *r_list) const {
+int Struct::get_capacity() const {
+	int a = get_value<int>(0);
+	const StructDB::StructTypeInfo *t = StructDB::get_struct_type(get_type_id());
+	return t ? t->get_capacity() : 0;
+}
+
+uint8_t *Struct::get_data() {
+	return StructDB::get_data(*this);
+}
+
+const uint8_t *Struct::get_data_const() const {
+	return StructDB::get_data_const(*this);
+}
+
+StringName Struct::get_type_name() const {
+	const StructDB::StructTypeInfo *struct_type = StructDB::get_struct_type(preamble.type_id);
+	ERR_FAIL_COND_V(!struct_type, StringName());
+	return struct_type->name;
+}
+
+void Struct::_get_property_list(List<StructPropertyInfo *> *r_list, bool p_reversed) const {
 	ERR_FAIL_COND(!r_list);
 	StructTypeId id = get_type_id();
 	const StructDB::StructTypeInfo *t = StructDB::get_struct_type(id);
@@ -76,7 +128,7 @@ void Struct::_get_property_list(List<StructPropertyInfo *> *r_list) const {
 	}
 }
 
-void Struct::get_property_list(List<PropertyInfo> *r_list) const {
+void Struct::get_property_list(List<PropertyInfo> *r_list, bool p_reversed) const {
 	ERR_FAIL_COND(!r_list);
 	List<StructPropertyInfo *> list;
 	_get_property_list(&list);
@@ -85,32 +137,13 @@ void Struct::get_property_list(List<PropertyInfo> *r_list) const {
 	}
 }
 
-void Struct::get_property_list(List<StructPropertyInfo> *r_list) const {
+void Struct::get_property_list(List<StructPropertyInfo> *r_list, bool p_reversed) const {
 	ERR_FAIL_COND(!r_list);
 	List<StructPropertyInfo *> list;
 	_get_property_list(&list);
 	for (const StructPropertyInfo *p : list) {
 		r_list->push_back(*p);
 	}
-}
-
-int Struct::get_capacity() const {
-	const StructDB::StructTypeInfo *t = StructDB::get_struct_type(get_type_id());
-	return t ? t->get_capacity() : 0;
-}
-
-uint8_t *Struct::get_data() {
-	return StructDB::get_data(*this);
-}
-
-const uint8_t *Struct::get_data_const() const {
-	return StructDB::get_data_const(*this);
-}
-
-StringName Struct::get_type_name() const {
-	const StructDB::StructTypeInfo *struct_type = StructDB::get_struct_type(preamble.type_id);
-	ERR_FAIL_COND_V(!struct_type, StringName());
-	return struct_type->name;
 }
 
 bool Struct::has_method(const StringName &p_name) const {

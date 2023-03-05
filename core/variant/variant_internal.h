@@ -1584,22 +1584,22 @@ struct VariantZeroAssigner<PackedColorArray> {
 
 template <>
 struct VariantZeroAssigner<StructMinimal> {
-	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructMinimal(); }
+	static _FORCE_INLINE_ void zero(Variant *v) { (*VariantInternal::get_struct(v)) = StructMinimal(); }
 };
 
 template <>
 struct VariantZeroAssigner<StructSmall> {
-	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructSmall(); }
+	static _FORCE_INLINE_ void zero(Variant *v) { (*VariantInternal::get_struct(v)) = StructSmall(); }
 };
 
 template <>
 struct VariantZeroAssigner<StructMedium> {
-	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructMedium(); }
+	static _FORCE_INLINE_ void zero(Variant *v) { (*VariantInternal::get_struct(v)) = StructMedium(); }
 };
 
 template <>
 struct VariantZeroAssigner<StructLarge> {
-	static _FORCE_INLINE_ void zero(Variant *v) { *VariantInternal::get_struct(v) = StructLarge(); }
+	static _FORCE_INLINE_ void zero(Variant *v) { (*VariantInternal::get_struct(v)) = StructLarge(); }
 };
 
 template <class T>

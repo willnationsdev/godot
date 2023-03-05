@@ -103,12 +103,14 @@ protected:
 
 	StructPreamble preamble;
 
-	_FORCE_INLINE_ void _get_property_list(List<StructPropertyInfo *> *r_list) const;
+	_FORCE_INLINE_ void _get_property_list(List<StructPropertyInfo *> *r_list, bool p_reversed = false) const;
 
 public:
 	bool operator==(const Struct &p_struct) const;
-
+	
 	void assign(const Struct *p_other, Error &r_error);
+	template <class T>
+	T get_value(int p_offset, bool *r_valid = nullptr) const;
 
 	static _FORCE_INLINE_ int get_capacity(StructBucket p_bucket);
 	_FORCE_INLINE_ int get_capacity() const;
@@ -119,9 +121,18 @@ public:
 	_FORCE_INLINE_ StringName get_type_name() const;
 	_FORCE_INLINE_ StructBucket get_bucket() const { return preamble.bucket; }
 
-	_FORCE_INLINE_ void get_property_list(List<PropertyInfo> *r_list) const;
-	_FORCE_INLINE_ void get_property_list(List<StructPropertyInfo> *r_list) const;
-	_FORCE_INLINE_ bool has_method(const StringName &p_name) const;
+	void set(const StringName &p_name, const Variant &p_value, bool *r_valid = nullptr);
+	Variant get(const StringName &p_name, bool *r_valid = nullptr) const;
+	void set_indexed(const Vector<StringName> &p_names, const Variant &p_value, bool *r_valid = nullptr);
+	Variant get_indexed(const Vector<StringName> &p_names, bool *r_valid = nullptr) const;
+
+	void get_property_list(List<PropertyInfo> *p_list, bool p_reversed = false) const;
+	void get_property_list(List<StructPropertyInfo> *p_list, bool p_reversed = false) const;
+	void validate_property(PropertyInfo &p_property) const;
+	bool property_can_revert(const StringName &p_name) const;
+	Variant property_get_revert(const StringName &p_name) const;
+	bool has_method(const StringName &p_method) const;
+	void get_method_list(List<MethodInfo> *p_list) const;
 
 	Variant callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error);
 };

@@ -149,12 +149,13 @@ public:
 		~StructTypeInfo() {}
 	};
 
+	// Only really used to have more concise code everywhere else.
 	struct StructInstanceInfo {
-		Struct *const ref;
-		StructTypeInfo *const type;
-		mutable Struct::StructPreamble *preamble;
-		mutable uint8_t *data;
-		_FORCE_INLINE_ bool is_valid() { return ref && type && preamble && data; }
+		Struct *ref; // TODO: surely there's a better way to simplify const-usability than by just making the properties mutable, no?
+		StructTypeInfo *type;
+		Struct::StructPreamble *preamble;
+		uint8_t *data;
+		_FORCE_INLINE_ bool is_valid() const { return ref && type && preamble && data; }
 
 		StructInstanceInfo(Struct *p_ref = nullptr, StructTypeInfo *p_type = nullptr, Struct::StructPreamble *p_preamble = nullptr, uint8_t *p_data = nullptr) :
 			ref(p_ref), type(p_type), preamble(p_preamble), data(p_data) {}
@@ -164,9 +165,11 @@ public:
 	static const uint8_t *get_data_const(const Struct &p_struct);
 	static void init_struct(Struct *p_struct);
 	static void struct_assign(Struct *p_struct, const Struct *p_other, Error &r_error);
+	static Error try_cast(StructInstanceInfo &p_info, StructInstanceInfo &p_other);
 
 	static void struct_set_property(Struct *p_struct, StructPropertyId p_id, Variant p_value, Error &r_error);
-	static Variant struct_get_property(Struct *p_struct, StructPropertyId p_id);
+	static Variant struct_get_property(Struct *p_struct, StructPropertyId p_id, Error &r_error);
+	static Variant struct_get_property(const Struct *p_struct, StructPropertyId p_id, Error &r_error);
 	static bool struct_has_method(const Struct *p_struct, const StringName &p_name);
 
 	static void get_struct_type_names(Vector<StringName> &r_names);
@@ -186,8 +189,9 @@ private:
 	static HashMap<StringName, StructTypeId> _types_by_name;
 	static RandomPCG _rand;
 
-	static _FORCE_INLINE_ void _remove_struct_type(const StructTypeInfo *p_info, const char *p_lookup, String p_identifier);
-	static _FORCE_INLINE_ const StructTypeInfo *get_struct_type(StructTypeId p_id);
+	static void _remove_struct_type(const StructTypeInfo *p_info, const char *p_lookup, String p_identifier);
+	static _FORCE_INLINE_ StructTypeInfo *get_struct_type(StructTypeId p_id);
+	static _FORCE_INLINE_ const StructTypeInfo *get_struct_type_const(const StructTypeId p_id);
 	static StructTypeId _next_id();
 	static StructBucket _evaluate_bucket_size(const StructTypeInfo &p_info);
 	static StructPropertyId _evaluate_property_key(const StructTypeInfo &p_info, const StructPropertyInfo &p_property);
