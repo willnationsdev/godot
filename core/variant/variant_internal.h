@@ -1130,9 +1130,9 @@ struct VariantInternalAccessor<Object *> {
 };
 
 template <>
-struct VariantInternalAccessor<Struct> {
-	static _FORCE_INLINE_ const Struct &get(const Variant *v) { return *VariantInternal::get_struct(v); }
-	static _FORCE_INLINE_ void set(Variant *v, const Struct &p_value) { VariantInternal::struct_assign(v, &p_value); }
+struct VariantInternalAccessor<Struct *> {
+	static _FORCE_INLINE_ Struct *get(const Variant *v) { return const_cast<Struct *>(VariantInternal::get_struct(v)); }
+	static _FORCE_INLINE_ void set(Variant *v, const Struct *p_value) { VariantInternal::struct_assign(v, p_value); }
 };
 
 template <>

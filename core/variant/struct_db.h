@@ -198,4 +198,64 @@ private:
 	static StructInstanceInfo &&_get_validated_struct_info(Struct *p_struct);
 };
 
+class StructBuffer {
+private:
+	Struct *_struct = nullptr;
+
+protected:
+	bool big_endian = false;
+	int pointer = 0;
+
+	uint8_t *_get_data();
+	template <class T>
+	void _put_ptr(const T *p_ptr);
+
+public:
+	virtual Error put_data(const uint8_t *p_data, int p_bytes);
+	virtual Error get_data(uint8_t *p_buffer, int p_bytes);
+	virtual Error get_partial_data(uint8_t *p_buffer, int p_bytes, int &r_received);
+	virtual int get_available_bytes() const;
+
+	/* helpers */
+	void set_big_endian(bool p_big_endian);
+	bool is_big_endian_enabled() const;
+
+	void put_8(int8_t p_val);
+	void put_u8(uint8_t p_val);
+	void put_16(int16_t p_val);
+	void put_u16(uint16_t p_val);
+	void put_32(int32_t p_val);
+	void put_u32(uint32_t p_val);
+	void put_64(int64_t p_val);
+	void put_u64(uint64_t p_val);
+	void put_float(float p_val);
+	void put_double(double p_val);
+	void put_string(const String &p_string);
+	void put_var(const Variant &p_variant, bool p_full_objects = false);
+	Error put_value(const Variant &p_variant);
+
+	uint8_t get_u8();
+	int8_t get_8();
+	uint16_t get_u16();
+	int16_t get_16();
+	uint32_t get_u32();
+	int32_t get_32();
+	uint64_t get_u64();
+	int64_t get_64();
+	float get_float();
+	double get_double();
+	String get_string();
+	template <class T>
+	T *get_ptr();
+	Variant get_var(Variant::Type p_type, bool p_allow_objects = false);
+	Variant get_value(Variant::Type p_type, Error &r_error);
+
+	void seek(int p_pos);
+	int get_size() const;
+	int get_position() const;
+
+	StructBuffer(Struct *p_struct) : _struct(p_struct) {}
+	StructBuffer(const Struct *p_struct) : _struct(const_cast<Struct *>(p_struct)) {}
+};
+
 #endif // STRUCT_DB_H
